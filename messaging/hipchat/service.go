@@ -2,12 +2,13 @@ package main
 
 func main() {
 
-	// Create Telegram BOT
+	// Create Hip-Chat BOT
+	// https://github.com/tbruyelle/hipchat-go
 
 	// Connect to REDIS and subscribe to "IM" channel
 
 	// Loop
-	//    Block until message received from REDIS channel
+	//    Block until message received from REDIS "IM" channel
 	//    Send message through BOT
 	// End
 

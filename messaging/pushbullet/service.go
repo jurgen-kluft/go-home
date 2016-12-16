@@ -1,12 +1,10 @@
-
-
+package main
 
 func main() {
 
-
 	// Create Push-Bullet BOT
 
-	// Connect to REDIS and subscribe to "MESSAGING" channel
+	// Connect to REDIS and subscribe to "IM" channel
 
 	// Loop
 	//    Block until message received from REDIS channel
