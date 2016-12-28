@@ -39,8 +39,17 @@ func main() {
 	sunrise := &xbase.TimeOfDay{}
 	sunrise.Parse(ssrc.Results.Sunrise)
 	sunrise.Add(&xbase.TimeOfDay{Hours: 8, Minutes: 0, Seconds: 0})
-	fmt.Printf("Sunrise: %v, Sunset: %v", sunrise, sunset)
+	fmt.Printf("Sunrise: %v, Sunset: %v\n", sunrise, sunset)
 
+	tods := timeOfDayConfig.Find(sunset)
+	for _, index := range tods {
+		fmt.Println(timeOfDayConfig.TimeOfDay[index].Name)
+	}
+
+	tods = timeOfDayConfig.Find(sunrise)
+	for _, index := range tods {
+		fmt.Println(timeOfDayConfig.TimeOfDay[index].Name)
+	}
 	// channel_name := "Go-Home"
 
 	// Every N seconds
