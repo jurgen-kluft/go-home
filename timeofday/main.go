@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/jurgen-kluft/go-xbase"
 	"gopkg.in/redis.v5"
 	"io/ioutil"
 	"net/http"
@@ -16,11 +17,12 @@ func main() {
 	})
 
 	// Create and initialize
-	msgTimeOfDayConfigJSON, err := redisClient.Get("GO-HOME-TIMEOFDAY-CONFIG").Result()
+	ghTimeOfDayConfigJSON, err := redisClient.Get("GO-HOME-TIMEOFDAY-CONFIG").Result()
 	if err != nil {
 		panic(err)
 	}
-	timeOfDayConfig := CreateTimeOfDayConfig([]byte(msgTimeOfDayConfigJSON))
+	timeOfDayConfig := CreateTimeOfDayConfig([]byte(ghTimeOfDayConfigJSON))
+	fmt.Println(timeOfDayConfig)
 
 	// timeofday_config_key := "Go-Home-TimeOfDay-Config"
 	// timeofday_state_key := "Go-Home-TimeOfDay-State"
@@ -31,7 +33,13 @@ func main() {
 	sunsetSunriseResponse, _ := http.Get(timeOfDayConfig.URL)
 	sunsetSunriseConfigBytes, _ := ioutil.ReadAll(sunsetSunriseResponse.Body)
 	ssrc := CreateSunSetSunRiseConfig(sunsetSunriseConfigBytes)
-	fmt.Printf("SunSet: %v, SunRise: %v\n", ssrc.Results.Sunset, ssrc.Results.Sunrise)
+	sunset := &xbase.TimeOfDay{}
+	sunset.Parse(ssrc.Results.Sunset)
+	sunset.Add(&xbase.TimeOfDay{Hours: 8, Minutes: 0, Seconds: 0})
+	sunrise := &xbase.TimeOfDay{}
+	sunrise.Parse(ssrc.Results.Sunrise)
+	sunrise.Add(&xbase.TimeOfDay{Hours: 8, Minutes: 0, Seconds: 0})
+	fmt.Printf("Sunrise: %v, Sunset: %v", sunrise, sunset)
 
 	// channel_name := "Go-Home"
 
