@@ -128,10 +128,10 @@ func CreateTimeOfDayConfig(jsondata []byte) (config *TimeOfDayConfig) {
 }
 
 // Find will return an array of indices that mark elements in the TimeOfDay array that match timeofday.IsBetween
-func (t *TimeOfDayConfig) Find(timeofday *xbase.TimeOfDay) (result []int) {
+func (t *TimeOfDayConfig) Find(hours, minutes, seconds int) (result []int) {
 	result = make([]int, 0, 2)
 	for i, v := range t.TimeOfDay {
-		if timeofday.IsBetween(v.Start, v.End) {
+		if xbase.TimeIsBetween(hours, minutes, seconds, v.Start, v.End) {
 			result = append(result, i)
 		}
 	}

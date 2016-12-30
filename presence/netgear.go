@@ -54,6 +54,11 @@ type AttachedDevice struct {
 	LinkRate string `json:"link_rate"`
 }
 
+// Router is the public interface with one member function to obtain devices
+type Router interface {
+	GetAttachedDevices() ([]AttachedDevice, error)
+}
+
 // Netgear describes a modern Netgear router providing a SOAP interface at port
 // 5000
 type Netgear struct {
@@ -66,14 +71,14 @@ type Netgear struct {
 
 // IsLoggedIn returns true if the session has been authenticated against the
 // Netgear Router or false otherwise.
-func (netgear *Netgear) IsLoggedIn() bool {
+func (netgear *Netgear) isLoggedIn() bool {
 	return netgear.loggedIn
 }
 
 // Login authenticates the session against the Netgear router
 // On success true and nil should be returned. Otherwise false and
 // the related error are returned
-func (netgear *Netgear) Login() (bool, error) {
+func (netgear *Netgear) login() (bool, error) {
 	message := fmt.Sprintf(soapLoginMessage, sessionID, netgear.username, netgear.password)
 
 	resp, err := netgear.makeRequest(soapActionLogin, message)
@@ -86,14 +91,14 @@ func (netgear *Netgear) Login() (bool, error) {
 	return netgear.loggedIn, err
 }
 
-func (netgear *Netgear) getUrl() string {
+func (netgear *Netgear) getURL() string {
 	return fmt.Sprintf("http://%s:5000/soap/server_sa/", netgear.host)
 }
 
 func (netgear *Netgear) makeRequest(action string, message string) (string, error) {
 	client := &http.Client{}
 
-	url := netgear.getUrl()
+	url := netgear.getURL()
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(message)))
 	if err != nil {
@@ -137,29 +142,29 @@ func (netgear *Netgear) GetAttachedDevices() ([]AttachedDevice, error) {
 		for _, deviceStr := range deviceStrs {
 			fields := strings.Split(deviceStr, ";")
 
-			signal_str := "?"
-			ip_str := ""
-			name_str := ""
-			mac_str := ""
-			type_str := "?"
-			linkrate_str := "?"
+			signalStr := "?"
+			ipStr := ""
+			nameStr := ""
+			macStr := ""
+			typeStr := "?"
+			linkrateStr := "?"
 			if len(fields) >= 2 {
-				ip_str = fields[1]
+				ipStr = fields[1]
 			}
 			if len(fields) >= 3 {
-				name_str = fields[2]
+				nameStr = fields[2]
 			}
 			if len(fields) >= 4 {
-				mac_str = fields[3]
+				macStr = fields[3]
 			}
 
 			device := AttachedDevice{
-				Signal:   signal_str,
-				IP:       ip_str,
-				Name:     name_str,
-				Mac:      mac_str,
-				Type:     type_str,
-				LinkRate: linkrate_str,
+				Signal:   signalStr,
+				IP:       ipStr,
+				Name:     nameStr,
+				Mac:      macStr,
+				Type:     typeStr,
+				LinkRate: linkrateStr,
 			}
 			result = append(result, device)
 		}
@@ -171,7 +176,7 @@ func (netgear *Netgear) GetAttachedDevices() ([]AttachedDevice, error) {
 // NewRouter returns a new and already initialized Netgear router instance
 // However, the Netgear SOAP session has not been authenticated at this point.
 // Use Login() to authenticate against the router
-func NewRouter(host, username, password string) *Netgear {
+func NewRouter(host, username, password string) Router {
 	router := &Netgear{
 		host:     host,
 		username: username,
