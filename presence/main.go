@@ -101,7 +101,7 @@ func main() {
 		member.IndexPresence = 0
 		member.DetectPresence = make([]presenceState, 6, 6)
 		for i := range member.DetectPresence {
-			member.DetectPresence[i] = away
+			member.DetectPresence[i] = home
 		}
 		presence.MacToIndex[device.Mac] = i
 		presence.Member[i] = member
@@ -131,7 +131,7 @@ func main() {
 	//  	}]
 	//  }
 
-	router := NewRouter("192.168.1.3", ghConfig.User, ghConfig.Password)
+	router := NewRouter(ghConfig.Host, ghConfig.User, ghConfig.Password)
 
 	// Every N seconds
 	ticker := time.NewTicker(time.Second * time.Duration(ghConfig.Detectionfreq))
@@ -139,11 +139,20 @@ func main() {
 		//     'collect connected devices'
 		devices, result := router.GetAttachedDevices()
 		if result == nil {
+			// All members initialize detected presence state to 'away'
+			for _, m := range presence.Member {
+				m.DetectPresence[m.IndexPresence] = away
+				m.IndexPresence = (m.IndexPresence + 1) % len(m.DetectPresence)
+			}
+			// For any member registered at the Router mark them as 'home'
 			for _, device := range devices {
 				mi := presence.MacToIndex[device.Mac]
 				m := presence.Member[mi]
-				m.DetectPresence[m.IndexPresence] = home
-				m.IndexPresence = (m.IndexPresence + 1) % len(m.DetectPresence)
+				pi := (m.IndexPresence + len(m.DetectPresence) - 1) % len(m.DetectPresence)
+				m.DetectPresence[pi] = home
+			}
+			// Update final presence state for all members
+			for _, m := range presence.Member {
 				m.UpdatePresence()
 			}
 
