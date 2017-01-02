@@ -1,10 +1,11 @@
 # go-home
 
-Automated home using NATS (messaging), Redis (database) and micro services.
+Automated home using micro service and Redis for PubSub/KVDB.
 
 # Services
 
-All services communicate over NATS.
+All services communicate over Pub/Sub of REDIS.
 
 # Redis
 
+Used as Key-Value Database and as a PubSub server.

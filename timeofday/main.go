@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"github.com/jurgen-kluft/go-xbase"
 	"gopkg.in/redis.v5"
-	"io/ioutil"
-	"net/http"
 	"strings"
 	"time"
 )
 
 func main() {
-	// ghChannelName := "Go-Home"
+	ghChannelName := "Go-Home"
 	ghConfigKey := "GO-HOME-TIMEOFDAY-CONFIG"
 
 	// Open REDIS and read all the configurations
@@ -28,15 +26,12 @@ func main() {
 	}
 	timeOfDayConfig := CreateTimeOfDayConfig([]byte(ghConfigJSON))
 
-	sunsetSunriseResponse, _ := http.Get(timeOfDayConfig.URL)
-	sunsetSunriseConfigBytes, _ := ioutil.ReadAll(sunsetSunriseResponse.Body)
-	ssrc := CreateSunSetSunRiseConfig(sunsetSunriseConfigBytes)
-	sunset := &xbase.TimeOfDay{}
-	sunset.Parse(ssrc.Results.Sunset)
-	sunset.Add(&xbase.TimeOfDay{Hours: 8, Minutes: 0, Seconds: 0})
-	sunrise := &xbase.TimeOfDay{}
-	sunrise.Parse(ssrc.Results.Sunrise)
-	sunrise.Add(&xbase.TimeOfDay{Hours: 8, Minutes: 0, Seconds: 0})
+	// Shanghai latitude and longtitude
+	localLatitude := 31.2222200
+	localLongtitude := -121.4580600
+
+	sunrise := xbase.CalcSunrise(time.Now(), localLatitude, localLongtitude)
+	sunset := xbase.CalcSunset(time.Now(), localLatitude, localLongtitude)
 	fmt.Printf("Sunrise: %v, Sunset: %v\n", sunrise, sunset)
 
 	ticker := time.NewTicker(time.Second * time.Duration(timeOfDayConfig.UpdateEvery))
@@ -54,5 +49,6 @@ func main() {
 		fmt.Println(json)
 		// Send as JSON to REDIS channel 'channel_name', like:
 		// { timeofday : "MORNING&BREAKFAST" }
+		redisClient.Publish(ghChannelName, json)
 	}
 }
