@@ -1,4 +1,4 @@
-package main
+package eventlog
 
 import (
 	"encoding/json"
@@ -19,14 +19,14 @@ func CreateEventLogConfig(jsondata []byte) (log *EventLogConfig) {
 	return
 }
 
-func (log *EventLogConfig) initialize() {
+func (log *EventLogConfig) Initialize() {
 	// See if the folder exists
 	// Glob all *.log files
 	// The number of log files determines the count
 	// Sort by date and open the latest
 }
 
-func (log *EventLogConfig) saveEvent(subject string, data []byte) {
+func (log *EventLogConfig) SaveEvent(subject string, data []byte) {
 	// Save the event in the current open log file
 }
 

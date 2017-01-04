@@ -1,4 +1,4 @@
-package main
+package presence
 
 import (
 	"bytes"
@@ -46,22 +46,19 @@ const soapGetAttachedDevicesMesssage = `\
 // AttachedDevice represents a network device attached to the Netgear router via
 // a wired or wireless link
 type AttachedDevice struct {
-	Signal   string `json:"signal"`
-	IP       string `json:"ip"`
-	Name     string `json:"name"`
-	Mac      string `json:"mac"`
-	Type     string `json:"type"`
-	LinkRate string `json:"link_rate"`
+	ip   string `json:"ip"`
+	name string `json:"name"`
+	mac  string `json:"mac"`
 }
 
 // Router is the public interface with one member function to obtain devices
-type Router interface {
-	GetAttachedDevices() ([]AttachedDevice, error)
+type irouter interface {
+	getAttachedDevices() ([]AttachedDevice, error)
 }
 
 // Netgear describes a modern Netgear router providing a SOAP interface at port
 // 5000
-type Netgear struct {
+type netgear struct {
 	host     string
 	username string
 	password string
@@ -71,14 +68,14 @@ type Netgear struct {
 
 // IsLoggedIn returns true if the session has been authenticated against the
 // Netgear Router or false otherwise.
-func (netgear *Netgear) isLoggedIn() bool {
+func (netgear *netgear) isLoggedIn() bool {
 	return netgear.loggedIn
 }
 
 // Login authenticates the session against the Netgear router
 // On success true and nil should be returned. Otherwise false and
 // the related error are returned
-func (netgear *Netgear) login() (bool, error) {
+func (netgear *netgear) login() (bool, error) {
 	message := fmt.Sprintf(soapLoginMessage, sessionID, netgear.username, netgear.password)
 
 	resp, err := netgear.makeRequest(soapActionLogin, message)
@@ -91,11 +88,11 @@ func (netgear *Netgear) login() (bool, error) {
 	return netgear.loggedIn, err
 }
 
-func (netgear *Netgear) getURL() string {
+func (netgear *netgear) getURL() string {
 	return fmt.Sprintf("http://%s:5000/soap/server_sa/", netgear.host)
 }
 
-func (netgear *Netgear) makeRequest(action string, message string) (string, error) {
+func (netgear *netgear) makeRequest(action string, message string) (string, error) {
 	client := &http.Client{}
 
 	url := netgear.getURL()
@@ -122,7 +119,7 @@ func (netgear *Netgear) makeRequest(action string, message string) (string, erro
 // GetAttachedDevices queries the Netgear router for attached network
 // devices and returns a list of them. If an error occures an empty list
 // and the respective error is returned.
-func (netgear *Netgear) GetAttachedDevices() ([]AttachedDevice, error) {
+func (netgear *netgear) getAttachedDevices() ([]AttachedDevice, error) {
 	var result []AttachedDevice
 
 	message := fmt.Sprintf(soapGetAttachedDevicesMesssage, sessionID)
@@ -142,12 +139,9 @@ func (netgear *Netgear) GetAttachedDevices() ([]AttachedDevice, error) {
 		for _, deviceStr := range deviceStrs {
 			fields := strings.Split(deviceStr, ";")
 
-			signalStr := "?"
 			ipStr := ""
 			nameStr := ""
 			macStr := ""
-			typeStr := "?"
-			linkrateStr := "?"
 			if len(fields) >= 2 {
 				ipStr = fields[1]
 			}
@@ -159,12 +153,9 @@ func (netgear *Netgear) GetAttachedDevices() ([]AttachedDevice, error) {
 			}
 
 			device := AttachedDevice{
-				Signal:   signalStr,
-				IP:       ipStr,
-				Name:     nameStr,
-				Mac:      macStr,
-				Type:     typeStr,
-				LinkRate: linkrateStr,
+				ip:   ipStr,
+				name: nameStr,
+				mac:  macStr,
 			}
 			result = append(result, device)
 		}
@@ -173,11 +164,11 @@ func (netgear *Netgear) GetAttachedDevices() ([]AttachedDevice, error) {
 	return result, err
 }
 
-// NewRouter returns a new and already initialized Netgear router instance
+// newRouter returns a new and already initialized Netgear router instance
 // However, the Netgear SOAP session has not been authenticated at this point.
 // Use Login() to authenticate against the router
-func NewRouter(host, username, password string) Router {
-	router := &Netgear{
+func newRouter(host, username, password string) irouter {
+	router := &netgear{
 		host:     host,
 		username: username,
 		password: password,

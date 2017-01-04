@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/jurgen-kluft/go-home/eventlog"
 	"gopkg.in/redis.v5"
 )
 
@@ -14,11 +15,11 @@ func main() {
 
 	// Create and initialize event log
 	msgEventLogConfigJSON, _ := redisClient.Get("GO-HOME-EVENTLOG-CONFIG").Result()
-	eventLog := CreateEventLogConfig([]byte(msgEventLogConfigJSON))
+	eventLog := eventlog.CreateEventLogConfig([]byte(msgEventLogConfigJSON))
 
 	// Initialize EVENT LOGGING
 	// Scan log folder and identify state
-	eventLog.initialize()
+	eventLog.Initialize()
 
 	// Config is a JSON configuration like this:
 	//
