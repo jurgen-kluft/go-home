@@ -28,7 +28,7 @@ func main() {
 	presence := &presence.Presence{}
 
 	// Every N seconds
-	ticker := time.NewTicker(time.Second * time.Duration(home.Detectionfreq))
+	ticker := time.NewTicker(time.Second * time.Duration(1.0/home.UpdateFrequency))
 	for currentTime := range ticker.C {
 		home.Presence(currentTime, presence)
 		presenceInfo, _ := json.Marshal(presence)

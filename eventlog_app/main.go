@@ -15,7 +15,7 @@ func main() {
 
 	// Create and initialize event log
 	msgEventLogConfigJSON, _ := redisClient.Get("GO-HOME-EVENTLOG-CONFIG").Result()
-	eventLog := eventlog.CreateEventLogConfig([]byte(msgEventLogConfigJSON))
+	eventLog := eventlog.Create([]byte(msgEventLogConfigJSON))
 
 	// Initialize EVENT LOGGING
 	// Scan log folder and identify state

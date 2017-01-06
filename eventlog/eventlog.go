@@ -14,7 +14,7 @@ type EventLogConfig struct {
 }
 
 // CreateEventLogConfig creates an instance of EventLogConfig from a stream of bytes containing JSON
-func CreateEventLogConfig(jsondata []byte) (log *EventLogConfig) {
+func Create(jsondata []byte) (log *EventLogConfig) {
 	json.Unmarshal(jsondata, log)
 	return
 }

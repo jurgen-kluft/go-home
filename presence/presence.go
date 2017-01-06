@@ -21,13 +21,13 @@ const (
 // ARRIVED is a trigger that happens when state changes from AWAY => HOME
 
 type config struct {
-	Host          string `json:"host"`
-	Port          int    `json:"port"`
-	User          string `json:"user"`
-	Password      string `json:"password"`
-	Detectionwnd  int    `json:"detectionwnd"`
-	Detectionfreq int    `json:"detectionfreq"`
-	Devices       []struct {
+	Host       string  `json:"host"`
+	Port       int     `json:"port"`
+	User       string  `json:"user"`
+	Password   string  `json:"password"`
+	UpdateHist int     `json:"uhist"`
+	UpdateFreq float64 `json:"ufreq"`
+	Devices    []struct {
 		Name string `json:"name"`
 		Mac  string `json:"mac"`
 	} `json:"devices"`
@@ -68,37 +68,12 @@ func getNameOfState(state state) string {
 
 // Home contains multiple device tracking states
 type Home struct {
-	config     *config
-	router     irouter
-	macToIndex map[string]int
-	members    []*member
-
-	Detectionfreq int
+	config          *config
+	router          irouter
+	macToIndex      map[string]int
+	members         []*member
+	UpdateFrequency float64
 }
-
-// Config is a JSON configuration like this:
-//
-//  {
-//  	"host": "192.168.1.3",
-//  	"port": "5000",
-//  	"user": "admin",
-//  	"password": "*********",
-//  	"detectionwnd": "200",
-//  	"detectionfreq": "60",
-//  	"devices": [{
-//  		"name": "Faith",
-//  		"mac": "D8:1D:72:97:51:94"
-//  	}, {
-//  		"name": "Jurgen",
-//  		"mac": "90:3C:92:72:0D:C8"
-//  	}, {
-//  		"name": "GrandPa",
-//  		"mac": "BC:44:86:5A:CD:D4"
-//  	}, {
-//  		"name": "GrandMa",
-//  		"mac": "94:94:26:B5:E6:1C"
-//  	}]
-//  }
 
 // Create will return an instance of presence.Home
 func Create(configjson string) *Home {
@@ -108,11 +83,12 @@ func Create(configjson string) *Home {
 	presence.router = newRouter(presence.config.Host, presence.config.User, presence.config.Password)
 	presence.macToIndex = map[string]int{}
 
+	updateHist := presence.config.UpdateHist
 	for i, device := range presence.config.Devices {
 		member := &member{name: device.Name}
 		member.current = home
 		member.index = 0
-		member.detect = make([]state, 6, 6)
+		member.detect = make([]state, updateHist, updateHist)
 		for i := range member.detect {
 			member.detect[i] = home
 		}
@@ -120,7 +96,7 @@ func Create(configjson string) *Home {
 		presence.members = append(presence.members, member)
 	}
 
-	presence.Detectionfreq = presence.config.Detectionfreq
+	presence.UpdateFrequency = presence.config.UpdateFreq
 
 	return presence
 }
