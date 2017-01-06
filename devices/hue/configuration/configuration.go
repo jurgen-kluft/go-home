@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/heatxsink/go-hue/hue"
+	"github.com/jurgen-kluft/go-home/devices/hue/hue"
 	"io/ioutil"
 	"net/http"
 )

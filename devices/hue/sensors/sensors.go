@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/heatxsink/go-hue/hue"
+	"github.com/jurgen-kluft/go-home/devices/hue"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -13,7 +13,7 @@ import (
 
 var (
 	getAllSensorsURL = "http://%s/api/%s/sensors"
-	getSensorURL = "http://%s/api/%s/sensors/%d"
+	getSensorURL     = "http://%s/api/%s/sensors/%d"
 )
 
 type Sensors struct {
@@ -34,17 +34,17 @@ type Sensor struct {
 }
 
 type Config struct {
-	On            bool     `json:"on"`
-	Long          string   `json:"long,omitempty"`
-	Lat           string   `json:"lat,omitempty"`
-	SunriseOffset int16    `json:"sunriseoffset,omitempty"`
-	SunsetOffset  int16    `json:"sunsetoffset,omitempty"`
+	On            bool   `json:"on"`
+	Long          string `json:"long,omitempty"`
+	Lat           string `json:"lat,omitempty"`
+	SunriseOffset int16  `json:"sunriseoffset,omitempty"`
+	SunsetOffset  int16  `json:"sunsetoffset,omitempty"`
 }
 
 type State struct {
-	Daylight    bool      `json:"daylight,omitempty"`
-	LastUpdated string    `json:"lastupdated,omitempty"`
-	ButtonEvent int16     `json:"buttonevent,omitempty"`
+	Daylight    bool   `json:"daylight,omitempty"`
+	LastUpdated string `json:"lastupdated,omitempty"`
+	ButtonEvent int16  `json:"buttonevent,omitempty"`
 }
 
 func New(hostname string, username string) *Sensors {

@@ -41,10 +41,7 @@ func main() {
 			m, err := redisPubSub.ReceiveMessage()
 			if err == nil {
 				//     save event to log
-				eventLog.saveEvent("", []byte(m.Payload))
-
-				//     check if we need to roll the log
-				eventLog.rollLog()
+				eventLog.SaveEvent("", []byte(m.Payload))
 			}
 		}
 	}

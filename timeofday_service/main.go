@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/jurgen-kluft/go-home/timeofday"
 	"github.com/jurgen-kluft/go-xbase"
 	"gopkg.in/redis.v5"
-	"strings"
 	"time"
 )
 
@@ -24,7 +24,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	timeOfDayConfig := CreateTimeOfDayConfig([]byte(ghConfigJSON))
+	timeOfDayConfig := timeofday.CreateTimeOfDayConfig([]byte(ghConfigJSON))
 
 	// Shanghai latitude and longtitude
 	localLatitude := 31.2222200
@@ -38,15 +38,8 @@ func main() {
 	for currentTime := range ticker.C {
 		//
 		//     Determine the TimeOfDay elements we are in using current time
-		hours, minutes, seconds := currentTime.Clock()
-		tods := timeOfDayConfig.Find(hours, minutes, seconds)
-		names := make([]string, len(tods))
-		for _, index := range tods {
-			names = append(names, timeOfDayConfig.TimeOfDay[index].Name)
-		}
+		json := timeOfDayConfig.Build(currentTime, localLatitude, localLongtitude)
 
-		json := fmt.Sprintf("{ timeofday : \"%v\" }", strings.Join(names, "&"))
-		fmt.Println(json)
 		// Send as JSON to REDIS channel 'channel_name', like:
 		// { timeofday : "MORNING&BREAKFAST" }
 		redisClient.Publish(ghChannelName, json)

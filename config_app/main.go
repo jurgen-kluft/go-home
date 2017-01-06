@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	WriteConfigsToRedis("localhost:6379", "", 0)
+	config.WriteConfigsToRedis("localhost:6379", "", 0)
 }
