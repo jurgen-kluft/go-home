@@ -25,6 +25,7 @@ func GetPortal() ([]Portal, error) {
 	}
 	client := http.Client{}
 	response, err := client.Do(request)
+	fmt.Println(response.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -37,6 +38,9 @@ func GetPortal() ([]Portal, error) {
 	err = json.Unmarshal(contents, &apiResponse)
 	if err != nil {
 		return nil, err
+	}
+	for _, v := range apiResponse {
+		fmt.Printf("Portal: %v\n", v)
 	}
 	return apiResponse, err
 }

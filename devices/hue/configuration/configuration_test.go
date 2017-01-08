@@ -15,13 +15,15 @@ var (
 func init() {
 	testUsername = os.Getenv("HUE_TEST_USERNAME")
 	testHostname = os.Getenv("HUE_TEST_HOSTNAME")
+	testHostname = "10.0.0.27"
+	testUsername = "a6vdEfxKE2RD6VoLl4SHLUeM5hCkywRJnnMPfjX4"
 	testDeleteUsername = ""
-	testConfiguration = New(testHostname)
+	testConfiguration = New(testHostname, testUsername)
 }
 
 func TestCreateUser(t *testing.T) {
-	testApplicationName := "foo"
-	testDeviceType := "bar"
+	testApplicationName := "go-home"
+	testDeviceType := "home"
 	apiResponse, err := testConfiguration.CreateUser(testApplicationName, testDeviceType)
 	if err != nil {
 		t.Log("TestCreateUser Error: ", err)

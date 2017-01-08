@@ -20,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-querystring/query"
+	"github.com/jurgen-kluft/go-home/messaging/hipchat/query"
 )
 
 const (

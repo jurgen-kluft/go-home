@@ -23,6 +23,9 @@ var (
 func init() {
 	testUsername = os.Getenv("HUE_TEST_USERNAME")
 	testHostname = os.Getenv("HUE_TEST_HOSTNAME")
+	testHostname = "10.0.0.27"
+	testUsername = "a6vdEfxKE2RD6VoLl4SHLUeM5hCkywRJnnMPfjX4"
+
 	testLights = New(testHostname, testUsername)
 
 	transitionTime = uint16(4)

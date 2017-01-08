@@ -2,7 +2,7 @@ package groups
 
 import (
 	"fmt"
-	"github.com/heatxsink/go-hue/lights"
+	"github.com/jurgen-kluft/go-home/devices/hue/lights"
 	"os"
 	"testing"
 	"time"
@@ -27,6 +27,8 @@ var (
 func init() {
 	testUsername = os.Getenv("HUE_TEST_USERNAME")
 	testHostname = os.Getenv("HUE_TEST_HOSTNAME")
+	testHostname = "10.0.0.27"
+	testUsername = "a6vdEfxKE2RD6VoLl4SHLUeM5hCkywRJnnMPfjX4"
 	testGroups = New(testHostname, testUsername)
 	transitionTime = uint16(4)
 	sleepSeconds = 4

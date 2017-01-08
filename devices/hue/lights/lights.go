@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/jurgen-kluft/go-home/devices/hue"
+	"github.com/jurgen-kluft/go-home/devices/hue/hue"
 	"io/ioutil"
 	"net/http"
 	"strconv"
