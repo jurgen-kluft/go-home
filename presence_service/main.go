@@ -2,24 +2,21 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/jurgen-kluft/go-home/com"
 	"github.com/jurgen-kluft/go-home/presence"
-	"gopkg.in/redis.v5"
 	"time"
 )
 
 func main() {
 	ghChannelName := "Go-Home"
 	ghConfigKey := "GO-HOME-PRESENCE-CONFIG"
+	ghCom := com.New()
 
-	// Open REDIS and read all the configurations
-	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
+	ghCom.Open()
+	ghChannel := ghCom.Subscribe(ghChannelName)
 
 	// Create and initialize
-	ghConfigValue, err := client.Get(ghConfigKey).Result()
+	ghConfigValue, err := ghCom.GetKV(ghConfigKey)
 	if err != nil {
 		panic(err)
 	}
@@ -32,6 +29,8 @@ func main() {
 	for currentTime := range ticker.C {
 		home.Presence(currentTime, presence)
 		presenceInfo, _ := json.Marshal(presence)
-		client.Publish(ghChannelName, string(presenceInfo)).Result()
+		ghCom.SubSend(ghChannel, string(presenceInfo))
 	}
+
+	ghCom.Close()
 }
