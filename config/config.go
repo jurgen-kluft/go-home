@@ -7,6 +7,7 @@ import (
 const (
 	ghPresenceConfigKey   = "GO-HOME-PRESENCE-CONFIG"
 	ghPresenceConfigValue = `{
+    "name": "netgear",
 	"host": "192.168.1.3",
 	"port": 5000,
 	"user": "admin",

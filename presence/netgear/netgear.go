@@ -1,4 +1,4 @@
-package presence
+package netgear
 
 import (
 	"bytes"
@@ -43,22 +43,8 @@ const soapGetAttachedDevicesMesssage = `\
 </SOAP-ENV:Envelope>
 `
 
-// AttachedDevice represents a network device attached to the Netgear router via
-// a wired or wireless link
-type AttachedDevice struct {
-	ip   string `json:"ip"`
-	name string `json:"name"`
-	mac  string `json:"mac"`
-}
-
-// Router is the public interface with one member function to obtain devices
-type irouter interface {
-	getAttachedDevices() ([]AttachedDevice, error)
-}
-
-// Netgear describes a modern Netgear router providing a SOAP interface at port
-// 5000
-type netgear struct {
+// Router describes a modern Netgear router providing a SOAP interface at port 5000
+type Router struct {
 	host     string
 	username string
 	password string
@@ -68,14 +54,14 @@ type netgear struct {
 
 // IsLoggedIn returns true if the session has been authenticated against the
 // Netgear Router or false otherwise.
-func (netgear *netgear) isLoggedIn() bool {
+func (netgear *Router) isLoggedIn() bool {
 	return netgear.loggedIn
 }
 
 // Login authenticates the session against the Netgear router
 // On success true and nil should be returned. Otherwise false and
 // the related error are returned
-func (netgear *netgear) login() (bool, error) {
+func (netgear *Router) login() (bool, error) {
 	message := fmt.Sprintf(soapLoginMessage, sessionID, netgear.username, netgear.password)
 
 	resp, err := netgear.makeRequest(soapActionLogin, message)
@@ -88,11 +74,11 @@ func (netgear *netgear) login() (bool, error) {
 	return netgear.loggedIn, err
 }
 
-func (netgear *netgear) getURL() string {
+func (netgear *Router) getURL() string {
 	return fmt.Sprintf("http://%s:5000/soap/server_sa/", netgear.host)
 }
 
-func (netgear *netgear) makeRequest(action string, message string) (string, error) {
+func (netgear *Router) makeRequest(action string, message string) (string, error) {
 	client := &http.Client{}
 
 	url := netgear.getURL()
@@ -116,12 +102,10 @@ func (netgear *netgear) makeRequest(action string, message string) (string, erro
 	return string(body), err
 }
 
-// GetAttachedDevices queries the Netgear router for attached network
+// Get queries the Netgear router for attached network
 // devices and returns a list of them. If an error occures an empty list
 // and the respective error is returned.
-func (netgear *netgear) getAttachedDevices() ([]AttachedDevice, error) {
-	var result []AttachedDevice
-
+func (netgear *Router) Get(mac map[string]bool) error {
 	message := fmt.Sprintf(soapGetAttachedDevicesMesssage, sessionID)
 	resp, err := netgear.makeRequest(soapActionGetAttachedDevices, message)
 
@@ -129,46 +113,31 @@ func (netgear *netgear) getAttachedDevices() ([]AttachedDevice, error) {
 		re := netgear.regex.FindStringSubmatch(resp)
 		if len(re) < 2 {
 			err = fmt.Errorf("Invalid response code")
-			return result, err
+			return err
 		}
 
 		filteredDevicesStr := strings.Replace(re[1], "&lt;unknown&gt;", "unknown", -1)
 
 		deviceStrs := strings.Split(filteredDevicesStr, "@")
-
 		for _, deviceStr := range deviceStrs {
 			fields := strings.Split(deviceStr, ";")
-
-			ipStr := ""
-			nameStr := ""
-			macStr := ""
-			if len(fields) >= 2 {
-				ipStr = fields[1]
-			}
-			if len(fields) >= 3 {
-				nameStr = fields[2]
-			}
 			if len(fields) >= 4 {
-				macStr = fields[3]
+				macStr := fields[3]
+				_, macExists := mac[macStr]
+				if macExists {
+					mac[macStr] = true
+				}
 			}
-
-			device := AttachedDevice{
-				ip:   ipStr,
-				name: nameStr,
-				mac:  macStr,
-			}
-			result = append(result, device)
 		}
-
 	}
-	return result, err
+	return err
 }
 
-// newRouter returns a new and already initialized Netgear router instance
+// newNetgearRouter returns a new and already initialized Netgear router instance
 // However, the Netgear SOAP session has not been authenticated at this point.
 // Use Login() to authenticate against the router
-func newRouter(host, username, password string) irouter {
-	router := &netgear{
+func New(host, username, password string) *Router {
+	router := &Router{
 		host:     host,
 		username: username,
 		password: password,

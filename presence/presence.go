@@ -20,7 +20,9 @@ const (
 // LEFT    is a trigger that happens when state changes from HOME => AWAY
 // ARRIVED is a trigger that happens when state changes from AWAY => HOME
 
-type config struct {
+// Config is the configuration needed to call presence.New
+type Config struct {
+	Name       string  `json:"name"`
 	Host       string  `json:"host"`
 	Port       int     `json:"port"`
 	User       string  `json:"user"`
@@ -33,10 +35,23 @@ type config struct {
 	} `json:"devices"`
 }
 
-func createConfig(jsondata string) (c *config) {
-	c = &config{}
+func createConfig(jsondata string) (c *Config) {
+	c = &Config{}
 	json.Unmarshal([]byte(jsondata), c)
 	return
+}
+
+// Router is the public interface with one member function to obtain devices
+type provider interface {
+	get(mac map[string]bool) error
+}
+
+func newProvider(name string, host string, username string, password string) provider {
+	switch {
+	case name == "netgear":
+		return newNetgearRouter(host, username, password)
+	}
+	return nil
 }
 
 type member struct {
@@ -68,19 +83,20 @@ func getNameOfState(state state) string {
 
 // Home contains multiple device tracking states
 type Home struct {
-	config          *config
-	router          irouter
+	config          *Config
+	provider        provider
 	macToIndex      map[string]int
+	macToPresence   map[string]bool
 	members         []*member
 	UpdateFrequency float64
 }
 
-// Create will return an instance of presence.Home
-func Create(configjson string) *Home {
+// New will return an instance of presence.Home
+func New(configjson string) *Home {
 
 	presence := &Home{}
 	presence.config = createConfig(configjson)
-	presence.router = newRouter(presence.config.Host, presence.config.User, presence.config.Password)
+	presence.provider = newProvider(presence.config.Name, presence.config.Host, presence.config.User, presence.config.Password)
 	presence.macToIndex = map[string]int{}
 
 	updateHist := presence.config.UpdateHist
@@ -116,7 +132,8 @@ type Presence struct {
 // Presence will  a new Presence
 func (p *Home) Presence(currentTime time.Time, s *Presence) bool {
 	//     'collect connected devices'
-	devices, result := p.router.getAttachedDevices()
+
+	result := p.provider.get(p.macToPresence)
 	if result == nil {
 		// All members initialize detected presence state to 'away'
 		for _, m := range p.members {
@@ -124,11 +141,15 @@ func (p *Home) Presence(currentTime time.Time, s *Presence) bool {
 			m.index = (m.index + 1) % len(m.detect)
 		}
 		// For any member registered at the Router mark them as 'home'
-		for _, device := range devices {
-			mi := p.macToIndex[device.mac]
+		for mac, presence := range p.macToPresence {
+			mi := p.macToIndex[mac]
 			m := p.members[mi]
 			pi := (m.index + len(m.detect) - 1) % len(m.detect)
-			m.detect[pi] = home
+			if presence {
+				m.detect[pi] = home
+			} else {
+				m.detect[pi] = away
+			}
 		}
 		// Update final presence state for all members
 		for _, m := range p.members {

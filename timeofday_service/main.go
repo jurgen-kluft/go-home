@@ -2,29 +2,26 @@ package main
 
 import (
 	"fmt"
+	"github.com/jurgen-kluft/go-home/com"
 	"github.com/jurgen-kluft/go-home/timeofday"
 	"github.com/jurgen-kluft/go-xbase"
-	"gopkg.in/redis.v5"
 	"time"
 )
 
 func main() {
 	ghChannelName := "Go-Home"
 	ghConfigKey := "GO-HOME-TIMEOFDAY-CONFIG"
+	ghCom := com.New()
 
-	// Open REDIS and read all the configurations
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
+	ghCom.Open()
+	ghChannel := ghCom.Subscribe(ghChannelName)
 
 	// Create and initialize
-	ghConfigJSON, err := redisClient.Get(ghConfigKey).Result()
+	ghConfigValue, err := ghCom.GetKV(ghConfigKey)
 	if err != nil {
 		panic(err)
 	}
-	timeOfDayConfig := timeofday.CreateTimeOfDayConfig([]byte(ghConfigJSON))
+	timeOfDayConfig := timeofday.CreateTimeOfDayConfig([]byte(ghConfigValue))
 
 	// Shanghai latitude and longtitude
 	localLatitude := 31.2222200
@@ -42,6 +39,8 @@ func main() {
 
 		// Send as JSON to REDIS channel 'channel_name', like:
 		// { timeofday : "MORNING&BREAKFAST" }
-		redisClient.Publish(ghChannelName, json)
+		ghCom.SubSend(ghChannel, json)
 	}
+
+	ghCom.Close()
 }

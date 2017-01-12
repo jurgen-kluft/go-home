@@ -1,20 +1,16 @@
 package main
 
 import (
+	"github.com/jurgen-kluft/go-home/com"
 	"github.com/jurgen-kluft/go-home/eventlog"
-	"gopkg.in/redis.v5"
 )
 
 func main() {
-	// Open REDIS and read all the configurations
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
+	ghCom := com.New()
+	ghCom.Open()
 
 	// Create and initialize event log
-	msgEventLogConfigJSON, _ := redisClient.Get("GO-HOME-EVENTLOG-CONFIG").Result()
+	msgEventLogConfigJSON, _ := ghCom.GetKV("GO-HOME-EVENTLOG-CONFIG")
 	eventLog := eventlog.Create([]byte(msgEventLogConfigJSON))
 
 	// Initialize EVENT LOGGING
@@ -33,16 +29,18 @@ func main() {
 	// }
 
 	// Subscribe to event-logging channel
-	ghEventLoggingChannel := "Go-Home-EventLog"
-	redisPubSub, err := redisClient.Subscribe(ghEventLoggingChannel)
+	ghChannel, err := ghCom.Subscribe("Go-Home-EventLog")
+
 	if err == nil {
 		// Block for message on channel
 		for true {
-			m, err := redisPubSub.ReceiveMessage()
+			m, err := ghCom.SubRecv(ghChannel)
 			if err == nil {
 				//     save event to log
-				eventLog.SaveEvent("", []byte(m.Payload))
+				eventLog.SaveEvent("", []byte(m))
 			}
 		}
 	}
+
+	ghCom.Close()
 }
