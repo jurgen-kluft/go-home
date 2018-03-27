@@ -9,7 +9,7 @@ func TestCorrectJsonConfig(t *testing.T) {
 	buf := new(bytes.Buffer)
 	buf.WriteString(testCorrectJsonConfig)
 
-	cr, err := unmarshalcaqi(buf.Bytes())
+	cr, err := unmarshalConfig(buf.Bytes())
 	if err != nil {
 		t.Error("Cannot unmarshall correct json configuration", err)
 	}

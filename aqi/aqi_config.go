@@ -2,17 +2,17 @@ package aqi
 
 import "encoding/json"
 
-func unmarshalcaqi(data []byte) (*Caqi, error) {
-	r := &Caqi{}
+func unmarshalConfig(data []byte) (*Config, error) {
+	r := &Config{}
 	err := json.Unmarshal(data, r)
 	return r, err
 }
 
-func (r *Caqi) marshal() ([]byte, error) {
+func (r *Config) marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
-type Caqi struct {
+type Config struct {
 	Token  string     `json:"token"`
 	City   string     `json:"city"`
 	URL    string     `json:"url"`

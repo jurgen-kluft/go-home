@@ -11,14 +11,14 @@ import (
 )
 
 type instance struct {
-	config *Caqi
+	config *Config
 	update time.Time
 	period time.Duration
 }
 
-func (c *instance) readConfig(jsonstr string) (*Caqi, error) {
+func (c *instance) readConfig(jsonstr string) (*Config, error) {
 	jsonBytes := []byte(jsonstr)
-	obj, err := unmarshalcaqi(jsonBytes)
+	obj, err := unmarshalConfig(jsonBytes)
 	return obj, err
 }
 
