@@ -123,7 +123,7 @@ func main() {
 	for true {
 		// START
 
-		// Connect to REDIS, if unable to connect, wait for N seconds then restart
+		// Connect to Mist, if unable to connect, wait for N seconds then restart
 		// Subscribe to chennel "Go-Home"
 
 		// Create Home
