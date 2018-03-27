@@ -2,10 +2,13 @@ package presence
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
+
+	"github.com/nanopack/mist/clients"
 )
 
-// HOME    is a state that happens when       SEEN > N seconds
+// HOME    is a state that happens when   NOT_AWAY > X seconds
 // AWAY    is a state that happens when   NOT_SEEN > N seconds
 
 type state uint32
@@ -54,16 +57,35 @@ func newProvider(name string, host string, username string, password string) pro
 	return nil
 }
 
-type member struct {
-	name    string
-	current state
+type Detect struct {
+	Time  time.Time
+	State state
+}
+
+type Member struct {
+	Name    string `json:"name"`
+	State   string `json:"state"`
+	current Detect
 	index   int
-	detect  []state
+	detect  []Detect
+}
+
+type PresenceState struct {
+	Time    time.Time `json:"time"`
+	Members []Member  `json:"members"`
 }
 
 // Update will set the current presence state based on historical information
-func (m *member) update() {
-
+func (m *Member) updateCurrent(current time.Time) {
+	for _, d := range m.detect {
+		if d.State == home {
+			m.current.Time = current
+			m.current.State = home
+			return
+		}
+	}
+	m.current.Time = current
+	m.current.State = away
 }
 
 func getNameOfState(state state) string {
@@ -82,62 +104,49 @@ func getNameOfState(state state) string {
 }
 
 // Home contains multiple device tracking states
-type Home struct {
-	config          *Config
-	provider        provider
-	macToIndex      map[string]int
-	macToPresence   map[string]bool
-	members         []*member
-	UpdateFrequency float64
+type Presence struct {
+	config        *Config
+	provider      provider
+	macToIndex    map[string]int
+	macToPresence map[string]bool
+	members       []*Member
+	updateFreq    float64
+	state         *PresenceState
 }
 
 // New will return an instance of presence.Home
-func New(configjson string) *Home {
+func New(configjson string) *Presence {
 
-	presence := &Home{}
+	presence := &Presence{}
 	presence.config = createConfig(configjson)
 	presence.provider = newProvider(presence.config.Name, presence.config.Host, presence.config.User, presence.config.Password)
 	presence.macToIndex = map[string]int{}
 
 	updateHist := presence.config.UpdateHist
 	for i, device := range presence.config.Devices {
-		member := &member{name: device.Name}
-		member.current = home
+		member := &Member{Name: device.Name}
+		member.current = Detect{Time: time.Now(), State: home}
 		member.index = 0
-		member.detect = make([]state, updateHist, updateHist)
+		member.detect = make([]Detect, updateHist, updateHist)
 		for i := range member.detect {
-			member.detect[i] = home
+			member.detect[i] = Detect{Time: time.Now(), State: away}
 		}
 		presence.macToIndex[device.Mac] = i
 		presence.members = append(presence.members, member)
 	}
 
-	presence.UpdateFrequency = presence.config.UpdateFreq
+	presence.updateFreq = presence.config.UpdateFreq
 
 	return presence
 }
 
-// MemberState contains the JSON data retrieved from REDIS
-type MemberState struct {
-	Name  string `json:"name"`
-	State string `json:"state"`
-}
-
-// Presence is a snapshot state of all detected members
-type Presence struct {
-	Current time.Time     `json:"datetime"`
-	Members []MemberState `json:"members"`
-}
-
-// Presence will  a new Presence
-func (p *Home) Presence(currentTime time.Time, s *Presence) bool {
-	//     'collect connected devices'
-
+// Presence  ...
+func (p *Presence) Presence(currentTime time.Time) bool {
 	result := p.provider.get(p.macToPresence)
 	if result == nil {
 		// All members initialize detected presence state to 'away'
 		for _, m := range p.members {
-			m.detect[m.index] = away
+			m.detect[m.index] = Detect{Time: currentTime, State: away}
 			m.index = (m.index + 1) % len(m.detect)
 		}
 		// For any member registered at the Router mark them as 'home'
@@ -146,27 +155,75 @@ func (p *Home) Presence(currentTime time.Time, s *Presence) bool {
 			m := p.members[mi]
 			pi := (m.index + len(m.detect) - 1) % len(m.detect)
 			if presence {
-				m.detect[pi] = home
+				m.detect[pi] = Detect{Time: currentTime, State: home}
 			} else {
-				m.detect[pi] = away
+				m.detect[pi] = Detect{Time: currentTime, State: away}
 			}
 		}
 		// Update final presence state for all members
 		for _, m := range p.members {
-			m.update()
+			m.updateCurrent(currentTime)
 		}
 
 		// Build JSON structure of members
-		// Send as compact JSON to REDIS channel ghChannelName, like:
 		// {"datetime":"30/12", "members": [{"name": "Faith", "state": "HOME"},{"name": "Jurgen", "state": "LEAVING"}]}
-		s.Current = currentTime
+		p.state.Time = currentTime
 		for _, m := range p.members {
-			var member MemberState
-			member.Name = m.name
-			member.State = getNameOfState(m.current)
-			s.Members = append(s.Members, member)
+			m.State = getNameOfState(m.current.State)
 		}
 		return true
 	}
 	return false
+}
+
+func (p *Presence) publish(client *clients.TCP) error {
+	data, err := json.Marshal(p.state)
+	jsonstr := string(data)
+	client.Publish([]string{"presence", "state"}, jsonstr)
+	return err
+}
+
+func tagsContains(tag string, tags []string) bool {
+	for _, t := range tags {
+		if t == tag {
+			return true
+		}
+	}
+	return false
+}
+
+func main() {
+
+	var presence *Presence
+
+	for {
+		client, err := clients.New("127.0.0.1:1445", "authtoken.wicked")
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		client.Ping()
+		client.Subscribe([]string{"presence"})
+		client.Publish([]string{"request", "config"}, "presence")
+
+		for {
+			select {
+			case msg := <-client.Messages():
+				if tagsContains("config", msg.Tags) {
+					presence = New(msg.Data)
+				}
+				break
+			case <-time.After(time.Second * 10):
+				if presence != nil {
+					if presence.Presence(time.Now()) {
+						presence.publish(client)
+					}
+				}
+				break
+			}
+		}
+
+		// Disconnect from Mist
+	}
 }

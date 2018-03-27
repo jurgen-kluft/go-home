@@ -1,24 +1,34 @@
-# Compiled Object files, Static and Dynamic libs (Shared Objects)
-*.o
-*.a
-*.so
+#ignore all files
+*.*
+vendor/
+source/main/builddir/
+source/test/builddir/
+tags
 
-# Folders
-_obj
-_test
+#except the following files
+!*.cpp
+!*.hpp
+!*.c
+!*.h
+!*.inl
 
-# Architecture specific extensions/prefixes
-*.[568vq]
-[568vq].out
+!*.pl
 
-*.cgo1.go
-*.cgo2.c
-_cgo_defun.c
-_cgo_gotypes.go
-_cgo_export.*
+!*.go
+!*.lua
 
-_testmain.go
+!*.cs
+!*.csproj
+!*.resx
 
-*.exe
-*.test
-*.prof
+!*.hlsl
+!*.fragment
+
+!*.mold
+!*.sc
+!*.diagram
+
+!*.ini
+!*.bat
+
+#except the following folders
