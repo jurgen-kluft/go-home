@@ -1,6 +1,7 @@
 package aqi
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -14,6 +15,15 @@ type instance struct {
 	config *Config
 	update time.Time
 	period time.Duration
+}
+
+type SensorState struct {
+	Domain  string    `json:"domain"`
+	Product string    `json:"product"`
+	Name    string    `json:"name"`
+	Type    string    `json:"type"`
+	Value   string    `json:"value"`
+	Time    time.Time `json:"time"`
 }
 
 func (c *instance) readConfig(jsonstr string) (*Config, error) {
@@ -87,10 +97,11 @@ func (c *instance) Poll() (aqiStateJSON string, err error) {
 	aqiStateJSON = ""
 	aqi, err := c.getResponse()
 	if err == nil {
-		level := c.getAiqTagAndDescr(aqi)
-		aqiStateJSON = fmt.Sprintf("{ \"aqi\": %f, \"descr\": %s", aqi, level.Tag)
-		aqiStateJSON += fmt.Sprintf(", \"implications\": %s", level.Implications)
-		aqiStateJSON += fmt.Sprintf(", \"caution\": %s", level.Caution)
+		sensor := SensorState{Domain: "sensor", Product: "weather", Name: "aqi", Type: "float", Value: fmt.Sprintf("%f", aqi), Time: time.Now()}
+		jsonbytes, err := json.Marshal(sensor)
+		if err == nil {
+			aqiStateJSON = string(jsonbytes)
+		}
 	}
 	return aqiStateJSON, err
 }
@@ -131,7 +142,7 @@ func main() {
 					if aqi.shouldPoll(time.Now(), false) {
 						jsonstate, err := aqi.Poll()
 						if err == nil {
-							client.Publish([]string{"aqi", "state"}, jsonstate)
+							client.Publish([]string{"sensor", "weather", "aqi"}, jsonstate)
 						}
 						aqi.computeNextPoll(time.Now(), err)
 					}

@@ -10,31 +10,31 @@ import (
 	"fmt"
 )
 
-func unmarshalccalendar(data []byte) (*Ccalendar, error) {
-	r := &Ccalendar{}
+func configFromJSON(data []byte) (*Config, error) {
+	r := &Config{}
 	err := json.Unmarshal(data, &r)
 	return r, err
 }
 
-func (r *Ccalendar) marshal() ([]byte, error) {
+func (r *Config) configToJSON() ([]byte, error) {
 	return json.Marshal(r)
 }
 
-type Ccalendar struct {
+type Config struct {
 	Calendars []Ccal    `json:"calendars"`
-	Event     []Cevent  `json:"event"`
-	Policy    []Cpolicy `json:"policy"`
+	Sensors   []Csensor `json:"sensors"`
+	Rules     []Crule   `json:"rules"`
 }
 
-func (c *Ccalendar) print() {
+func (c *Config) print() {
 	for _, cal := range c.Calendars {
 		cal.print()
 	}
-	for _, evn := range c.Event {
-		evn.print()
+	for _, sensor := range c.Sensors {
+		sensor.print()
 	}
-	for _, pol := range c.Policy {
-		pol.print()
+	for _, rule := range c.Rules {
+		rule.print()
 	}
 }
 
@@ -44,35 +44,40 @@ type Ccal struct {
 }
 
 func (c Ccal) print() {
-	fmt.Printf("ccal.name = %s\n", c.Name)
-	fmt.Printf("ccal.url = %s\n", c.URL)
+	fmt.Printf("calendar.name = %s\n", c.Name)
+	fmt.Printf("calendar.url = %s\n", c.URL)
 }
 
-type Cevent struct {
-	Calendar string   `json:"calendar"`
-	Domain   string   `json:"domain"`
-	Name     string   `json:"name"`
-	State    string   `json:"state"`
-	Typeof   string   `json:"typeof"`
-	Values   []string `json:"values"`
+type Csensor struct {
+	Domain  string `json:"domain"`
+	Product string `json:"product"`
+	Name    string `json:"name"`
+	State   string `json:"state"`
+	Type    string `json:"type"`
 }
 
-func (c Cevent) print() {
-	fmt.Printf("cevent.calendar = %s\n", c.Calendar)
-	fmt.Printf("cevent.domain = %s\n", c.Domain)
-	fmt.Printf("cevent.name = %s\n", c.Name)
-	fmt.Printf("cevent.state = %s\n", c.State)
-	fmt.Printf("cevent.typeof = %s\n", c.Typeof)
+func (c Csensor) print() {
+	fmt.Printf("sensor.domain = %s\n", c.Domain)
+	fmt.Printf("sensor.product = %s\n", c.Product)
+	fmt.Printf("sensor.name = %s\n", c.Name)
+	fmt.Printf("sensor.state = %s\n", c.State)
+	fmt.Printf("sensor.type = %s\n", c.Type)
 }
 
-type Cpolicy struct {
-	Domain string `json:"domain"`
-	Name   string `json:"name"`
-	Policy string `json:"policy"`
+type Crule struct {
+	Key    string `json:"key"`
+	State  string `json:"state"`
+	IfThen IfThen `json:"if"`
 }
 
-func (c Cpolicy) print() {
-	fmt.Printf("cpolicy.domain = %s\n", c.Domain)
-	fmt.Printf("cpolicy.name = %s\n", c.Name)
-	fmt.Printf("cpolicy.policy = %s\n", c.Policy)
+type IfThen struct {
+	Key   string `json:"key"`
+	State string `json:"state"`
+}
+
+func (c Crule) print() {
+	fmt.Printf("rule.key = %s\n", c.Key)
+	fmt.Printf("rule.state = %s\n", c.State)
+	fmt.Printf("rule.if.key = %s\n", c.IfThen.Key)
+	fmt.Printf("rule.if.state = %s\n", c.IfThen.State)
 }

@@ -1,47 +1,60 @@
 package calendar
 
 import (
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/jurgen-kluft/go-icloud-calendar"
-	"github.com/jurgen-kluft/hass-go/state"
+	"github.com/nanopack/mist/clients"
 )
 
+// Calendar ...
 type Calendar struct {
-	ccal   *Ccalendar
-	events map[string]Cevent
-	cals   []*icalendar.Calendar
-	update time.Time
+	config       *Config
+	sensors      map[string]Csensor
+	sensorStates map[string]*SensorState
+	cals         []*icalendar.Calendar
+	update       time.Time
 }
 
-func (c *Calendar) readConfig() (*Ccalendar, error) {
-	jsonBytes, err := ioutil.ReadFile("config/calendar.json")
-	if err != nil {
-		return nil, fmt.Errorf("ERROR: Failed to read calendar config ( %s )", err)
-	}
-	ccal, err := unmarshalccalendar(jsonBytes)
-	return ccal, err
+// SensorState ...
+type SensorState struct {
+	Domain  string    `json:"domain"`
+	Product string    `json:"product"`
+	Name    string    `json:"name"`
+	Type    string    `json:"type"`
+	Value   string    `json:"value"`
+	Time    time.Time `json:"time"`
 }
 
-func New() (*Calendar, error) {
+func (c *Calendar) readConfig(jsonstr string) (*Config, error) {
+	jsonBytes := []byte(jsonstr)
+	config, err := configFromJSON(jsonBytes)
+	return config, err
+}
+
+// New  ... create a new Calendar from the given JSON configuration
+func New(jsonstr string) (*Calendar, error) {
 	var err error
 
 	c := &Calendar{}
-	c.events = map[string]Cevent{}
-	c.ccal, err = c.readConfig()
+	c.sensors = map[string]Csensor{}
+	c.sensorStates = map[string]*SensorState{}
+	c.config, err = c.readConfig(jsonstr)
 	if err != nil {
 		fmt.Printf("ERROR: '%s'\n", err.Error())
 	}
 	//c.ccal.print()
-	for _, ev := range c.ccal.Event {
-
-		c.events[strings.ToLower(ev.Domain)+":"+strings.ToLower(ev.Name)] = ev
+	for _, sn := range c.config.Sensors {
+		ekey := strings.ToLower(sn.Domain) + ":" + strings.ToLower(sn.Product) + ":" + strings.ToLower(sn.Name)
+		c.sensors[ekey] = sn
+		sensor := &SensorState{Domain: sn.Domain, Product: sn.Product, Name: sn.Name, Type: sn.Type, Value: sn.State, Time: time.Now()}
+		c.sensorStates[ekey] = sensor
 	}
-	for _, cal := range c.ccal.Calendars {
+
+	for _, cal := range c.config.Calendars {
 		if strings.HasPrefix(cal.URL, "http") {
 			c.cals = append(c.cals, icalendar.NewURLCalendar(cal.URL))
 		} else if strings.HasPrefix(cal.URL, "file") {
@@ -57,43 +70,33 @@ func New() (*Calendar, error) {
 	return c, err
 }
 
-func (c *Calendar) updateEvents(when time.Time, states *state.Instance) error {
+func (c *Calendar) updateSensorStates(when time.Time) error {
 	//fmt.Printf("Update calendar events: '%d'\n", len(c.cals))
+
 	for _, cal := range c.cals {
 		//fmt.Printf("Update calendar events: '%s'\n", cal.Name)
 
 		eventsForDay := cal.GetEventsByDate(when)
 		for _, e := range eventsForDay {
 			var domain string
+			var dproduct string
 			var dname string
 			var dstate string
 			title := strings.Replace(e.Summary, ":", " : ", 1)
 			title = strings.Replace(title, "=", " = ", 1)
-			fmt.Sscanf(title, "%s : %s = %s", &domain, &dname, &dstate)
-			//fmt.Printf("Parsed: '%s' - '%s' - '%s'\n", domain, dname, dstate)
+			fmt.Sscanf(title, "%s : %s : %s = %s", &domain, &dproduct, &dname, &dstate)
+			//fmt.Printf("Parsed: '%s' - '%s' - '%s' - '%s'\n", domain, dproduct, dname, dstate)
 
 			domain = strings.ToLower(domain)
+			dproduct = strings.ToLower(dproduct)
 			dname = strings.ToLower(dname)
 			dstate = strings.ToLower(dstate)
+			ekey := domain + ":" + dproduct + ":" + dname
 
-			ekey := domain + ":" + dname
-			ce, exists := c.events[ekey]
+			sensor, exists := c.sensorStates[ekey]
 			if exists {
-				if domain == "report" {
-					states.SetStringState(domain+"."+dname, e.GenerateUUID())
-					states.SetStringState(domain+"."+dname+".ID", e.GenerateUUID())
-					states.SetTimeState(domain+"."+dname+".from", e.Start)
-					states.SetTimeState(domain+"."+dname+".until", e.End)
-				}
-
-				if ce.Typeof == "string" {
-					states.SetStringState(domain+"."+dname, dstate)
-				} else if ce.Typeof == "float" {
-					fstate, err := strconv.ParseFloat(dstate, 64)
-					if err == nil {
-						states.SetFloatState(domain+"."+dname, fstate)
-					}
-				}
+				sensor.Value = dstate
+				sensor.Time = time.Now()
 			}
 		}
 	}
@@ -169,86 +172,102 @@ func weekOrWeekEndStartEnd(now time.Time) (weekend bool, westart, weend, wdstart
 	return weekend, westart, weend, wdstart, wdend
 }
 
-func (c *Calendar) findPolicy(domain string, name string, policy string) (bool, string) {
-	for _, p := range c.ccal.Policy {
-		if p.Domain == domain && p.Name == name {
-			pname := ""
-			pvalue := ""
-			n, err := fmt.Sscanf(p.Policy, "%s = %s", &pname, &pvalue)
-			if n == 2 && err == nil {
-				if pname == policy {
-					return true, pvalue
+func (c *Calendar) applyRulesToSensorStates() {
+	for _, p := range c.config.Rules {
+		var sensor *SensorState
+		var ifthen *SensorState
+		var exists bool
+		sensor, exists = c.sensorStates[p.Key]
+		if exists {
+			ifthen, exists = c.sensorStates[p.IfThen.Key]
+			if exists {
+				if ifthen.Type == "string" && ifthen.Value == p.IfThen.State {
+					sensor.Value = p.State
 				}
 			}
 		}
 	}
-	return false, ""
+}
+
+func publishSensorState(s *SensorState, client *clients.TCP) {
+	jsonbytes, err := json.Marshal(s)
+	if err == nil {
+		client.Publish([]string{s.Domain, s.Product, s.Name}, string(jsonbytes))
+	}
 }
 
 // Process will update 'events' from the calendar
-func (c *Calendar) Process(states *state.Instance) time.Duration {
+func (c *Calendar) Process(client *clients.TCP) {
 	var err error
-	now := states.GetTimeState("time.now", time.Now())
+	now := time.Now()
 
 	if now.Unix() >= c.update.Unix() {
 		// Download again after 15 minutes
 		c.update = time.Unix(now.Unix()+15*60, 0)
 
-		// Download calendar
+		// Download calendars
 		// fmt.Println("CALENDAR: LOAD")
 		err := c.load()
 		if err != nil {
 			fmt.Printf("ERROR: '%s'\n", err.Error())
-			return 15 * time.Minute
+			return
 		}
 	}
 
 	// Other general states
-	weekend, weStart, weEnd, wdStart, wdEnd := weekOrWeekEndStartEnd(now)
+	weekend, _, _, _, _ := weekOrWeekEndStartEnd(now)
+	sensor := &SensorState{Domain: "sensor", Product: "calendar", Name: "weekend", Type: "bool", Value: fmt.Sprintf("%v", weekend), Time: time.Now()}
+	publishSensorState(sensor, client)
 
-	//fmt.Println("CALENDAR: DEFAULT")
+	// Update sensors and apply configured rules to sensors
+	err = c.updateSensorStates(now)
+	if err != nil {
+		c.applyRulesToSensorStates()
 
-	// Default all states before updating them
-	for _, eevent := range c.events {
-		if eevent.Typeof == "string" {
-			states.SetStringState(eevent.Domain+"."+eevent.Name, eevent.State)
-			if weekend {
-				policyOk, policyValue := c.findPolicy(eevent.Domain, eevent.Name, "weekend")
-				if policyOk {
-					states.SetStringState(eevent.Domain+"."+eevent.Name, policyValue)
+		// Publish sensor states
+		for _, ss := range c.sensorStates {
+			publishSensorState(ss, client)
+		}
+	}
+}
+
+func tagsContains(tag string, tags []string) bool {
+	for _, t := range tags {
+		if t == tag {
+			return true
+		}
+	}
+	return false
+}
+
+func main() {
+
+	var calendar *Calendar
+
+	for {
+		client, err := clients.New("127.0.0.1:1445", "authtoken.wicked")
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		client.Ping()
+		client.Subscribe([]string{"calendar"})
+		client.Publish([]string{"request", "config"}, "calendar")
+
+		for {
+			select {
+			case msg := <-client.Messages():
+				if tagsContains("config", msg.Tags) {
+					calendar, err = New(msg.Data)
 				}
-			} else {
-				policyOk, policyValue := c.findPolicy(eevent.Domain, eevent.Name, "!weekend")
-				if policyOk {
-					states.SetStringState(eevent.Domain+"."+eevent.Name, policyValue)
+				break
+			case <-time.After(time.Second * 60):
+				if calendar != nil && calendar.config != nil {
+					calendar.Process(client)
 				}
-			}
-		} else if eevent.Typeof == "float" {
-			fstate, err := strconv.ParseFloat(eevent.State, 64)
-			if err == nil {
-				states.SetFloatState(eevent.Domain+"."+eevent.Name, fstate)
+				break
 			}
 		}
 	}
-
-	// Update events
-	//fmt.Println("CALENDAR: UPDATE EVENTS")
-	err = c.updateEvents(now, states)
-	if err != nil {
-		fmt.Printf("ERROR: '%s'\n", err.Error())
-		return 1 * time.Minute
-	}
-
-	states.SetBoolState("calendar.weekend", weekend)
-	states.SetBoolState("calendar.weekday", !weekend)
-	states.SetTimeState("calendar.weekend.start", weStart)
-	states.SetTimeState("calendar.weekend.end", weEnd)
-	states.SetTimeState("calendar.weekday.start", wdStart)
-	states.SetTimeState("calendar.weekday.end", wdEnd)
-	states.SetStringState("calendar.weekend.title", "Weekend")
-	states.SetStringState("calendar.weekday.title", "Weekday")
-	states.SetStringState("calendar.weekend.description", "Saturday and Sunday")
-	states.SetStringState("calendar.weekday.description", "Monday to Friday")
-
-	return 1 * time.Minute
 }

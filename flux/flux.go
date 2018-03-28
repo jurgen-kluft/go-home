@@ -1,8 +1,8 @@
 package flux
 
 import (
+	"encoding/json"
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/nanopack/mist/clients"
@@ -67,7 +67,7 @@ func (s *instance) updateLighttimes() {
 // States are both input and output, for example as input
 // there are Season/Weather states like 'Season':'Winter'
 // and 'Clouds':0.5
-func Process(f *instance) {
+func Process(f *instance, client *clients.TCP) {
 	if f.config == nil || f.suncalc == nil || f.season == nil || f.weather == nil {
 		return
 	}
@@ -127,16 +127,45 @@ func Process(f *instance) {
 	}
 	BRI = f.season.BRI.Min + (BRI * (f.season.BRI.Max - f.season.BRI.Min))
 
-	json := "{ \"flux\": [ "
+	// Publishing the following sensors:
+	//  - Sensor.Light.HUE_CT = float64(100.0)
+	//  - Sensor.Light.HUE_BRI = float64(100.0)
+	//  - Sensor.Light.YEE_CT = float64(100.0)
+	//  - Sensor.Light.YEE_BRI = float64(100.0)
+	//  - Sensor.Light.DarkOrLight = string(Dark)
+
 	for _, ltype := range f.config.Lighttype {
 		lct := ltype.CT.Min + CT*(ltype.CT.Max-ltype.CT.Min)
+		sensorCT := SensorState{Domain: "sensor", Product: "light", Name: ltype.Name + "_CT", Type: "float", Value: fmt.Sprintf("%f", lct), Time: time.Now()}
+		publishSensor(sensorCT, client)
 		lbri := ltype.BRI.Min + BRI*(ltype.BRI.Max-ltype.BRI.Min)
-		json += fmt.Sprintf("\"type\": %s, ", ltype.Name)
-		json += fmt.Sprintf("\"ct\": %f, ", math.Floor(lct))
-		json += fmt.Sprintf("\"bri\": %f ", math.Floor(lbri))
+		sensorBRI := SensorState{Domain: "sensor", Product: "light", Name: ltype.Name + "_BRI", Type: "float", Value: fmt.Sprintf("%f", lbri), Time: time.Now()}
+		publishSensor(sensorBRI, client)
+
+		//	json += fmt.Sprintf("\"type\": %s, ", ltype.Name)
+		//	json += fmt.Sprintf("\"ct\": %f, ", math.Floor(lct))
+		//	json += fmt.Sprintf("\"bri\": %f ", math.Floor(lbri))
 	}
-	json += " ], \"darkorlight\": " + string(current.Darkorlight)
-	json += " }"
+
+	sensorDOL := SensorState{Domain: "sensor", Product: "light", Name: "DarkOrLight", Type: "string", Value: string(current.Darkorlight), Time: time.Now()}
+	publishSensor(sensorDOL, client)
+}
+
+func publishSensor(sensor SensorState, client *clients.TCP) {
+	data, err := json.Marshal(sensor)
+	if err == nil {
+		jsonstr := string(data)
+		client.Publish([]string{"sensor", "light"}, jsonstr)
+	}
+}
+
+type SensorState struct {
+	Domain  string    `json:"domain"`
+	Product string    `json:"product"`
+	Name    string    `json:"name"`
+	Type    string    `json:"type"`
+	Value   string    `json:"value"`
+	Time    time.Time `json:"time"`
 }
 
 func tagsContains(tag string, tags []string) bool {
@@ -185,7 +214,7 @@ func main() {
 			case <-time.After(time.Second * 10):
 				// do something if messages are taking too long
 				// or if we haven't received enough state info.
-				Process(flux)
+				Process(flux, client)
 				break
 			}
 		}

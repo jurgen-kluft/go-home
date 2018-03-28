@@ -63,20 +63,21 @@ type Detect struct {
 }
 
 type Member struct {
-	Name    string `json:"name"`
-	State   string `json:"state"`
+	name    string
+	last    Detect
 	current Detect
 	index   int
 	detect  []Detect
 }
 
 type PresenceState struct {
-	Time    time.Time `json:"time"`
-	Members []Member  `json:"members"`
+	time    time.Time
+	members []Member
 }
 
 // Update will set the current presence state based on historical information
 func (m *Member) updateCurrent(current time.Time) {
+	m.last = m.current
 	for _, d := range m.detect {
 		if d.State == home {
 			m.current.Time = current
@@ -124,7 +125,8 @@ func New(configjson string) *Presence {
 
 	updateHist := presence.config.UpdateHist
 	for i, device := range presence.config.Devices {
-		member := &Member{Name: device.Name}
+		member := &Member{name: device.Name}
+		member.last = Detect{Time: time.Now(), State: away}
 		member.current = Detect{Time: time.Now(), State: home}
 		member.index = 0
 		member.detect = make([]Detect, updateHist, updateHist)
@@ -167,20 +169,34 @@ func (p *Presence) Presence(currentTime time.Time) bool {
 
 		// Build JSON structure of members
 		// {"datetime":"30/12", "members": [{"name": "Faith", "state": "HOME"},{"name": "Jurgen", "state": "LEAVING"}]}
-		p.state.Time = currentTime
-		for _, m := range p.members {
-			m.State = getNameOfState(m.current.State)
-		}
+		p.state.time = currentTime
 		return true
 	}
 	return false
 }
 
-func (p *Presence) publish(client *clients.TCP) error {
-	data, err := json.Marshal(p.state)
-	jsonstr := string(data)
-	client.Publish([]string{"presence", "state"}, jsonstr)
-	return err
+type SensorState struct {
+	Domain  string    `json:"domain"`
+	Product string    `json:"product"`
+	Name    string    `json:"name"`
+	Type    string    `json:"type"`
+	Value   string    `json:"value"`
+	Time    time.Time `json:"time"`
+}
+
+func (p *Presence) publish(client *clients.TCP) {
+
+	for _, m := range p.members {
+		sensor := SensorState{Domain: "sensor", Product: "presence", Name: m.name, Type: "string", Value: getNameOfState(home), Time: m.current.Time}
+		sensor.Value = getNameOfState(m.current.State)
+
+		data, err := json.Marshal(sensor)
+		if err == nil {
+			jsonstr := string(data)
+			client.Publish([]string{"sensor", "presence"}, jsonstr)
+		}
+	}
+
 }
 
 func tagsContains(tag string, tags []string) bool {
