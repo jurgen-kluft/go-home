@@ -16,6 +16,7 @@ tags
 
 !*.go
 !*.lua
+!*.json
 
 !*.cs
 !*.csproj

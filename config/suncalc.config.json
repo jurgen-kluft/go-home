@@ -1,0 +1,113 @@
+{
+  "config": {
+    "latitude": 31.2304,
+    "longitude": 121.4737
+  },
+  "anglecfg": [
+    {
+      "angle": -18.0,
+      "rise": "astronomical.dawn",
+      "set": "night.dusk"
+    },
+    {
+      "angle": -12.0,
+      "rise": "nautical.dawn",
+      "set": "astronomical.dusk"
+    },
+    {
+      "angle": -6.0,
+      "rise": "civil.dawn",
+      "set": "nautical.dusk"
+    },
+    {
+      "angle": -0.833,
+      "rise": "sun.rise",
+      "set": "civil.dusk"
+    },
+    {
+      "angle": -0.3,
+      "rise": "sun.rise.end",
+      "set": "sun.set"
+    }
+  ],
+  "moments": [
+    {
+      "title": "night.dawn",
+      "descr": "midnight to twilight, 2nd part of the night",
+      "begin": "today.begin",
+      "end  ": "astronomical.dawn"
+    },
+    {
+      "title": "astronomical.dawn",
+      "descr": "morning astronomical twilight",
+      "begin": "astronomical.dawn",
+      "end  ": "nautical.dawn"
+    },
+    {
+      "title": "nautical.dawn",
+      "descr": "morning nautical twilight",
+      "begin": "nautical.dawn",
+      "end  ": "civil.dawn"
+    },
+    {
+      "title": "civil.dawn",
+      "descr": "morning civil twilight",
+      "begin": "civil.dawn",
+      "end  ": "sun.rise"
+    },
+    {
+      "title": "sun.rise",
+      "descr": "top edge of the sun appears on the horizon until it is fully visible",
+      "begin": "sun.rise",
+      "end  ": "sun.rise.end"
+    },
+    {
+      "title": "sun.morning",
+      "descr": "sun has risen and moves towards noon",
+      "begin": "sun.rise.end",
+      "end  ": "sun.noon.begin"
+    },
+    {
+      "title": "sun.noon",
+      "descr": "sun is in the highest position",
+      "begin": "sun.noon.begin",
+      "end  ": "sun.noon.end"
+    },
+    {
+      "title": "sun.afternoon",
+      "descr": "sun is past noon and moves towards sunset",
+      "begin": "sun.noon.end",
+      "end  ": "sun.set"
+    },
+    {
+      "title": "sun.set",
+      "descr": "bottom edge of the sun touches the horizon until it dissapears under the horizon",
+      "begin": "sun.set",
+      "end  ": "civil.dusk"
+    },
+    {
+      "title": "civil.dusk",
+      "descr": "evening civil twilight",
+      "begin": "civil.dusk",
+      "end  ": "nautical.dusk"
+    },
+    {
+      "title": "nautical.dusk",
+      "descr": "evening nautical twilight",
+      "begin": "nautical.dusk",
+      "end  ": "astronomical.dusk"
+    },
+    {
+      "title": "astronomical.dusk",
+      "descr": "evening astronomical twilight",
+      "begin": "astronomical.dusk",
+      "end  ": "night.dusk"
+    },
+    {
+      "title": "night.dusk",
+      "descr": "end of dusk, evening until midnight",
+      "begin": "night.dusk",
+      "end  ": "today.end"
+    }
+  ]
+}

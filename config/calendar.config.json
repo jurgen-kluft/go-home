@@ -1,0 +1,143 @@
+{
+  "calendars": [
+    {
+      "name": "Home",
+      "url": "https://p15-calendarws.icloud.com/ca/subscribe/1/wOCHp_4FkokEaZ_BGHLi0vk5c43gO3ZTbwG7b6CKvQfKEJm8RU71ujaoADm5UgWW"
+    },
+    {
+      "name": "TimeOfDay",
+      "url": "https://p15-calendars.icloud.com/published/2/PSkyvuQTv3bd5BjeLqi-7XfOMERoONeBGsaQ4QMR3a0LkzQYrX3GnsvqR9X0wRu0uAybT-6BnaL1awe5P2whdyUzCt6u0pkygpbm_NimA5c"
+    },
+    {
+      "name": "Season",
+      "url": "https://p15-calendars.icloud.com/published/2/dpMeblaQfu4QhfhSvjiA1Me3kMJFh_K5meVO5LsUqOY2oXdY0RLFetvHilfD2BRPNDJdgwK_1YliQmk1OD9mI_dayN8-XGVazynd2SA0Wlc"
+    }
+  ],
+  "sensors": [
+    {
+      "domain": "sensor",
+      "product": "geo",
+      "name": "latitude",
+      "type": "float",
+      "state": "31.2304"
+    },
+    {
+      "domain": "sensor",
+      "product": "geo",
+      "name": "longitude",
+      "state": "121.4737",
+      "type": "float"
+    },
+    {
+      "domain": "sensor",
+      "product": "calendar",
+      "name": "jennifer",
+      "state": "free",
+      "type": "string"
+    },
+    {
+      "domain": "sensor",
+      "product": "calendar",
+      "name": "sophia",
+      "state": "free",
+      "type": "string"
+    },
+    {
+      "domain": "sensor",
+      "product": "calendar",
+      "name": "parents",
+      "state": "free",
+      "type": "string"
+    },
+    {
+      "domain": "sensor",
+      "product": "calendar",
+      "name": "alarm",
+      "state": "off",
+      "type": "string"
+    },
+    {
+      "domain": "sensor",
+      "product": "calendar",
+      "name": "season",
+      "state": "winter",
+      "type": "string"
+    },
+    {
+      "domain": "sensor",
+      "product": "calendar",
+      "name": "tod",
+      "state": "morning",
+      "type": "string"
+    },
+    {
+      "domain": "sensor",
+      "product": "calendar",
+      "name": "weekend",
+      "state": "false",
+      "type": "bool"
+    }
+  ],
+  "rules": [
+    {
+      "key": "sensor.calendar.jennifer",
+      "state": "free",
+      "if": [
+        {
+          "key": "sensor.calendar.weekend",
+          "state": "true"
+        }
+      ]
+    },
+    {
+      "key": "sensor.calendar.jennifer",
+      "state": "school",
+      "if": [
+        {
+          "key": "sensor.calendar.weekend",
+          "state": "false"
+        }
+      ]
+    },
+    {
+      "key": "sensor.calendar.sophia",
+      "state": "free",
+      "if": [
+        {
+          "key": "sensor.calendar.weekend",
+          "state": "true"
+        }
+      ]
+    },
+    {
+      "key": "sensor.calendar.sophia",
+      "state": "school",
+      "if": [
+        {
+          "key": "sensor.calendar.weekend",
+          "state": "false"
+        }
+      ]
+    },
+    {
+      "key": "sensor.calendar.parents",
+      "state": "free",
+      "if": [
+        {
+          "key": "sensor.calendar.weekend",
+          "state": "true"
+        }
+      ]
+    },
+    {
+      "key": "sensor.calendar.parents",
+      "state": "work",
+      "if": [
+        {
+          "key": "sensor.calendar.weekend",
+          "state": "false"
+        }
+      ]
+    }
+  ]
+}

@@ -3,30 +3,12 @@ package suncalc
 // sun calculations are based on http://aa.quae.nl/en/reken/zonpositie.html formulas
 
 import (
-	"fmt"
+	"encoding/json"
 	"math"
 	"time"
 
-	"github.com/jurgen-kluft/hass-go/dynamic"
-	"github.com/jurgen-kluft/hass-go/state"
-	"github.com/spf13/viper"
+	"github.com/nanopack/mist/clients"
 )
-
-// The angle is mirrored in the rising and setting moments of the day centered around noon
-type anglecfg struct {
-	angle float64
-	rise  string
-	set   string
-}
-
-// A moment is a time period with a 'from' and 'to' marked with a 'title' and 'description'
-// 'title' is of the format 'primary:secondary:begin|end{:today|tomorrow}",
-type momentcfg struct {
-	title string
-	descr string
-	begin string
-	end   string
-}
 
 const (
 	pi  = math.Pi
@@ -195,11 +177,11 @@ func (s *Instance) getMoments(date time.Time, lat float64, lng float64) (result 
 	noon := fromJulian(Jnoon)
 	mtimes["sun.noon.begin"] = hoursLater(noon, -0.15)
 	mtimes["sun.noon.end"] = hoursLater(noon, +0.15)
-	for _, a := range s.angles {
-		Jset := getSetJ(a.angle*rad, lw, phi, dec, n, M, L)
+	for _, a := range s.config.Anglecfg {
+		Jset := getSetJ(a.Angle*rad, lw, phi, dec, n, M, L)
 		Jrise := Jnoon - (Jset - Jnoon)
-		mtimes[a.rise] = fromJulian(Jrise)
-		mtimes[a.set] = fromJulian(Jset)
+		mtimes[a.Rise] = fromJulian(Jrise)
+		mtimes[a.Set] = fromJulian(Jset)
 	}
 
 	// type Cmoment struct {
@@ -210,13 +192,13 @@ func (s *Instance) getMoments(date time.Time, lat float64, lng float64) (result 
 	// }
 
 	moments := []Cmoment{}
-	for _, m := range s.moments {
-		t0 := mtimes[m.begin]
-		t1 := mtimes[m.end]
+	for _, m := range s.config.Moments {
+		t0 := mtimes[m.Begin]
+		t1 := mtimes[m.End]
 
 		moment := Cmoment{}
-		moment.descr = m.descr
-		moment.title = m.title
+		moment.descr = m.Descr
+		moment.title = m.Title
 		moment.start = t0
 		moment.end = t1
 		moments = append(moments, moment)
@@ -404,77 +386,54 @@ func getMoonTimes(date time.Time, lat float64, lng float64, inUTC bool) (moonris
 }
 
 type Instance struct {
-	viper     *viper.Viper
-	angles    []anglecfg
-	moments   []momentcfg
-	latitude  float64
-	longitude float64
+	config *Config
 }
 
-func New() (*Instance, error) {
+func New(jsonstr string) (*Instance, error) {
 	s := &Instance{}
-	s.angles = []anglecfg{}
-	s.moments = []momentcfg{}
-	s.viper = viper.New()
 
-	// Viper command-line package
-	s.viper.SetConfigName("suncalc") // name of config file (without extension)
-	s.viper.AddConfigPath("config/") // optionally look for config in the working directory
-	err := s.viper.ReadInConfig()    // Find and read the config file
-	if err != nil {                  // Handle errors reading the config file
-		fmt.Printf("%v\n", err)
-		return nil, err
+	config, err := configFromJSON(jsonstr)
+	if err == nil {
+		s.config = config
 	}
-
-	config := dynamic.Dynamic{Item: s.viper.Get("config")}
-	s.latitude = config.Get("latitude").AsFloat64()
-	s.longitude = config.Get("longitude").AsFloat64()
-	//fmt.Printf("%v\n", s.latitude)
-	//fmt.Printf("%v\n", s.longitude)
-
-	angles := dynamic.Dynamic{Item: s.viper.Get("anglecfg")}
-	//fmt.Printf("%v\n", s.viper.Get("angle"))
-	for _, a := range angles.ArrayIter() {
-		angle := anglecfg{}
-		angle.angle = a.Get("angle").AsFloat64()
-		angle.rise = a.Get("rise").AsString()
-		angle.set = a.Get("set").AsString()
-		s.angles = append(s.angles, angle)
-	}
-
-	moments := dynamic.Dynamic{Item: s.viper.Get("moment")}
-	for _, m := range moments.ArrayIter() {
-		moment := momentcfg{}
-		moment.title = m.Get("title").AsString()
-		moment.descr = m.Get("descr").AsString()
-		moment.begin = m.Get("begin").AsString()
-		moment.end = m.Get("end").AsString()
-		s.moments = append(s.moments, moment)
-	}
-
-	return s, nil
+	return s, err
 }
 
-func (s *Instance) Process(states *state.Instance) time.Duration {
-	now := states.GetTimeState("time.now", time.Now())
-	now = time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, time.Local)
-	//fmt.Printf("Suncalc, now = %v\n", now)
+type SuncalcMoment struct {
+	Name  string    `json:"name"`
+	Begin time.Time `json:"begin"`
+	End   time.Time `json:"end"`
+}
 
-	lat := states.GetFloatState("geo.latitude", s.latitude)
-	lng := states.GetFloatState("geo.longitude", s.longitude)
-	//fmt.Printf("SunCalc: lat = %f, lng = %f\n", lat, lng)
+type SuncalcState struct {
+	Moments          []SuncalcMoment `json:"moments"`
+	MoonIllumination float64         `json:"moonillumination"`
+}
+
+func (s *Instance) Process(client *clients.TCP) {
+
+	now := time.Now()
+	now = time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, time.Local)
+
+	lat := s.config.Config.Latitude
+	lng := s.config.Config.Longitude
+
 	moments := s.getMoments(now, lat, lng)
 
+	suncalc := SuncalcState{Moments: []SuncalcMoment{}}
 	for _, m := range moments {
-		states.SetTimeState("suncalc."+m.title+".begin", m.start)
-		states.SetTimeState("suncalc."+m.title+".end", m.end)
+		sm := SuncalcMoment{}
+		sm.Name = m.title
+		sm.Begin = m.start
+		sm.End = m.end
+		suncalc.Moments = append(suncalc.Moments, sm)
 	}
-	_, moonPhase, _ := getMoonIllumination(now)
-	states.SetFloatState("suncalc.moon.phase", moonPhase)
 
-	// Update every whole hour, compute the duration from now to the next whole hour
-	whour := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, now.Location())
-	whour = whour.Add(1 * time.Hour)
-	wait := whour.Unix() - now.Unix()
-	return time.Duration(wait) * time.Second
+	_, moonPhase, _ := getMoonIllumination(now)
+	suncalc.MoonIllumination = moonPhase
+
+	jsonbytes, err := json.Marshal(suncalc)
+	if err == nil {
+		client.Publish([]string{"suncalc", "state"}, string(jsonbytes))
+	}
 }
