@@ -112,6 +112,7 @@ func TestListSubscriptions(t *testing.T) {
 	sender.Subscribe([]string{"a", "b"})
 	list = flattenSliceToString(sender.List())
 	switch list {
+	case "ab", "ba":
 	case "aba,b", "baa,b", "a,bab", "a,bba", "aa,bb", "ba,ba", "abb,a":
 		// pass
 	default:
@@ -124,6 +125,7 @@ func TestListSubscriptions(t *testing.T) {
 	sender.Subscribe([]string{"b", "a"})
 	list = flattenSliceToString(sender.List())
 	switch list {
+	case "ab", "ba":
 	case "aba,b", "baa,b", "a,bab", "a,bba", "aa,bb", "ba,ba", "abb,a":
 		// pass
 	default:

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jurgen-kluft/go-home/suncalc"
 	"github.com/nanopack/mist/clients"
 )
 
@@ -35,7 +36,7 @@ func computeTimeSpanX(start, end, t time.Time) float64 {
 
 type instance struct {
 	config  *Config
-	suncalc *Suncalc
+	suncalc *suncalc.State
 	season  *Season
 	weather *WeatherState
 }
@@ -189,7 +190,7 @@ func main() {
 		client.Ping()
 
 		// 'flux' OR (('suncalc' OR 'weather') AND 'state')
-		client.Subscribe([]string{"suncalc weather OR state AND flux OR"})
+		client.Subscribe([]string{"suncalc weather | state & flux |"})
 		client.Publish([]string{"request", "config", "weather", "suncalc", "season"}, "flux")
 
 		client.ListAll()

@@ -43,7 +43,7 @@ func (filter *Filter) addVar(varname string) int16 {
 	return i
 }
 
-func (filter *Filter) addFilter(expression string) {
+func (filter *Filter) addFilter(expression string) error {
 	elems := strings.Split(expression, " ")
 	compiled := []int16{}
 	for _, e := range elems {
@@ -61,22 +61,35 @@ func (filter *Filter) addFilter(expression string) {
 			compiled = append(compiled, vi)
 		}
 	}
-	filter.filters[expression] = compiled
+
+	err := filter.validate(compiled)
+	if err == nil {
+		filter.filters[expression] = compiled
+	}
+	return err
 }
 
 // Add sorts the keys and then attempts to add them
-func (filter *Filter) Add(keys []string) {
+func (filter *Filter) Add(keys []string) error {
 	if len(keys) == 0 {
-		return
+		return nil
 	}
-	filter.add(keys)
+	return filter.add(keys)
 }
 
 // add ...
-func (filter *Filter) add(keys []string) {
+func (filter *Filter) add(keys []string) error {
+	errstr := ""
 	for _, k := range keys {
-		filter.addFilter(k)
+		err := filter.addFilter(k)
+		if err != nil {
+			errstr = errstr + err.Error()
+		}
 	}
+	if errstr == "" {
+		return nil
+	}
+	return fmt.Errorf(errstr)
 }
 
 // Remove sorts the keys and then attempts to remove them
@@ -101,37 +114,33 @@ func (filter *Filter) Match(keys []string) bool {
 	return filter.match(keys)
 }
 
-func (filter *Filter) evaluate(expr []int16) (bool, error) {
+func (filter *Filter) validate(expr []int16) error {
 	r := []bool{}
 	for _, s := range expr {
 		i := len(r)
 		switch s {
 		case opxand:
-			if len(r) < 2 {
-				return false, fmt.Errorf("RPN evaluation, expression is incorrect")
+			if i < 2 {
+				return fmt.Errorf("RPN evaluation, expression is incorrect")
 			}
-			r[i-2] = r[i-2] && r[i-1]
 			r = r[:i-1]
 			break
 		case opxor:
-			if len(r) < 2 {
-				return false, fmt.Errorf("RPN evaluation, expression is incorrect")
+			if i < 2 {
+				return fmt.Errorf("RPN evaluation, expression is incorrect")
 			}
-			r[i-2] = r[i-2] || r[i-1]
 			r = r[:i-1]
 			break
 		case opxxor:
-			if len(r) < 2 {
-				return false, fmt.Errorf("RPN evaluation, expression is incorrect")
+			if i < 2 {
+				return fmt.Errorf("RPN evaluation, expression is incorrect")
 			}
-			r[i-2] = (r[i-2] && !r[i-1]) || (!r[i-2] && r[i-1])
 			r = r[:i-1]
 			break
 		case opxnot:
-			if len(r) < 1 {
-				return false, fmt.Errorf("RPN evaluation, expression is incorrect")
+			if i < 1 {
+				return fmt.Errorf("RPN evaluation, expression is incorrect")
 			}
-			r[i-1] = !r[i-1]
 			break
 		default:
 			r = append(r, filter.varValues[s])
@@ -139,9 +148,37 @@ func (filter *Filter) evaluate(expr []int16) (bool, error) {
 		}
 	}
 	if len(r) == 1 {
-		return r[0], nil
+		return nil
 	}
-	return false, fmt.Errorf("RPN evaluation results not in 1 answer")
+	return fmt.Errorf("RPN evaluation results not in 1 answer")
+}
+
+func (filter *Filter) evaluate(expr []int16) bool {
+	r := []bool{}
+	for _, s := range expr {
+		i := len(r)
+		switch s {
+		case opxand:
+			r[i-2] = r[i-2] && r[i-1]
+			r = r[:i-1]
+			break
+		case opxor:
+			r[i-2] = r[i-2] || r[i-1]
+			r = r[:i-1]
+			break
+		case opxxor:
+			r[i-2] = (r[i-2] && !r[i-1]) || (!r[i-2] && r[i-1])
+			r = r[:i-1]
+			break
+		case opxnot:
+			r[i-1] = !r[i-1]
+			break
+		default:
+			r = append(r, filter.varValues[s])
+			break
+		}
+	}
+	return r[0]
 }
 
 // ​match ...
@@ -160,11 +197,9 @@ func (filter *Filter) match(keys []string) bool {
 	}
 
 	for _, expr := range filter.filters {
-		res, err := filter.evaluate(expr)
-		if err == nil && res {
+		res := filter.evaluate(expr)
+		if res {
 			return true
-		} else if err != nil {
-			fmt.Print(err)
 		}
 	}
 	return false

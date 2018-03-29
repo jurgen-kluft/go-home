@@ -7,21 +7,21 @@ package suncalc
 
 import "encoding/json"
 
-func configFromJSON(jsonstr string) (*Config, error) {
+func ConfigFromJSON(jsonstr string) (*Config, error) {
 	data := []byte(jsonstr)
 	r := &Config{}
 	err := json.Unmarshal(data, r)
 	return r, err
 }
 
-func (r *Config) configToJSON() ([]byte, error) {
+func (r *Config) ConfigToJSON() ([]byte, error) {
 	return json.Marshal(r)
 }
 
 type Config struct {
 	Config   ConfigConfig `json:"config"`
 	Anglecfg []Anglecfg   `json:"anglecfg"`
-	Moments  []Moment     `json:"moments"`
+	Moments  []CMoment    `json:"moments"`
 }
 
 type Anglecfg struct {
@@ -35,7 +35,7 @@ type ConfigConfig struct {
 	Longitude float64 `json:"longitude"`
 }
 
-type Moment struct {
+type CMoment struct {
 	Title string `json:"title"`
 	Descr string `json:"descr"`
 	Begin string `json:"begin"`

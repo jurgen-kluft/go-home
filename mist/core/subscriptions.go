@@ -4,7 +4,7 @@ import "sort"
 
 type (
 	subscriptions interface {
-		Add([]string)
+		Add([]string) error
 		Remove([]string)
 		Match([]string) bool
 		ToSlice() [][]string
@@ -31,13 +31,14 @@ func newNode() (node *Node) {
 }
 
 // Add sorts the keys and then attempts to add them
-func (node *Node) Add(keys []string) {
+func (node *Node) Add(keys []string) error {
 	if len(keys) == 0 {
-		return
+		return nil
 	}
 
 	sort.Strings(keys)
 	node.add(keys)
+	return nil
 }
 
 // add ...

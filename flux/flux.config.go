@@ -3,6 +3,8 @@ package flux
 import (
 	"encoding/json"
 	"time"
+
+	"github.com/jurgen-kluft/go-home/suncalc"
 )
 
 func UnmarshalFluxState(data []byte) (FluxState, error) {
@@ -55,21 +57,10 @@ type WeatherForecast struct {
 	Temperature float64    `json:"temperature"`
 }
 
-func NewSuncalc(jsonstr string) (*Suncalc, error) {
-	data := []byte(jsonstr)
-	r := &Suncalc{}
-	err := json.Unmarshal(data, &r)
+func NewSuncalc(jsonstr string) (*suncalc.State, error) {
+	r := &suncalc.State{}
+	err := json.Unmarshal([]byte(jsonstr), r)
 	return r, err
-}
-
-type Suncalc struct {
-	Moments []Sunmoment `json:"moments"`
-}
-
-type Sunmoment struct {
-	Name  string    `json:"name"`
-	Begin time.Time `json:"begin"`
-	End   time.Time `json:"end"`
 }
 
 func UnmarshalConfig(data []byte) (*Config, error) {

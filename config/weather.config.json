@@ -1,0 +1,326 @@
+{
+  "location": {
+    "latitude": 31.2304,
+    "longitude": 121.4737
+  },
+  "darksky": {
+    "key": "5044c4d80e9004d3d6100fd3a736d7c3"
+  },
+  "aqi": {
+    "key": "94aba5be0d555d3f44507dc8554b979bf3430a80"
+  },
+  "im": {
+    "channel": "weather"
+  },
+  "notify": [
+    {
+      "type": "rain",
+      "warning": {
+        "min": 0.4,
+        "max": 0.7
+      },
+      "alert": {
+        "min": 0.7,
+        "max": 1.0
+      }
+    }
+  ],
+  "clouds": [
+    {
+      "name": "Cloudy",
+      "description": "The sky is completely covered with clouds, no view of blue sky.",
+      "unit": "%",
+      "min": 0.9,
+      "max": 1.0
+    },
+    {
+      "name": "Mostly cloudy",
+      "description": "More than half of the sky is covered in clouds.",
+      "unit": "%",
+      "min": 0.5,
+      "max": 0.9
+    },
+    {
+      "name": "Partly cloudy",
+      "description": "Less than half of the sky is covered by clouds.",
+      "unit": "%",
+      "min": 0.35,
+      "max": 0.50
+    },
+    {
+      "name": "Partly sunny",
+      "description": "More than half of the sky is covered by clouds.",
+      "unit": "%",
+      "min": 0.15,
+      "max": 0.35
+    },
+    {
+      "name": "Mostly sunny",
+      "description": "Most of the sky is clear of clouds.",
+      "unit": "%",
+      "min": 0.5,
+      "max": 0.15
+    },
+    {
+      "name": "Sunny",
+      "description": "There are NO clouds in the sky.",
+      "min": 0.0,
+      "max": 0.5
+    }
+  ],
+  "rain": [
+    {
+      "name": "Dry",
+      "unit": "mm/h",
+      "intensity_min": 0.0,
+      "intensity_max": 0.02
+    },
+    {
+      "name": "Mist",
+      "unit": "mm/h",
+      "intensity_min": 0.02,
+      "intensity_max": 0.05
+    },
+    {
+      "name": "Fog",
+      "unit": "mm/h",
+      "intensity_min": 0.05,
+      "intensity_max": 0.13
+    },
+    {
+      "name": "Drizzle",
+      "unit": "mm/h",
+      "intensity_min": 0.13,
+      "intensity_max": 0.25
+    },
+    {
+      "name": "Light rain",
+      "unit": "mm/h",
+      "intensity_min": 0.25,
+      "intensity_max": 2.5
+    },
+    {
+      "name": "Moderate rain",
+      "unit": "mm/h",
+      "intensity_min": 2.5,
+      "intensity_max": 10
+    },
+    {
+      "name": "Heavy rain",
+      "unit": "mm/h",
+      "intensity_min": 10,
+      "intensity_max": 50
+    },
+    {
+      "name": "Violent rain",
+      "unit": "mm/h",
+      "intensity_min": 50,
+      "intensity_max": 500
+    }
+  ],
+  "wind": [
+    {
+      "unit": "km/h",
+      "speed": 1,
+      "description": [
+        "Calm",
+        "Flat",
+        "Calm, smoke rises vertically."
+      ]
+    },
+    {
+      "unit": "km/h",
+      "speed": 5,
+      "description": [
+        "Light air",
+        "Ripples without crests.",
+        "Wind motion visible in smoke."
+      ]
+    },
+    {
+      "unit": "km/h",
+      "speed": 11,
+      "description": [
+        "Light breeze",
+        "Small wavelets. Crests of glassy appearance, not breaking",
+        "Wind felt on exposed skin. Leaves rustle."
+      ]
+    },
+    {
+      "unit": "km/h",
+      "speed": 19,
+      "description": [
+        "Gentle breeze",
+        "Large wavelets. Crests begin to break; scattered whitecaps",
+        "Leaves and smaller twigs in constant motion."
+      ]
+    },
+    {
+      "unit": "km/h",
+      "speed": 28,
+      "description": [
+        "Moderate breeze",
+        "Small waves.",
+        "Dust and loose paper raised. Small branches begin to move."
+      ]
+    },
+    {
+      "unit": "km/h",
+      "speed": 38,
+      "description": [
+        "Fresh breeze",
+        "Moderate (1.2 m) longer waves. Some foam and spray.",
+        "Branches of a moderate size move. Small trees begin to sway."
+      ]
+    },
+    {
+      "unit": "km/h",
+      "speed": 49,
+      "description": [
+        "Strong breeze",
+        "Large waves with foam crests and some spray.",
+        "Large branches in motion. Whistling heard in overhead wires. Umbrella use becomes difficult.  Empty plastic garbage cans tip over."
+      ]
+    },
+    {
+      "unit": "km/h",
+      "speed": 61,
+      "description": [
+        "Moderate Gale",
+        "Sea heaps up and foam begins to streak.",
+        "Whole trees in motion. Effort needed to walk against the wind.  Swaying of skyscrapers may be felt, especially by people on upper floors."
+      ]
+    },
+    {
+      "unit": "km/h",
+      "speed": 74,
+      "description": [
+        "Fresh Gale",
+        "Moderately high waves with breaking crests forming spindrift. Streaks of foam.",
+        "Twigs broken from trees. Cars veer on road."
+      ]
+    },
+    {
+      "unit": "km/h",
+      "speed": 88,
+      "description": [
+        "Strong Gale",
+        "High waves (6-7 m) with dense foam. Wave crests start to roll over. Considerable spray.",
+        "Larger branches break off trees, and some small trees blow over. Construction/temporary signs and barricades blow over. Damage to circus tents and canopies."
+      ]
+    },
+    {
+      "unit": "km/h",
+      "speed": 102,
+      "description": [
+        "Storm",
+        "Very high waves. Large patches of foam from wave crests give the sea a white appearance. Considerable tumbling of waves with heavy impact. Large amounts of airborne spray reduce visibility.",
+        "Trees are broken off or uprooted, saplings bent and deformed, poorly attached asphalt shingles and shingles in poor condition peel off roofs."
+      ]
+    },
+    {
+      "unit": "km/h",
+      "speed": 117,
+      "description": [
+        "Violent storm",
+        "Exceptionally high waves. Very large patches of foam, driven before the wind, cover much of the sea surface. Very large amounts of airborne spray severely reduce visibility.",
+        "Widespread vegetation damage. More damage to most roofing surfaces, asphalt tiles that have curled up and/or fractured due to age may break away completely."
+      ]
+    },
+    {
+      "unit": "km/h",
+      "speed": 256,
+      "description": [
+        "Hurricane",
+        "Huge waves. Sea is completely white with foam and spray. Air is filled with driving spray, greatly reducing visibility.",
+        "Considerable and widespread damage to vegetation, a few windows broken, structural damage to mobile homes and poorly constructed sheds and barns. Debris may be hurled about."
+      ]
+    }
+  ],
+  "temperature": [
+    {
+      "unit": "Celcius",
+      "min": -50,
+      "max": -20,
+      "description": "Frozen solid"
+    },
+    {
+      "unit": "Celcius",
+      "min": -20,
+      "max": -15,
+      "description": "Deep freeze"
+    },
+    {
+      "unit": "Celcius",
+      "min": -15,
+      "max": -10,
+      "description": "F#&ck%@g cold"
+    },
+    {
+      "unit": "Celcius",
+      "min": -10,
+      "max": -2.5,
+      "description": "Freezing cold"
+    },
+    {
+      "unit": "Celcius",
+      "min": -2.5,
+      "max": 2.5,
+      "description": "Freezing"
+    },
+    {
+      "unit": "Celcius",
+      "min": 2.5,
+      "max": 7.5,
+      "description": "Cold"
+    },
+    {
+      "unit": "Celcius",
+      "min": 7.5,
+      "max": 12.5,
+      "description": "Chilly"
+    },
+    {
+      "unit": "Celcius",
+      "min": 12.5,
+      "max": 17.5,
+      "description": "Cool"
+    },
+    {
+      "unit": "Celcius",
+      "min": 17.5,
+      "max": 22.5,
+      "description": "Nice"
+    },
+    {
+      "unit": "Celcius",
+      "min": 22.5,
+      "max": 27.5,
+      "description": "Warm"
+    },
+    {
+      "unit": "Celcius",
+      "min": 27.5,
+      "max": 32.5,
+      "description": "Quite hot"
+    },
+    {
+      "unit": "Celcius",
+      "min": 32.5,
+      "max": 37.5,
+      "description": "Damn hot"
+    },
+    {
+      "unit": "Celcius",
+      "min": 37.5,
+      "max": 42.5,
+      "description": "F#&ck%@g hot"
+    },
+    {
+      "unit": "Celcius",
+      "min": 42.5,
+      "max": 100,
+      "description": "Skin melting"
+    }
+  ]
+}

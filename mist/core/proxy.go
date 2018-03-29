@@ -31,7 +31,7 @@ func NewProxy() (p *Proxy) {
 		check:         make(chan Message),
 		done:          make(chan bool),
 		id:            atomic.AddUint32(&uid, 1),
-		subscriptions: newNode(),
+		subscriptions: newFilter(),
 	}
 
 	p.connect()

@@ -212,16 +212,29 @@ func TestMatchSimpleFilter(t *testing.T) {
 func TestMatchComplexFilter(t *testing.T) {
 	node := newFilter()
 
+	var err error
+
 	// match unordered keys; should match
-	node.Add([]string{"a", "b", "c"})
+	err = node.Add([]string{"a", "b", "c"})
+	if err != nil {
+		t.Fatalf("Error adding filters!")
+	}
 	if !node.Match([]string{"c", "b", "a"}) {
 		t.Fatalf("Expected match!")
 	}
 	node.Remove([]string{"a", "b", "c"})
 
 	// match multiple subs with single match; should match
-	node.Add([]string{"a", "b", "e"})
-	node.Add([]string{"c"})
+	err = node.Add([]string{"a", "b", "e"})
+	if err != nil {
+		t.Fatalf("Error adding filters!")
+	}
+
+	err = node.Add([]string{"c"})
+	if err != nil {
+		t.Fatalf("Error adding filters!")
+	}
+
 	if !node.Match([]string{"a", "b", "c", "d"}) {
 		t.Fatalf("Expected match!")
 	}
@@ -230,8 +243,17 @@ func TestMatchComplexFilter(t *testing.T) {
 
 	node = newFilter()
 
+	// bad expression; should give error
+	err = node.Add([]string{"a b & c & &"})
+	if err == nil {
+		t.Fatalf("Error adding bad filter!")
+	}
+
 	// match expression filter; should not match
-	node.Add([]string{"a b & c &"})
+	err = node.Add([]string{"a b & c &"})
+	if err != nil {
+		t.Fatalf("Error adding filters!")
+	}
 	if len(node.filters["a b & c &"]) != 5 {
 		t.Fatalf("Unexpected match!")
 	}
@@ -270,4 +292,23 @@ func TestMatchComplexFilter(t *testing.T) {
 		t.Fatalf("Should match!")
 	}
 	node.Remove([]string{"a b & | c"})
+}
+
+func TestMatchComplexFilterExpressions(t *testing.T) {
+	node := newFilter()
+
+	node.Add([]string{"a b & c |"})
+	if node.Match([]string{"a"}) {
+		t.Fatalf("Should not match!")
+	}
+	if node.Match([]string{"b"}) {
+		t.Fatalf("Should not match!")
+	}
+
+	if !node.Match([]string{"a", "b"}) {
+		t.Fatalf("Should match!")
+	}
+	if !node.Match([]string{"c"}) {
+		t.Fatalf("Should match!")
+	}
 }

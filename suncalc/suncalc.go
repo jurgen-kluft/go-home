@@ -392,22 +392,22 @@ type Instance struct {
 func New(jsonstr string) (*Instance, error) {
 	s := &Instance{}
 
-	config, err := configFromJSON(jsonstr)
+	config, err := ConfigFromJSON(jsonstr)
 	if err == nil {
 		s.config = config
 	}
 	return s, err
 }
 
-type SuncalcMoment struct {
+type Moment struct {
 	Name  string    `json:"name"`
 	Begin time.Time `json:"begin"`
 	End   time.Time `json:"end"`
 }
 
-type SuncalcState struct {
-	Moments          []SuncalcMoment `json:"moments"`
-	MoonIllumination float64         `json:"moonillumination"`
+type State struct {
+	Moments          []Moment `json:"moments"`
+	MoonIllumination float64  `json:"moonillumination"`
 }
 
 func (s *Instance) Process(client *clients.TCP) {
@@ -420,9 +420,9 @@ func (s *Instance) Process(client *clients.TCP) {
 
 	moments := s.getMoments(now, lat, lng)
 
-	suncalc := SuncalcState{Moments: []SuncalcMoment{}}
+	suncalc := State{Moments: []Moment{}}
 	for _, m := range moments {
-		sm := SuncalcMoment{}
+		sm := Moment{}
 		sm.Name = m.title
 		sm.Begin = m.start
 		sm.End = m.end
