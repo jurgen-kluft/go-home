@@ -103,7 +103,6 @@ func main() {
 			err := client.Connect("aqi")
 			if err == nil {
 
-				// Subscribe to the presence demo channel
 				client.Subscribe("aqi/+")
 
 				for connected {
