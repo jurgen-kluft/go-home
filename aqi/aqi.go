@@ -9,26 +9,17 @@ import (
 	"time"
 
 	"github.com/emitter-io/go"
+	"github.com/jurgen-kluft/go-home/config"
 )
 
 type instance struct {
-	config *Config
+	config *config.AqiConfig
 	update time.Time
 	period time.Duration
 }
 
-type SensorState struct {
-	Domain  string    `json:"domain"`
-	Product string    `json:"product"`
-	Name    string    `json:"name"`
-	Type    string    `json:"type"`
-	Value   string    `json:"value"`
-	Time    time.Time `json:"time"`
-}
-
-func (c *instance) readConfig(jsonstr string) (*Config, error) {
-	jsonBytes := []byte(jsonstr)
-	obj, err := unmarshalConfig(jsonBytes)
+func (c *instance) readConfig(jsonstr string) (*config.AqiConfig, error) {
+	obj, err := config.AqiConfigFromJSON(jsonstr)
 	return obj, err
 }
 
@@ -66,9 +57,9 @@ func (c *instance) getResponse() (AQI float64, err error) {
 	return
 }
 
-func (c *instance) getAiqTagAndDescr(aiq float64) (level AqiLevel) {
+func (c *instance) getAiqTagAndDescr(aqi float64) (level config.AqiLevel) {
 	for _, l := range c.config.Levels {
-		if aiq < l.LessThan {
+		if aqi < l.LessThan {
 			level = l
 			return
 		}
@@ -97,7 +88,7 @@ func (c *instance) Poll() (aqiStateJSON string, err error) {
 	aqiStateJSON = ""
 	aqi, err := c.getResponse()
 	if err == nil {
-		sensor := SensorState{Domain: "sensor", Product: "weather", Name: "aqi", Type: "float", Value: fmt.Sprintf("%f", aqi), Time: time.Now()}
+		sensor := config.SensorState{Domain: "sensor", Product: "weather", Name: "aqi", Type: "float", Value: fmt.Sprintf("%f", aqi), Time: time.Now()}
 		jsonbytes, err := json.Marshal(sensor)
 		if err == nil {
 			aqiStateJSON = string(jsonbytes)
@@ -133,41 +124,42 @@ func (d *DisconnectMessage) Payload() []byte {
 func main() {
 
 	aqi := construct()
-	secret_key := ""
 
 	for {
-		for {
+		connected := true
+		for connected {
 			// Create the options with default values
-			o := emitter.NewClientOptions()
-			o.SetUsername("aqi")
+			emitterOptions := emitter.NewClientOptions()
+			emitterOptions.SetUsername("aqi")
 
 			ctx := context{}
 			ctx.inmsgs = make(chan emitter.Message)
 
 			// Set the message handler
-			o.SetOnMessageHandler(func(client emitter.Emitter, msg emitter.Message) {
+			emitterOptions.SetOnMessageHandler(func(client emitter.Emitter, msg emitter.Message) {
 				ctx.inmsgs <- msg
 			})
 
 			// Set the presence notification handler
-			o.SetOnPresenceHandler(func(_ emitter.Emitter, p emitter.PresenceEvent) {
+			emitterOptions.SetOnPresenceHandler(func(_ emitter.Emitter, p emitter.PresenceEvent) {
 				fmt.Printf("Occupancy: %v\n", p.Occupancy)
 			})
 
-			o.SetOnConnectionLostHandler(func(_ emitter.Emitter, e error) {
+			// Set the connection lost handler
+			emitterOptions.SetOnConnectionLostHandler(func(_ emitter.Emitter, e error) {
 				msg := &DisconnectMessage{}
 				ctx.inmsgs <- msg
 			})
 
 			// Create a new emitter client and connect to the broker
-			c := emitter.NewClient(o)
-			sToken := c.Connect()
+			emitterClient := emitter.NewClient(emitterOptions)
+			sToken := emitterClient.Connect()
 			if sToken.Wait() && sToken.Error() == nil {
 
 				// Subscribe to the presence demo channel
-				c.Subscribe(secret_key, "aqi/+")
+				emitterClient.Subscribe(config.SecretKey, "aqi/+")
 
-				for {
+				for connected {
 					select {
 					case msg := <-ctx.inmsgs:
 						topic := msg.Topic()
@@ -177,6 +169,8 @@ func main() {
 							if err == nil {
 								aqi.config = config
 							}
+						} else if topic == "client/disconnected" {
+							connected = false
 						}
 						break
 					case <-time.After(time.Second * 10):
@@ -184,7 +178,7 @@ func main() {
 							if aqi.shouldPoll(time.Now(), false) {
 								jsonstate, err := aqi.Poll()
 								if err == nil {
-									c.PublishWithTTL(secret_key, "sensor/weather/aqi", jsonstate, 5*60)
+									emitterClient.PublishWithTTL(config.SecretKey, "sensor/weather/aqi", jsonstate, 5*60)
 								}
 								aqi.computeNextPoll(time.Now(), err)
 							}
