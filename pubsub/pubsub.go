@@ -4,9 +4,11 @@ import (
 	"fmt"
 
 	emitter "github.com/emitter-io/go"
+	"github.com/jurgen-kluft/go-home/config"
 )
 
 type Context struct {
+	Secret string
 	InMsgs chan emitter.Message
 	Client emitter.Emitter
 }
@@ -23,6 +25,7 @@ func (d *DisconnectMessage) Payload() []byte {
 
 func New() *Context {
 	ctx := &Context{}
+	ctx.Secret = config.SecretKey
 	ctx.InMsgs = make(chan emitter.Message)
 	return ctx
 }
@@ -60,13 +63,16 @@ func (ctx *Context) Connect(username string) error {
 }
 
 func (ctx *Context) Subscribe(channel string) error {
+	ctx.Client.Subscribe(ctx.Secret, channel)
 	return nil
 }
 
 func (ctx *Context) Publish(channel string, message string) error {
+	ctx.Client.Publish(ctx.Secret, channel, message)
 	return nil
 }
 
 func (ctx *Context) PublishTTL(channel string, message string, ttl int) error {
+	ctx.Client.PublishWithTTL(ctx.Secret, channel, message, ttl)
 	return nil
 }

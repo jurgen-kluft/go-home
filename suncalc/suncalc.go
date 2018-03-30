@@ -427,3 +427,30 @@ func (s *Instance) Process(client *pubsub.Context) {
 		client.Publish("state/suncalc", string(jsonbytes))
 	}
 }
+
+func main() {
+	suncalc := &Instance{}
+	for {
+		pb := pubsub.New()
+		err := pb.Connect("suncalc")
+		if err == nil {
+			for {
+				select {
+				case msg := <-pb.InMsgs:
+					if msg.Topic() == "suncalc/config" {
+						if suncalc.config == nil {
+							suncalc.config, err = config.SuncalcConfigFromJSON(string(msg.Payload()))
+						}
+					}
+					break
+				case <-time.After(time.Minute * 5):
+					suncalc.Process(pb)
+					break
+				}
+			}
+		}
+
+		// Wait for 10 seconds before retrying
+		time.Sleep(10 * time.Second)
+	}
+}

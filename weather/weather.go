@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/adlio/darksky"
+	"github.com/jurgen-kluft/go-home/config"
 )
 
 func converFToC(fahrenheit float64) float64 {
@@ -12,7 +13,7 @@ func converFToC(fahrenheit float64) float64 {
 }
 
 type Client struct {
-	config    *Config
+	config    *config.WeatherConfig
 	location  *time.Location
 	darksky   *darksky.Client
 	latitude  float64
@@ -30,7 +31,7 @@ func New() (*Client, error) {
 
 func (c *Client) getRainDescription(rain float64) string {
 	for _, r := range c.config.Rain {
-		if r.IntensityMin <= rain && rain <= r.IntensityMax {
+		if r.Intensity.Min <= rain && rain <= r.Intensity.Max {
 			return r.Name
 		}
 	}
@@ -39,7 +40,7 @@ func (c *Client) getRainDescription(rain float64) string {
 
 func (c *Client) getCloudsDescription(clouds float64) string {
 	for _, r := range c.config.Clouds {
-		if r.Min <= clouds && clouds <= r.Max {
+		if r.Cover.Min <= clouds && clouds <= r.Cover.Max {
 			return r.Description
 		}
 	}

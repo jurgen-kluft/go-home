@@ -38,7 +38,7 @@ func (r *SuncalcConfig) ToJSON() ([]byte, error) {
 }
 
 type SuncalcConfig struct {
-	Geo      CGeo      `json:"config"`
+	Geo      Geo       `json:"config"`
 	Anglecfg []CAngles `json:"anglecfg"`
 	Moments  []CMoment `json:"moments"`
 }
@@ -49,7 +49,7 @@ type CAngles struct {
 	Set   string  `json:"set"`
 }
 
-type CGeo struct {
+type Geo struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
 }

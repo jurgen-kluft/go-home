@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nanopack/mist/clients"
+	"github.com/jurgen-kluft/go-home/config"
+	"github.com/jurgen-kluft/go-home/pubsub"
 )
 
 // HOME    is a state that happens when   NOT_AWAY > X seconds
@@ -175,37 +176,18 @@ func (p *Presence) Presence(currentTime time.Time) bool {
 	return false
 }
 
-type SensorState struct {
-	Domain  string    `json:"domain"`
-	Product string    `json:"product"`
-	Name    string    `json:"name"`
-	Type    string    `json:"type"`
-	Value   string    `json:"value"`
-	Time    time.Time `json:"time"`
-}
-
-func (p *Presence) publish(client *clients.TCP) {
+func (p *Presence) publish(client *pubsub.Context) {
 
 	for _, m := range p.members {
-		sensor := SensorState{Domain: "sensor", Product: "presence", Name: m.name, Type: "string", Value: getNameOfState(home), Time: m.current.Time}
+		sensor := config.SensorState{Domain: "sensor", Product: "presence", Name: m.name, Type: "string", Value: getNameOfState(home), Time: m.current.Time}
 		sensor.Value = getNameOfState(m.current.State)
 
 		data, err := json.Marshal(sensor)
 		if err == nil {
 			jsonstr := string(data)
-			client.Publish([]string{"sensor", "presence"}, jsonstr)
+			client.Publish(fmt.Sprintf("%s/%s/%s", sensor.Domain, sensor.Product, sensor.Name), jsonstr)
 		}
 	}
-
-}
-
-func tagsContains(tag string, tags []string) bool {
-	for _, t := range tags {
-		if t == tag {
-			return true
-		}
-	}
-	return false
 }
 
 func main() {
@@ -213,33 +195,42 @@ func main() {
 	var presence *Presence
 
 	for {
-		client, err := clients.New("127.0.0.1:1445", "authtoken.wicked")
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
+		connected := true
+		for connected {
+			client := pubsub.New()
+			err := client.Connect("presence")
+			if err == nil {
 
-		client.Ping()
-		client.Subscribe([]string{"presence"})
-		client.Publish([]string{"request", "config"}, "presence")
+				// Subscribe to the presence demo channel
+				client.Subscribe("presence/+")
 
-		for {
-			select {
-			case msg := <-client.Messages():
-				if tagsContains("config", msg.Tags) {
-					presence = New(msg.Data)
-				}
-				break
-			case <-time.After(time.Second * 10):
-				if presence != nil {
-					if presence.Presence(time.Now()) {
-						presence.publish(client)
+				for connected {
+					select {
+					case msg := <-client.InMsgs:
+						topic := msg.Topic()
+						if topic == "presence/config" {
+							if msg.Topic() == "presence/config" {
+								presence = New(string(msg.Payload()))
+							}
+						} else if topic == "client/disconnected" {
+							connected = false
+						}
+						break
+					case <-time.After(time.Second * 10):
+						if presence != nil {
+							if presence.Presence(time.Now()) {
+								presence.publish(client)
+							}
+						}
+						break
 					}
 				}
-				break
+			} else {
+				panic("Error on Client.Connect(): " + err.Error())
 			}
 		}
 
-		// Disconnect from Mist
+		// Wait for 10 seconds before retrying
+		time.Sleep(10 * time.Second)
 	}
 }

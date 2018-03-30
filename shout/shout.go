@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nanopack/mist/clients"
+	"github.com/jurgen-kluft/go-home/pubsub"
 	"github.com/nlopes/slack"
 )
 
@@ -73,32 +73,39 @@ func main() {
 	var shout *Instance
 
 	for {
-		client, err := clients.New("127.0.0.1:1445", "authtoken.wicked")
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
+		connected := true
+		for connected {
+			client := pubsub.New()
+			err := client.Connect("shout")
+			if err == nil {
 
-		client.Ping()
-		client.Subscribe([]string{"shout"})
-		client.Publish([]string{"request", "config"}, "shout")
+				// Subscribe to the presence demo channel
+				client.Subscribe("shout/+")
 
-		for {
-			select {
-			case msg := <-client.Messages():
-				if tagsContains("config", msg.Tags) {
-					shout, err = New(msg.Data)
-				} else {
-					// Is this a message to send over slack ?
-					shout.postMessage(msg.Data)
+				for connected {
+					select {
+					case msg := <-client.InMsgs:
+						topic := msg.Topic()
+						if topic == "shout/config" {
+							shout, err = New(string(msg.Payload()))
+						} else if topic == "client/disconnected" {
+							connected = false
+						} else {
+							// Is this a message to send over slack ?
+							shout.postMessage(string(msg.Payload()))
+						}
+						break
+					case <-time.After(time.Second * 10):
+
+						break
+					}
 				}
-				break
-			case <-time.After(time.Second * 60):
-
-				break
+			} else {
+				panic("Error on Client.Connect(): " + err.Error())
 			}
 		}
 
-		// Disconnect from Mist
+		// Wait for 10 seconds before retrying
+		time.Sleep(10 * time.Second)
 	}
 }
