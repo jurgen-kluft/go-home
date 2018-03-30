@@ -1,6 +1,6 @@
 {
     "name": "netgear",
-	"host": "192.168.1.3",
+	"host": "10.0.0.3",
 	"port": 5000,
 	"user": "admin",
 	"password": "*********",

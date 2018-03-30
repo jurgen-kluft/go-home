@@ -25,26 +25,6 @@ const (
 // ARRIVED is a trigger that happens when state changes from AWAY => HOME
 
 // Config is the configuration needed to call presence.New
-type Config struct {
-	Name       string  `json:"name"`
-	Host       string  `json:"host"`
-	Port       int     `json:"port"`
-	User       string  `json:"user"`
-	Password   string  `json:"password"`
-	UpdateHist int     `json:"uhist"`
-	UpdateFreq float64 `json:"ufreq"`
-	Devices    []struct {
-		Name string `json:"name"`
-		Mac  string `json:"mac"`
-	} `json:"devices"`
-}
-
-func createConfig(jsondata string) (c *Config) {
-	c = &Config{}
-	json.Unmarshal([]byte(jsondata), c)
-	return
-}
-
 // Router is the public interface with one member function to obtain devices
 type provider interface {
 	get(mac map[string]bool) error
@@ -105,9 +85,9 @@ func getNameOfState(state state) string {
 	}
 }
 
-// Home contains multiple device tracking states
+// Presence contains multiple device tracking states
 type Presence struct {
-	config        *Config
+	config        *config.PresenceConfig
 	provider      provider
 	macToIndex    map[string]int
 	macToPresence map[string]bool
@@ -118,9 +98,12 @@ type Presence struct {
 
 // New will return an instance of presence.Home
 func New(configjson string) *Presence {
-
+	config, err := config.PresenceConfigFromJSON(configjson)
+	if err != nil {
+		return nil
+	}
 	presence := &Presence{}
-	presence.config = createConfig(configjson)
+	presence.config = config
 	presence.provider = newProvider(presence.config.Name, presence.config.Host, presence.config.User, presence.config.Password)
 	presence.macToIndex = map[string]int{}
 
@@ -201,7 +184,6 @@ func main() {
 			err := client.Connect("presence")
 			if err == nil {
 
-				// Subscribe to the presence demo channel
 				client.Subscribe("presence/+")
 
 				for connected {
