@@ -8,19 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emitter-io/go"
 	"github.com/jurgen-kluft/go-home/config"
+	"github.com/jurgen-kluft/go-home/pubsub"
 )
 
 type instance struct {
 	config *config.AqiConfig
 	update time.Time
 	period time.Duration
-}
-
-func (c *instance) readConfig(jsonstr string) (*config.AqiConfig, error) {
-	obj, err := config.AqiConfigFromJSON(jsonstr)
-	return obj, err
 }
 
 func construct() (c *instance) {
@@ -97,30 +92,6 @@ func (c *instance) Poll() (aqiStateJSON string, err error) {
 	return aqiStateJSON, err
 }
 
-func strContains(tag string, tags []string) bool {
-	for _, t := range tags {
-		if t == tag {
-			return true
-		}
-	}
-	return false
-}
-
-type context struct {
-	inmsgs chan emitter.Message
-	inpres chan emitter.PresenceEvent
-}
-
-type DisconnectMessage struct {
-}
-
-func (d *DisconnectMessage) Topic() string {
-	return "client/disconnected"
-}
-func (d *DisconnectMessage) Payload() []byte {
-	return []byte{}
-}
-
 func main() {
 
 	aqi := construct()
@@ -128,44 +99,20 @@ func main() {
 	for {
 		connected := true
 		for connected {
-			// Create the options with default values
-			emitterOptions := emitter.NewClientOptions()
-			emitterOptions.SetUsername("aqi")
-
-			ctx := context{}
-			ctx.inmsgs = make(chan emitter.Message)
-
-			// Set the message handler
-			emitterOptions.SetOnMessageHandler(func(client emitter.Emitter, msg emitter.Message) {
-				ctx.inmsgs <- msg
-			})
-
-			// Set the presence notification handler
-			emitterOptions.SetOnPresenceHandler(func(_ emitter.Emitter, p emitter.PresenceEvent) {
-				fmt.Printf("Occupancy: %v\n", p.Occupancy)
-			})
-
-			// Set the connection lost handler
-			emitterOptions.SetOnConnectionLostHandler(func(_ emitter.Emitter, e error) {
-				msg := &DisconnectMessage{}
-				ctx.inmsgs <- msg
-			})
-
-			// Create a new emitter client and connect to the broker
-			emitterClient := emitter.NewClient(emitterOptions)
-			sToken := emitterClient.Connect()
-			if sToken.Wait() && sToken.Error() == nil {
+			client := pubsub.New()
+			err := client.Connect("aqi")
+			if err == nil {
 
 				// Subscribe to the presence demo channel
-				emitterClient.Subscribe(config.SecretKey, "aqi/+")
+				client.Subscribe("aqi/+")
 
 				for connected {
 					select {
-					case msg := <-ctx.inmsgs:
+					case msg := <-client.InMsgs:
 						topic := msg.Topic()
 						if topic == "aqi/config" {
 							jsonmsg := string(msg.Payload())
-							config, err := aqi.readConfig(jsonmsg)
+							config, err := config.AqiConfigFromJSON(jsonmsg)
 							if err == nil {
 								aqi.config = config
 							}
@@ -178,7 +125,7 @@ func main() {
 							if aqi.shouldPoll(time.Now(), false) {
 								jsonstate, err := aqi.Poll()
 								if err == nil {
-									emitterClient.PublishWithTTL(config.SecretKey, "sensor/weather/aqi", jsonstate, 5*60)
+									client.PublishTTL("sensor/weather/aqi", jsonstate, 5*60)
 								}
 								aqi.computeNextPoll(time.Now(), err)
 							}
@@ -188,7 +135,7 @@ func main() {
 					}
 				}
 			} else {
-				panic("Error on Client.Connect(): " + sToken.Error().Error())
+				panic("Error on Client.Connect(): " + err.Error())
 			}
 		}
 

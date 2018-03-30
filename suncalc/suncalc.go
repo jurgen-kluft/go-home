@@ -7,7 +7,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/nanopack/mist/clients"
+	"github.com/jurgen-kluft/go-home/config"
+	"github.com/jurgen-kluft/go-home/pubsub"
 )
 
 const (
@@ -386,43 +387,32 @@ func getMoonTimes(date time.Time, lat float64, lng float64, inUTC bool) (moonris
 }
 
 type Instance struct {
-	config *Config
+	config *config.SuncalcConfig
 }
 
 func New(jsonstr string) (*Instance, error) {
 	s := &Instance{}
 
-	config, err := ConfigFromJSON(jsonstr)
+	config, err := config.SuncalcConfigFromJSON(jsonstr)
 	if err == nil {
 		s.config = config
 	}
 	return s, err
 }
 
-type Moment struct {
-	Name  string    `json:"name"`
-	Begin time.Time `json:"begin"`
-	End   time.Time `json:"end"`
-}
-
-type State struct {
-	Moments          []Moment `json:"moments"`
-	MoonIllumination float64  `json:"moonillumination"`
-}
-
-func (s *Instance) Process(client *clients.TCP) {
+func (s *Instance) Process(client *pubsub.Context) {
 
 	now := time.Now()
 	now = time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, time.Local)
 
-	lat := s.config.Config.Latitude
-	lng := s.config.Config.Longitude
+	lat := s.config.Geo.Latitude
+	lng := s.config.Geo.Longitude
 
 	moments := s.getMoments(now, lat, lng)
 
-	suncalc := State{Moments: []Moment{}}
+	suncalc := config.SuncalcState{Moments: []config.SuncalcMoment{}}
 	for _, m := range moments {
-		sm := Moment{}
+		sm := config.SuncalcMoment{}
 		sm.Name = m.title
 		sm.Begin = m.start
 		sm.End = m.end
@@ -434,6 +424,6 @@ func (s *Instance) Process(client *clients.TCP) {
 
 	jsonbytes, err := json.Marshal(suncalc)
 	if err == nil {
-		client.Publish([]string{"suncalc", "state"}, string(jsonbytes))
+		client.Publish("state/suncalc", string(jsonbytes))
 	}
 }

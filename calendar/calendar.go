@@ -6,33 +6,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jurgen-kluft/go-home/config"
+	"github.com/jurgen-kluft/go-home/pubsub"
 	"github.com/jurgen-kluft/go-icloud-calendar"
-	"github.com/nanopack/mist/clients"
 )
 
 // Calendar ...
 type Calendar struct {
-	config       *Config
-	sensors      map[string]Csensor
-	sensorStates map[string]*SensorState
+	config       *config.CalendarConfig
+	sensors      map[string]config.Csensor
+	sensorStates map[string]*config.SensorState
 	cals         []*icalendar.Calendar
 	update       time.Time
-}
-
-// SensorState ...
-type SensorState struct {
-	Domain  string    `json:"domain"`
-	Product string    `json:"product"`
-	Name    string    `json:"name"`
-	Type    string    `json:"type"`
-	Value   string    `json:"value"`
-	Time    time.Time `json:"time"`
-}
-
-func (c *Calendar) readConfig(jsonstr string) (*Config, error) {
-	jsonBytes := []byte(jsonstr)
-	config, err := configFromJSON(jsonBytes)
-	return config, err
 }
 
 // New  ... create a new Calendar from the given JSON configuration
@@ -40,9 +25,9 @@ func New(jsonstr string) (*Calendar, error) {
 	var err error
 
 	c := &Calendar{}
-	c.sensors = map[string]Csensor{}
-	c.sensorStates = map[string]*SensorState{}
-	c.config, err = c.readConfig(jsonstr)
+	c.sensors = map[string]config.Csensor{}
+	c.sensorStates = map[string]*config.SensorState{}
+	c.config, err = config.CalendarConfigFromJSON(jsonstr)
 	if err != nil {
 		fmt.Printf("ERROR: '%s'\n", err.Error())
 	}
@@ -50,7 +35,7 @@ func New(jsonstr string) (*Calendar, error) {
 	for _, sn := range c.config.Sensors {
 		ekey := strings.ToLower(sn.Domain) + ":" + strings.ToLower(sn.Product) + ":" + strings.ToLower(sn.Name)
 		c.sensors[ekey] = sn
-		sensor := &SensorState{Domain: sn.Domain, Product: sn.Product, Name: sn.Name, Type: sn.Type, Value: sn.State, Time: time.Now()}
+		sensor := &config.SensorState{Domain: sn.Domain, Product: sn.Product, Name: sn.Name, Type: sn.Type, Value: sn.State, Time: time.Now()}
 		c.sensorStates[ekey] = sensor
 	}
 
@@ -174,8 +159,8 @@ func weekOrWeekEndStartEnd(now time.Time) (weekend bool, westart, weend, wdstart
 
 func (c *Calendar) applyRulesToSensorStates() {
 	for _, p := range c.config.Rules {
-		var sensor *SensorState
-		var ifthen *SensorState
+		var sensor *config.SensorState
+		var ifthen *config.SensorState
 		var exists bool
 		sensor, exists = c.sensorStates[p.Key]
 		if exists {
@@ -189,15 +174,15 @@ func (c *Calendar) applyRulesToSensorStates() {
 	}
 }
 
-func publishSensorState(s *SensorState, client *clients.TCP) {
+func publishSensorState(s *config.SensorState, client *pubsub.Context) {
 	jsonbytes, err := json.Marshal(s)
 	if err == nil {
-		client.Publish([]string{s.Domain, s.Product, s.Name}, string(jsonbytes))
+		client.Publish(fmt.Sprintf("%s/%s/%s", s.Domain, s.Product, s.Name), string(jsonbytes))
 	}
 }
 
 // Process will update 'events' from the calendar
-func (c *Calendar) Process(client *clients.TCP) {
+func (c *Calendar) Process(client *pubsub.Context) {
 	var err error
 	now := time.Now()
 
@@ -216,7 +201,7 @@ func (c *Calendar) Process(client *clients.TCP) {
 
 	// Other general states
 	weekend, _, _, _, _ := weekOrWeekEndStartEnd(now)
-	sensor := &SensorState{Domain: "sensor", Product: "calendar", Name: "weekend", Type: "bool", Value: fmt.Sprintf("%v", weekend), Time: time.Now()}
+	sensor := &config.SensorState{Domain: "sensor", Product: "calendar", Name: "weekend", Type: "bool", Value: fmt.Sprintf("%v", weekend), Time: time.Now()}
 	publishSensorState(sensor, client)
 
 	// Update sensors and apply configured rules to sensors
@@ -231,43 +216,49 @@ func (c *Calendar) Process(client *clients.TCP) {
 	}
 }
 
-func tagsContains(tag string, tags []string) bool {
-	for _, t := range tags {
-		if t == tag {
-			return true
-		}
-	}
-	return false
-}
-
 func main() {
 
 	var calendar *Calendar
 
 	for {
-		client, err := clients.New("127.0.0.1:1445", "authtoken.wicked")
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
+		connected := true
+		for connected {
+			client := pubsub.New()
+			err := client.Connect("calendar")
+			if err == nil {
 
-		client.Ping()
-		client.Subscribe([]string{"calendar"})
-		client.Publish([]string{"request", "config"}, "calendar")
+				// Subscribe to the presence demo channel
+				client.Subscribe("calendar/+")
 
-		for {
-			select {
-			case msg := <-client.Messages():
-				if tagsContains("config", msg.Tags) {
-					calendar, err = New(msg.Data)
+				for connected {
+					select {
+					case msg := <-client.InMsgs:
+						topic := msg.Topic()
+						if topic == "calendar/config" {
+							jsonmsg := string(msg.Payload())
+							calendar, err = New(jsonmsg)
+							if err != nil {
+								calendar = nil
+							}
+						} else if topic == "client/disconnected" {
+							connected = false
+						}
+						break
+					case <-time.After(time.Second * 60):
+						if calendar != nil && calendar.config != nil {
+							calendar.Process(client)
+						}
+						break
+
+					}
 				}
-				break
-			case <-time.After(time.Second * 60):
-				if calendar != nil && calendar.config != nil {
-					calendar.Process(client)
-				}
-				break
+			} else {
+				panic("Error on Client.Connect(): " + err.Error())
 			}
 		}
+
+		// Wait for 10 seconds before retrying
+		time.Sleep(10 * time.Second)
 	}
+
 }
