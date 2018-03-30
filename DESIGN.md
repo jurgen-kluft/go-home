@@ -1,40 +1,54 @@
-# Mist subscriptions
+# Emitter.IO
 
-Why not replace the current tag matching with something more flexible, like:
+Been looking into emitter.io, a high-performance pub/sub server that seems a lot more suitable
+to our situation. It also uses MQTT as the message protocol which makes it interesting from
+a IoT point of view.
 
-Subscribe: messages tagged with: ``(('hue' OR 'flux') AND state') OR 'lighting'``  
+An emitter client can subscribe to channels, so generally for all of our processes they should
+subscribe to their config channel, state-request channel.
 
-``flux hue | state & lighting |``
+## Config Emitter Client
+Listen to presence messages, when a subscriber registers we can send him the configuration.
+Also when we detect that the configuration on disk has changed, we can hot-load it and send
+it to the associated channel.
 
-Subscribe: messages tagged with: ``('xiaomi' AND state') OR 'xiaomi'``
+## Presence Emitter Client
 
-``xiaomi state & xiaomi |``
+presenceEmitterClient.Subscribe(secret_key, "config/presence") \
+presenceEmitterClient.Subscribe(secret_key, "request/state/presence")
 
+## Automation Emitter Client
 
-# Mist client connections
-
-  Clients can connect and disconnect at any time, but a client might need state from others that might not have connected yet.
-  We do have the message to request a list of clients from the server.
+// Subscribe to all state messages \
+automationEmitterClient.Subscribe(secret_key, "state/+")
 
 
 # Log
-  Subscribe: messages tagged with: ``'log'``
+  Subscribe: 
+  * ``Subscribe(secret_key, "log/+")``
+
   Action: Log messages to console
 
 # Presence
-  Subscribe: messages tagged with ``'presence'``
+  Subscribe: 
+  * ``Subscribe(secret_key, "presence/+")``
 
   ```
   {
       "type": "config"
   }
+  {
+      "type": "pull"
+  }
     
   ```
-  Publish: messages tagged with: ``'presence'``
+  Publish: 
+
+  * ``Publish(secret_key, 'state/presence', json)``
   
   ```
   {
-      "type": "presence"
+      "type": "state/presence"
       "devices": [
           {
               "name": "A mobile phone",
@@ -50,34 +64,45 @@ Subscribe: messages tagged with: ``('xiaomi' AND state') OR 'xiaomi'``
   ```
 
 # Flux
-  Subscribe: messages tagged with: 'flux' OR (('suncalc' OR 'weather') AND 'state')
+  Subscribe: 
+  * ``Subscribe(secret_key, "flux/+")``
+  * ``Subscribe(secret_key, "state/sensor/calendar/season")``
+  * ``Subscribe(secret_key, "state/sensor/calendar/tod")``
+  * ``Subscribe(secret_key, "state/suncalc")``
+  * ``Subscribe(secret_key, "state/weather")``
 
-  Publish: messages tagged with: ``'flux', 'state'``
+
+  Publish: 
+  * ``Publish(secret_key, 'state/flux')``
   
   ```
   {
-      "type": "flux"
+      "type": "state/flux"
       "ct": 100.0
       "bri": 100.0
   }
   ```
 
 # AQI
-  Subscribe: messages tagged with: ``'aqi'``
+  Subscribe: 
+  * ``Subscribe(secret_key, "aqi/+")``
 
-  Publish: messages tagged with: 'aqi-state'
+  Publish: 
+  * ``Publish(secret_key, 'state/aqi')``
   
   ```
   {
-      "type": "aqi"
+      "type": "state/aqi"
       "pm2.5": 100.0
   }
   ```
 
 # Suncalc
-  Subscribe: messages tagged with: ``'suncalc'``
+  Subscribe: 
+  * ``Subscribe(secret_key, "suncalc/+")``
 
-  Publish: messages tagged with: ``'suncalc', 'state'``
+  Publish: 
+  * ``Publish(secret_key, 'state/suncalc')``
   
   ```
   {
@@ -90,9 +115,11 @@ Subscribe: messages tagged with: ``('xiaomi' AND state') OR 'xiaomi'``
   ```
 
 # TimeOfDay
-  Subscribe: messages tagged with: ``'timeofday'``
+  Subscribe:
+  * ``Subscribe(secret_key, "timeofday/+")``
 
-  Publish: messages tagged with: ``'timeofday', 'state'``
+  Publish: 
+  * ``Publish(secret_key, 'state/timeofday')``
   
   ```
   {
@@ -106,21 +133,35 @@ Subscribe: messages tagged with: ``('xiaomi' AND state') OR 'xiaomi'``
 
 
 # Lighting
-  Subscribe: messages tagged with: ``(('hue' OR 'yee' OR 'flux' OR 'weather') AND state') OR 'lighting'``
+  Subscribe: 
+  * ``Subscribe(secret_key, "lighting/+")``
+  * ``Subscribe(secret_key, "state/light/+")``
+  * ``Subscribe(secret_key, "state/flux")``
 
   Action: Turn On/Off, Set Ct/Bri
 
 
 # Xiaomi Aqara
-  Subscribe: messages tagged with: ``'xiaomi'``
+  Subscribe: 
+  * ``Subscribe(secret_key, "xiaomi/+")``
 
+  Publish:
+  * ``Publish(secret_key, 'state/xiaomi/wireless-switch/id')``
+  * ``Publish(secret_key, 'state/xiaomi/motion-sensor/id')``
+  * ``Publish(secret_key, 'state/xiaomi/wireddualwallswitch/id')``
 
 # Automation
-  Subscribe: messages tagged with: ``'state'``
+  Subscribe: 
+  * ``Subscribe(secret_key, "state/presence")``
+  * ``Subscribe(secret_key, "state/sensor/calendar/jennifer")``
+  * ``Subscribe(secret_key, "state/sensor/calendar/sophia")``
+  * ``Subscribe(secret_key, "state/sensor/calendar/parents")``
+  * ``Subscribe(secret_key, "state/sensor/calendar/alarm")``
+  * ``Subscribe(secret_key, "state/sensor/calendar/tod")``
+  * ``Subscribe(secret_key, "state/xiaomi/+/+")``
 
-  Receive events from:
-  - Xiaomi Aqara WirelessSwitch
-  - Xiaomi Aqara Motion Sensor
-  - Calendar
-  - 
+  Publish:
+  * ``Publish(secret_key, 'state/light/hue')``
+  * ``Publish(secret_key, 'state/light/yee')``
+  * ``Publish(secret_key, 'state//hue')``
 
