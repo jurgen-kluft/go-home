@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nanopack/mist/clients"
+	"github.com/emitter-io/go"
 )
 
 type instance struct {
@@ -106,7 +106,7 @@ func (c *instance) Poll() (aqiStateJSON string, err error) {
 	return aqiStateJSON, err
 }
 
-func tagsContains(tag string, tags []string) bool {
+func strContains(tag string, tags []string) bool {
 	for _, t := range tags {
 		if t == tag {
 			return true
@@ -115,42 +115,90 @@ func tagsContains(tag string, tags []string) bool {
 	return false
 }
 
+type context struct {
+	inmsgs chan emitter.Message
+	inpres chan emitter.PresenceEvent
+}
+
+type DisconnectMessage struct {
+}
+
+func (d *DisconnectMessage) Topic() string {
+	return "client/disconnected"
+}
+func (d *DisconnectMessage) Payload() []byte {
+	return []byte{}
+}
+
 func main() {
 
 	aqi := construct()
+	secret_key := ""
 
 	for {
-		client, err := clients.New("127.0.0.1:1445", "authtoken.wicked")
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-
-		client.Ping()
-		client.Subscribe([]string{"aqi"})
-		client.Publish([]string{"request", "config"}, "aqi")
-
 		for {
-			select {
-			case msg := <-client.Messages():
-				if tagsContains("config", msg.Tags) {
-					aqi.config, err = aqi.readConfig(msg.Data)
-				}
-				break
-			case <-time.After(time.Second * 10):
-				if aqi != nil && aqi.config != nil {
-					if aqi.shouldPoll(time.Now(), false) {
-						jsonstate, err := aqi.Poll()
-						if err == nil {
-							client.Publish([]string{"sensor", "weather", "aqi"}, jsonstate)
+			// Create the options with default values
+			o := emitter.NewClientOptions()
+			o.SetUsername("aqi")
+
+			ctx := context{}
+			ctx.inmsgs = make(chan emitter.Message)
+
+			// Set the message handler
+			o.SetOnMessageHandler(func(client emitter.Emitter, msg emitter.Message) {
+				ctx.inmsgs <- msg
+			})
+
+			// Set the presence notification handler
+			o.SetOnPresenceHandler(func(_ emitter.Emitter, p emitter.PresenceEvent) {
+				fmt.Printf("Occupancy: %v\n", p.Occupancy)
+			})
+
+			o.SetOnConnectionLostHandler(func(_ emitter.Emitter, e error) {
+				msg := &DisconnectMessage{}
+				ctx.inmsgs <- msg
+			})
+
+			// Create a new emitter client and connect to the broker
+			c := emitter.NewClient(o)
+			sToken := c.Connect()
+			if sToken.Wait() && sToken.Error() == nil {
+
+				// Subscribe to the presence demo channel
+				c.Subscribe(secret_key, "aqi/+")
+
+				for {
+					select {
+					case msg := <-ctx.inmsgs:
+						topic := msg.Topic()
+						if topic == "aqi/config" {
+							jsonmsg := string(msg.Payload())
+							config, err := aqi.readConfig(jsonmsg)
+							if err == nil {
+								aqi.config = config
+							}
 						}
-						aqi.computeNextPoll(time.Now(), err)
+						break
+					case <-time.After(time.Second * 10):
+						if aqi != nil && aqi.config != nil {
+							if aqi.shouldPoll(time.Now(), false) {
+								jsonstate, err := aqi.Poll()
+								if err == nil {
+									c.PublishWithTTL(secret_key, "sensor/weather/aqi", jsonstate, 5*60)
+								}
+								aqi.computeNextPoll(time.Now(), err)
+							}
+						}
+						break
+
 					}
 				}
-				break
+			} else {
+				panic("Error on Client.Connect(): " + sToken.Error().Error())
 			}
 		}
 
-		// Disconnect from Mist
+		// Wait for 10 seconds before retrying
+		time.Sleep(10 * time.Second)
 	}
 }

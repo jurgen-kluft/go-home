@@ -14,13 +14,13 @@ it to the associated channel.
 
 ## Presence Emitter Client
 
-presenceEmitterClient.Subscribe(secret_key, "config/presence") \
-presenceEmitterClient.Subscribe(secret_key, "request/state/presence")
+``presenceEmitterClient.Subscribe(secret_key, "config/presence")`` \
+``presenceEmitterClient.Subscribe(secret_key, "request/state/presence")``
 
 ## Automation Emitter Client
 
-// Subscribe to all state messages \
-automationEmitterClient.Subscribe(secret_key, "state/+")
+Subscribe to all state messages \
+``automationEmitterClient.Subscribe(secret_key, "state/+")``
 
 
 # Log
@@ -88,7 +88,7 @@ automationEmitterClient.Subscribe(secret_key, "state/+")
   * ``Subscribe(secret_key, "aqi/+")``
 
   Publish: 
-  * ``Publish(secret_key, 'state/aqi')``
+  * ``Publish(secret_key, 'sensor/weather/aqi')``
   
   ```
   {
