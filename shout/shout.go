@@ -5,25 +5,21 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jurgen-kluft/go-home/config"
 	"github.com/jurgen-kluft/go-home/pubsub"
 	"github.com/nlopes/slack"
 )
 
 // Instance is our instant-messenger instance (currently Slack)
 type Instance struct {
-	config *Config
+	config *config.ShoutConfig
 	slack  *slack.Client
-}
-
-type Config struct {
-	Key string `json:"key"`
 }
 
 // New creates a new instance of Slack
 func New(jsonstr string) (*Instance, error) {
 	shout := &Instance{}
-	config := &Config{}
-	err := json.Unmarshal([]byte(jsonstr), config)
+	config, err := config.ShoutConfigFromJSON(jsonstr)
 	if err == nil {
 		shout.config = config
 		shout.slack = slack.New(config.Key)
@@ -31,18 +27,9 @@ func New(jsonstr string) (*Instance, error) {
 	return shout, err
 }
 
-type Msg struct {
-	Channel  string `json:"channel"`
-	Username string `json:"username"`
-	Message  string `json:"message"`
-	Pretext  string `json:"pretext"`
-	Prebody  string `json:"prebody"`
-}
-
-// PostMessage posts a message to a channel
+// postMessage posts a message to a channel
 func (s *Instance) postMessage(jsonmsg string) {
-	var m Msg
-	err := json.Unmarshal([]byte(jsonmsg), &m)
+	m, err := config.ShoutMsgFromJSON(jsonmsg)
 	if err == nil {
 		params := slack.PostMessageParameters{}
 		params.Username = m.Username
@@ -57,15 +44,6 @@ func (s *Instance) postMessage(jsonmsg string) {
 		}
 		//fmt.Printf("Message successfully sent to channel %s at %s\n", channel, timestamp)
 	}
-}
-
-func tagsContains(tag string, tags []string) bool {
-	for _, t := range tags {
-		if t == tag {
-			return true
-		}
-	}
-	return false
 }
 
 func main() {
@@ -90,7 +68,7 @@ func main() {
 							shout, err = New(string(msg.Payload()))
 						} else if topic == "client/disconnected" {
 							connected = false
-						} else {
+						} else if shout != nil {
 							// Is this a message to send over slack ?
 							shout.postMessage(string(msg.Payload()))
 						}

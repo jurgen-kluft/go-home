@@ -2,6 +2,7 @@ package pubsub
 
 import (
 	"fmt"
+	"time"
 
 	emitter "github.com/emitter-io/go"
 	"github.com/jurgen-kluft/go-home/config"
@@ -25,7 +26,7 @@ func (d *DisconnectMessage) Payload() []byte {
 
 func New() *Context {
 	ctx := &Context{}
-	ctx.Secret = config.SecretKey
+	ctx.Secret = config.EmitterSecretKey
 	ctx.InMsgs = make(chan emitter.Message)
 	return ctx
 }
@@ -51,19 +52,28 @@ func (ctx *Context) Connect(username string) error {
 		ctx.InMsgs <- msg
 	})
 
+	options.AddBroker("tcp://10.0.0.22:8080")
+
 	// Create a new emitter client and connect to the broker
 	ctx.Client = emitter.NewClient(options)
 	sToken := ctx.Client.Connect()
-
-	if sToken.Wait() && sToken.Error() == nil {
-		return nil
+	if sToken.Error() != nil {
+		return sToken.Error()
 	}
 
-	return sToken.Error()
+	if !sToken.WaitTimeout(time.Second * 5) {
+		return fmt.Errorf("Timeout when connecting to emitter.io server")
+	}
+
+	if ctx.Client.IsConnected() == false {
+		return fmt.Errorf("Unknown error when connecting to emitter.io server")
+	}
+
+	return nil
 }
 
-func (ctx *Context) Subscribe(channel string) error {
-	ctx.Client.Subscribe(ctx.Secret, channel)
+func (ctx *Context) Subscribe(key string, channel string) error {
+	ctx.Client.Subscribe(key, channel)
 	return nil
 }
 

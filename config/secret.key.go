@@ -1,6 +1,11 @@
 package config
 
 var (
-	// SecretKey is the generic key used for emitter.io clients
-	SecretKey string = "D6D72EA7672C12877823443B9B8E7"
+	EmitterLicense   string = "zs39gyr2ThwMwfa3oDLPRWHrAoUgVMApAAAAAAAAAAI"
+	EmitterSecretKey string = "h3C7sXwQy0GO0FBNCMPxjoxa7vdftXkv"
+
+	EmitterConfigChannelKey      string = "QcrrTb0B4Ta43CjR1dqHalXExdDF0NwX"
+	EmitterSensorLightChannelKey string = "FxxgRLQuq-w5K7tHFcjO-IMPWTEJgp_D"
+
+	XiaomiStateChannelKey string = ""
 )

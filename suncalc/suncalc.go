@@ -443,7 +443,7 @@ func main() {
 						}
 					}
 					break
-				case <-time.After(time.Minute * 5):
+				case <-time.After(time.Minute * 1):
 					suncalc.Process(pb)
 					break
 				}
