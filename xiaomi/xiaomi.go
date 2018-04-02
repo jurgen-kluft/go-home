@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
-	"github.com/bingbaba/tool/color"
 	"github.com/jurgen-kluft/go-home/config"
 	"github.com/jurgen-kluft/go-home/pubsub"
 	"github.com/xuebing1110/migateway"
@@ -27,34 +27,22 @@ import (
 type instance struct {
 	key    string
 	config *config.HueConfig
+	aqara  *migateway.AqaraManager
 }
 
 func main() {
-	huelighting := &instance{}
+	xiaomi := &instance{}
 
 	//gatewayIP := "10.0.0.78"
-	gatewayKey := "3C8FA0275CAF4567"
+	xiaomi.key = "3C8FA0275CAF4567"
 
-	manager, err := migateway.NewAqaraManager(nil)
+	aqara, err := migateway.NewAqaraManager(nil)
 	if err != nil {
 		panic(err)
 	}
 
-	manager.SetAESKey(gatewayKey)
-
-	gateway := manager.GateWay
-	for _, color := range color.COLOR_ALL {
-		err = gateway.ChangeColor(color)
-		if err != nil {
-			panic(err)
-		}
-		time.Sleep(time.Second)
-	}
-
-	err = gateway.Flashing(color.COLOR_RED)
-	if err != nil {
-		panic(err)
-	}
+	xiaomi.aqara = aqara
+	xiaomi.aqara.SetAESKey(xiaomi.key)
 
 	for {
 		client := pubsub.New()
@@ -67,12 +55,29 @@ func main() {
 			for {
 				select {
 				case msg := <-client.InMsgs:
-					if msg.Topic() == "xiaomi/config" {
-						huelighting.config, err = config.HueConfigFromJSON(string(msg.Payload()))
-					} else if msg.Topic() == "xiaomi/state" {
+					topic := msg.Topic()
+					if topic == "xiaomi/config" {
+						xiaomi.config, err = config.XiaomiConfigFromJSON(string(msg.Payload()))
+					} else if strings.HasPrefix(topic, "xiaomi/state") {
 						// state object, json object
+						var object string
+						fmt.Sscanf(topic, "xiaomi/state/%s", object)
+
 					}
 					break
+
+				// We would like to receive state messages from the Gateway on a channel here
+				// so that we do not have to poll anything and just push it on a emitter channel.
+				// SensorState
+				// {
+				//   "domain": "xiaomi"
+				//   "product": "motion" / "switch" / "plug"
+				//   "name": "A98C84E"
+				//   "type": "string"
+				//   "value": "on/off"
+				//   "time": "Tue Apr 15 18:00:15 2014"
+				// }
+
 				case <-time.After(time.Second * 10):
 					// do something if messages are taking too long
 					// or if we haven't received enough state info.
@@ -88,4 +93,8 @@ func main() {
 		fmt.Println("Connecting to emitter (retry every 10 seconds)")
 		time.Sleep(10 * time.Second)
 	}
+}
+
+func (p *instance) handle(object string) {
+
 }
