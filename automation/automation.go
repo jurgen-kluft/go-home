@@ -8,11 +8,13 @@ package automation
 // -
 
 import (
-	"github.com/jurgen-kluft/go-home/pubsub"
 	"time"
+
+	"github.com/jurgen-kluft/go-home/pubsub"
 )
 
 func main() {
+	auto := &automation{}
 
 	for {
 		connected := true
@@ -21,6 +23,7 @@ func main() {
 			err := client.Connect("automation")
 			if err == nil {
 
+				client.Subscribe("config/automation")
 				client.Subscribe("state/+")
 
 				for connected {
@@ -31,9 +34,10 @@ func main() {
 						} else if topic == "client/disconnected" {
 							connected = false
 						}
-						break
-					case <-time.After(time.Second * 1):
-						break
+
+					case <-time.After(time.Second * 20):
+						auto.HandleTime(time.Now())
+
 					}
 				}
 			} else {
@@ -44,4 +48,171 @@ func main() {
 		// Wait for 10 seconds before retrying
 		time.Sleep(10 * time.Second)
 	}
+}
+
+type automation struct {
+	sensors    map[string]string
+	presence   map[string]bool
+	timeofday  string
+	lastmotion time.Time
+}
+
+func (a *automation) FamilyIsHome() bool {
+	// This can be a lot more complex:
+
+	// Motion sensors will mark if people are home and this will be reset when the front-door openened.
+	// When presence shows no devices on the network but there is still motion detected we still should
+	// regard that family is at home.
+	if len(a.presence) == 0 {
+		if time.Now().Sub(a.lastmotion) > (time.Minute * 12) {
+			return false
+		}
+	}
+
+	return len(a.presence) > 0
+}
+
+func (a *automation) IsSensor(name string, value string) bool {
+	v, e := a.sensors[name]
+	return e && (v == value)
+}
+
+func (a *automation) TurnOnLight(name string) {
+
+}
+func (a *automation) TurnOffLight(name string) {
+
+}
+func (a *automation) ToggleLight(name string) {
+
+}
+func (a *automation) ToggleSwitch(name string) {
+
+}
+
+func (a *automation) HandleEvent(domain string, product string, name string, valuetype string, value string) {
+	if domain == "sensor" && product == "calendar" && name == "tod" {
+		a.HandleTimeOfDay(value)
+	}
+}
+
+func (a *automation) HandleTimeOfDay(to string) {
+	a.timeofday = to
+	switch to {
+	case "morning":
+		a.TurnOffLight("Kitchen")
+		a.TurnOffLight("Living Room")
+	case "lunch":
+		if a.FamilyIsHome() {
+			a.TurnOnLight("Kitchen")
+		}
+	case "bedtime":
+		if a.FamilyIsHome() {
+			if a.IsSensor("sensor.calendar.jennifer", "school") {
+				a.TurnOnLight("Jennifer")
+			}
+			if a.IsSensor("sensor.calendar.sophia", "school") {
+				a.TurnOnLight("Sophia")
+			}
+		}
+	case "sleeptime":
+		if a.FamilyIsHome() {
+			a.TurnOnLight("Bedroom")
+		}
+	case "night":
+		a.TurnOffLight("Kitchen")
+		a.TurnOffLight("Living Room")
+		a.TurnOffLight("Bedroom")
+		a.TurnOffLight("Jennifer")
+		a.TurnOffLight("Sophia")
+		a.TurnOffLight("Front door hall light")
+	}
+}
+
+func (a *automation) HandleSensor(product string, name string, valuetype string, value string) {
+	if product == "xiaomi" && name == "motion_sensor_158d0001a9113b" {
+		if value == "on" {
+			a.lastmotion = time.Now() // Update the time we last detected motion
+
+			if a.timeofday == "breakfast" {
+				a.TurnOnLight("Kitchen")
+				a.TurnOnLight("Living Room")
+			}
+		}
+	}
+}
+
+func (a *automation) HandleState(product string, name string, valuetype string, value string) {
+	if product == "xiaomi" && name == "switch_158d00015db32c" {
+		if value == "double click" {
+			a.ToggleLight("Bedroom")
+		}
+		if value == "single click" {
+			a.ToggleSwitch("wall_switch_left_158d00016da5f5")
+		}
+		if value == "press release" {
+			a.ToggleSwitch("plug_158d00017ca3f2")
+		}
+	} else if product == "xiaomi" && name == "switch_158d00018dc863" {
+		if value == "single click" {
+			a.ToggleLight("Sophia")
+		}
+	}
+}
+
+func (a *automation) HandlePresence(name string, value string) {
+	if value == "away" {
+		delete(a.presence, name)
+		leaving := (len(a.presence) == 0)
+		if leaving {
+			a.HandlePresenceLeaving()
+		}
+	} else {
+		arriving := (len(a.presence) == 0)
+		a.presence[name] = true
+		if arriving {
+			a.HandlePresenceArriving()
+		}
+	}
+}
+func (a *automation) HandleSwitch(name string, value string) {
+
+}
+
+func (a *automation) HandlePresenceLeaving() {
+
+}
+
+func (a *automation) HandlePresenceArriving() {
+	// Depending on time-of-day
+	// Turn on Kitchen
+	// Turn on Living-Room
+
+}
+
+func (a *automation) HandleTime(now time.Time) {
+	if a.IsSensor("sensor.calendar.jennifer", "school") {
+		if now.Hour() == 6 && now.Minute() == 20 {
+			a.TurnOnLight("Bedroom")
+		}
+		if now.Hour() == 6 && now.Minute() == 30 {
+			a.TurnOnLight("Jennifer")
+		}
+	}
+	if a.IsSensor("sensor.calendar.sophia", "school") {
+		if now.Hour() == 7 && now.Minute() == 10 {
+			a.TurnOnLight("Bedroom")
+		}
+		if now.Hour() == 7 && now.Minute() == 20 {
+			a.TurnOnLight("Sophia")
+		}
+	}
+	if a.IsSensor("sensor.calendar.parents", "work") {
+		if !a.IsSensor("sensor.calendar.jennifer", "school") && !a.IsSensor("sensor.calendar.sophia", "school") {
+			if now.Hour() == 7 && now.Minute() == 45 {
+				a.TurnOnLight("Bedroom")
+			}
+		}
+	}
+
 }

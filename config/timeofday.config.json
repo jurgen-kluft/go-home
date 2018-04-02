@@ -1,71 +1,105 @@
 {
-    "UpdateEvery": "300",
-    "TimeOfDay": [
+    "configurations": [
         {
-            "name": "SUNRISE",
-            "start": 0:00,
-            "end": 0:30
-            "wnd": 0:30
+            "tag": "normal",
+            "moments": [
+                {
+                    "name": "night",
+                    "start": "00:00:00",
+                    "end": "05:45:00"
+                },
+                {
+                    "name": "breakfast",
+                    "start": "05:45:00",
+                    "end": "09:00:00"
+                },
+                {
+                    "name": "morning",
+                    "start": "09:00:00",
+                    "end": "12:00:00"
+                },
+                {
+                    "name": "lunch",
+                    "start": "12:00:00",
+                    "end": "13:30:00"
+                },
+                {
+                    "name": "afternoon",
+                    "start": "13:30:00",
+                    "end": "18:00:00"
+                },
+                {
+                    "name": "evening",
+                    "start": "17:30:00",
+                    "end": "19:30:00"
+                },
+                {
+                    "name": "bedtime",
+                    "start": "20:00:00",
+                    "end": "21:00:00"
+                },
+                {
+                    "name": "sleeptime",
+                    "start": "21:00:00",
+                    "end": "22:00:00"
+                },
+                {
+                    "name": "night",
+                    "start": "22:00:00",
+                    "end": "23:59:00"
+                }
+            ]
         },
         {
-            "name": "SUNSET",
-            "start": 0:00,
-            "end": 0:30
-            "wnd": 0:30
-        },
-        {
-            "name": "BREAKFAST",
-            "start": 7:00,
-            "end": 9:30
-            "wnd": 0:10
-        },
-        {
-            "name": "MORNING",
-            "start": 6:00,
-            "end": 12:00
-            "wnd": 0:10
-        },
-        {
-            "name": "NOON",
-            "start": 12:00,
-            "end": 13:00
-            "wnd": 0:10
-        },
-        {
-            "name": "LUNCH",
-            "start": 11:45,
-            "end": 12:45
-            "wnd": 0:10
-        },
-        {
-            "name": "AFTERNOON",
-            "start": 13:00,
-            "end": 18:00
-            "wnd": 0:10
-        },
-        {
-            "name": "DINNER",
-            "start": 18:00,
-            "end": 20:00
-            "wnd": 0:10
-        },
-        {
-            "name": "NIGHT",
-            "start": 20:00,
-            "end": 6:00
-            "wnd": 0:10
-        },
-        {
-            "name": "SLEEPING",
-            "start": 22:00,
-            "end": 6:00
-            "wnd": 0:10
-        },
-        {
-            "name": "EVENING",
-            "start": 16:30,
-            "end": 22:00
-            "wnd": 0:10
+            "tag": "weekend",
+            "moments": [
+                {
+                    "name": "night",
+                    "start": "00:00:00",
+                    "end": "06:30:00"
+                },
+                {
+                    "name": "breakfast",
+                    "start": "06:30:00",
+                    "end": "10:00:00"
+                },
+                {
+                    "name": "morning",
+                    "start": "10:00:00",
+                    "end": "12:00:00"
+                },
+                {
+                    "name": "lunch",
+                    "start": "12:00:00",
+                    "end": "14:00:00"
+                },
+                {
+                    "name": "afternoon",
+                    "start": "13:30:00",
+                    "end": "17:30:00"
+                },
+                {
+                    "name": "evening",
+                    "start": "17:30:00",
+                    "end": "20:30:00"
+                },
+                {
+                    "name": "bedtime",
+                    "start": "20:30:00",
+                    "end": "21:00:00"
+                },
+                {
+                    "name": "sleeptime",
+                    "start": "21:00:00",
+                    "end": "22:30:00"
+                },
+                {
+                    "name": "night",
+                    "start": "22:30:00",
+                    "end": "23:59:00"
+                }
+            ]
         }
+ 
     ]
 }

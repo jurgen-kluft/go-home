@@ -177,7 +177,7 @@ func (c *Calendar) applyRulesToSensorStates() {
 func publishSensorState(s *config.SensorState, client *pubsub.Context) {
 	jsonbytes, err := json.Marshal(s)
 	if err == nil {
-		client.Publish("sensor/calendar/event", string(jsonbytes))
+		client.Publish("state/sensor/calendar", string(jsonbytes))
 	}
 }
 
