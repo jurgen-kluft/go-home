@@ -2,12 +2,27 @@ package main
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/bingbaba/tool/color"
 	"github.com/jurgen-kluft/go-home/config"
 	"github.com/jurgen-kluft/go-home/pubsub"
 	"github.com/xuebing1110/migateway"
-	"time"
 )
+
+// Features:
+// - Gateway Light: Turn On/Off, Change color/brightness
+// - Gateway Sound: Play sound
+
+// Turn On/Off:
+// - WiredDualWallSwitch(es)
+// - Electric Power Plug(s)
+
+// Publish state of:
+// - Motion Sensor(s)
+// - Wireless Switch(es)
+// - WiredDualWallSwitch(es)
+// - Electric Power Plug(s)
 
 type instance struct {
 	key    string
