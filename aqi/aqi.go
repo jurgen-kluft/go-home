@@ -103,7 +103,7 @@ func main() {
 			err := client.Connect("aqi")
 			if err == nil {
 
-				client.Subscribe("aqi/+")
+				client.Subscribe("config/aqi")
 
 				for connected {
 					select {

@@ -431,20 +431,23 @@ func (s *Instance) Process(client *pubsub.Context) {
 func main() {
 	suncalc := &Instance{}
 	for {
-		pb := pubsub.New()
-		err := pb.Connect("suncalc")
+		client := pubsub.New()
+		err := client.Connect("suncalc")
 		if err == nil {
+
+			client.Subscribe("config/suncalc")
+
 			for {
 				select {
-				case msg := <-pb.InMsgs:
-					if msg.Topic() == "suncalc/config" {
+				case msg := <-client.InMsgs:
+					if msg.Topic() == "config/suncalc" {
 						if suncalc.config == nil {
 							suncalc.config, err = config.SuncalcConfigFromJSON(string(msg.Payload()))
 						}
 					}
 					break
 				case <-time.After(time.Minute * 1):
-					suncalc.Process(pb)
+					suncalc.Process(client)
 					break
 				}
 			}

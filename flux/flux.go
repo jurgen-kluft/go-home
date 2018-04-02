@@ -158,19 +158,19 @@ func publishSensor(sensor config.SensorState, client *pubsub.Context) {
 func main() {
 	flux := &instance{}
 	for {
-		pb := pubsub.New()
-		err := pb.Connect("flux")
+		client := pubsub.New()
+		err := client.Connect("flux")
 		if err == nil {
 			for {
 				select {
-				case msg := <-pb.InMsgs:
-					if msg.Topic() == "flux/config" {
+				case msg := <-client.InMsgs:
+					if msg.Topic() == "config/flux" {
 						if flux.config == nil {
 							flux.config, err = config.FluxConfigFromJSON(string(msg.Payload()))
 						}
 					} else if msg.Topic() == "sensor/weather/clouds" {
 						flux.clouds, err = config.SensorStateFromJSON(string(msg.Payload()))
-					} else if msg.Topic() == "sensor/weather/clouds" {
+					} else if msg.Topic() == "sensor//clouds" {
 						flux.suncalc, err = NewSuncalc(msg.Data)
 					} else if msg.Topic() == "sensor/weather/clouds" {
 						flux.updateSeasonFromName(msg.Data)

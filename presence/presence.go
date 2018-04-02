@@ -2,7 +2,6 @@ package presence
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
@@ -168,7 +167,7 @@ func (p *Presence) publish(client *pubsub.Context) {
 		data, err := json.Marshal(sensor)
 		if err == nil {
 			jsonstr := string(data)
-			client.Publish(fmt.Sprintf("%s/%s/%s", sensor.Domain, sensor.Product, sensor.Name), jsonstr)
+			client.Publish("sensor/presence/LAN", jsonstr)
 		}
 	}
 }
@@ -177,6 +176,8 @@ func main() {
 
 	var presence *Presence
 
+	updateIntervalSec := time.Second * 15
+
 	for {
 		connected := true
 		for connected {
@@ -184,7 +185,7 @@ func main() {
 			err := client.Connect("presence")
 			if err == nil {
 
-				client.Subscribe("presence/+")
+				client.Subscribe("config/presence")
 
 				for connected {
 					select {
@@ -193,12 +194,13 @@ func main() {
 						if topic == "presence/config" {
 							if msg.Topic() == "presence/config" {
 								presence = New(string(msg.Payload()))
+								updateIntervalSec = time.Second * time.Duration(presence.config.UpdateIntervalSec)
 							}
 						} else if topic == "client/disconnected" {
 							connected = false
 						}
 						break
-					case <-time.After(time.Second * 10):
+					case <-time.After(updateIntervalSec):
 						if presence != nil {
 							if presence.Presence(time.Now()) {
 								presence.publish(client)

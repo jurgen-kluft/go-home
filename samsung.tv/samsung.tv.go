@@ -68,7 +68,8 @@ func main() {
 		if err == nil {
 
 			fmt.Println("Connected to emitter")
-			client.Subscribe(config.EmitterSensorLightChannelKey, "sensor/tv.samsung/+")
+			client.Subscribe("config/tv/samsung")
+			client.Subscribe("state/tv/samsung")
 
 			for {
 				select {

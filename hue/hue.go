@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/jurgen-kluft/go-home/config"
 	"github.com/jurgen-kluft/go-home/pubsub"
-	"github.com/stefanwichmann/go.hue"
-	"time"
 )
 
 type instance struct {
@@ -59,7 +59,7 @@ func main() {
 		if err == nil {
 
 			fmt.Println("Connected to emitter")
-			client.Subscribe(config.EmitterSensorLightChannelKey, "sensor/light/+")
+			client.Subscribe("sensor/light/+")
 
 			for {
 				select {

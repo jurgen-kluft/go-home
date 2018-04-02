@@ -4,8 +4,8 @@
 	"port": 5000,
 	"user": "admin",
 	"password": "*********",
-	"uhist": 4,
-	"ufreq": 0.0166,
+	"update_history": 4,
+	"update_interval_sec": 10,
 	"devices": 
 	[
 		{

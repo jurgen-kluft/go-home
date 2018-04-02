@@ -177,7 +177,7 @@ func (c *Calendar) applyRulesToSensorStates() {
 func publishSensorState(s *config.SensorState, client *pubsub.Context) {
 	jsonbytes, err := json.Marshal(s)
 	if err == nil {
-		client.Publish(fmt.Sprintf("%s/%s/%s", s.Domain, s.Product, s.Name), string(jsonbytes))
+		client.Publish("sensor/calendar/event", string(jsonbytes))
 	}
 }
 
@@ -228,7 +228,7 @@ func main() {
 			if err == nil {
 
 				// Subscribe to the presence demo channel
-				client.Subscribe("calendar/+")
+				client.Subscribe("config/calendar")
 
 				for connected {
 					select {

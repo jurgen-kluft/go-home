@@ -26,7 +26,7 @@ func (d *DisconnectMessage) Payload() []byte {
 
 func New() *Context {
 	ctx := &Context{}
-	ctx.Secret = config.EmitterSecretKey
+	ctx.Secret = config.EmitterSecrets["secret"]
 	ctx.InMsgs = make(chan emitter.Message)
 	return ctx
 }
@@ -72,17 +72,29 @@ func (ctx *Context) Connect(username string) error {
 	return nil
 }
 
-func (ctx *Context) Subscribe(key string, channel string) error {
-	ctx.Client.Subscribe(key, channel)
-	return nil
+func (ctx *Context) Subscribe(channel string) error {
+	key, exists := config.EmitterSecrets[channel]
+	if exists {
+		ctx.Client.Subscribe(key, channel)
+		return nil
+	}
+	return fmt.Errorf("Emitter.Subscribe did not succeed for channel %s since no channel key was configured", channel)
 }
 
 func (ctx *Context) Publish(channel string, message string) error {
-	ctx.Client.Publish(ctx.Secret, channel, message)
-	return nil
+	key, exists := config.EmitterSecrets[channel]
+	if exists {
+		ctx.Client.Publish(key, channel, message)
+		return nil
+	}
+	return fmt.Errorf("Emitter.Publish did not succeed for channel %s since no channel key was configured", channel)
 }
 
 func (ctx *Context) PublishTTL(channel string, message string, ttl int) error {
-	ctx.Client.PublishWithTTL(ctx.Secret, channel, message, ttl)
-	return nil
+	key, exists := config.EmitterSecrets[channel]
+	if exists {
+		ctx.Client.PublishWithTTL(key, channel, message, ttl)
+		return nil
+	}
+	return fmt.Errorf("Emitter.PublishTTL did not succeed for channel %s since no channel key was configured", channel)
 }

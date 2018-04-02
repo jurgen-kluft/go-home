@@ -6,6 +6,7 @@ import (
 
 	"github.com/adlio/darksky"
 	"github.com/jurgen-kluft/go-home/config"
+	"github.com/jurgen-kluft/go-home/pubsub"
 )
 
 func converFToC(fahrenheit float64) float64 {
@@ -22,16 +23,16 @@ type Client struct {
 	update    time.Time
 }
 
-func New() (*Client, error) {
+func New() *Client {
 	c := &Client{}
+	c.darkargs = map[string]string{}
 	c.update = time.Now()
-
-	return c, nil
+	return c
 }
 
 func (c *Client) getRainDescription(rain float64) string {
 	for _, r := range c.config.Rain {
-		if r.Intensity.Min <= rain && rain <= r.Intensity.Max {
+		if r.Range.Min <= rain && rain <= r.Range.Max {
 			return r.Name
 		}
 	}
@@ -40,7 +41,7 @@ func (c *Client) getRainDescription(rain float64) string {
 
 func (c *Client) getCloudsDescription(clouds float64) string {
 	for _, r := range c.config.Clouds {
-		if r.Cover.Min <= clouds && clouds <= r.Cover.Max {
+		if r.Range.Min <= clouds && clouds <= r.Range.Max {
 			return r.Description
 		}
 	}
@@ -49,7 +50,7 @@ func (c *Client) getCloudsDescription(clouds float64) string {
 
 func (c *Client) getTemperatureDescription(temperature float64) string {
 	for _, t := range c.config.Temperature {
-		if t.Min <= temperature && temperature < t.Max {
+		if t.Range.Min <= temperature && temperature < t.Range.Max {
 			return t.Description
 		}
 	}
@@ -58,32 +59,16 @@ func (c *Client) getTemperatureDescription(temperature float64) string {
 
 func (c *Client) getWindDescription(wind float64) string {
 	for _, w := range c.config.Wind {
-		if wind < w.Speed {
-			if len(w.Description) > 0 {
-				return w.Description[0]
-			}
-			break
+		if w.Range.Min <= wind && wind < w.Range.Max {
+			return w.Description
 		}
 	}
 	return ""
 }
 
-type Forecast struct {
-	From        time.Time `json:"from"`
-	Until       time.Time `json:"until"`
-	Rain        float64   `json:"rain"`
-	RainDescr   string    `json:"rainDescr"`
-	Wind        float64   `json:"wind"`
-	WindDescr   string    `json:"windDescr"`
-	Clouds      float64   `json:"clouds"`
-	CloudDescr  string    `json:"cloudsDescr"`
-	Temperature float64   `json:"temperature"`
-	TempDescr   string    `json:"temperatureDescr"`
-}
-
 type State struct {
-	Current Forecast   `json:"current"`
-	Hourly  []Forecast `json:"hourly"`
+	Current config.Forecast   `json:"current"`
+	Hourly  []config.Forecast `json:"hourly"`
 }
 
 func (c *Client) addHourly(from time.Time, until time.Time, hourly *darksky.DataBlock, state *State) {
@@ -93,7 +78,7 @@ func (c *Client) addHourly(from time.Time, until time.Time, hourly *darksky.Data
 		huntil := hoursLater(hfrom, 1.0)
 
 		if timeRangeInGlobalRange(from, until, hfrom, huntil) {
-			forecast := Forecast{}
+			forecast := config.Forecast{}
 			forecast.From = hfrom
 			forecast.Until = huntil
 
@@ -166,7 +151,7 @@ func atHour(date time.Time, h int, m int) time.Time {
 
 func (c *Client) Process() time.Duration {
 	now := time.Now()
-	state := &State{Hourly: []Forecast{}}
+	state := &State{Hourly: []config.Forecast{}}
 
 	// Weather update every 5 minutes
 	if now.Unix() >= c.update.Unix() {
@@ -180,7 +165,7 @@ func (c *Client) Process() time.Duration {
 			from := now
 			until := hoursLater(from, 3.0)
 
-			current := Forecast{}
+			current := config.Forecast{}
 			current.From = from
 			current.Until = until
 
@@ -200,4 +185,41 @@ func (c *Client) Process() time.Duration {
 		wait = 0
 	}
 	return wait
+}
+
+func main() {
+	weather := New()
+
+	for {
+		client := pubsub.New()
+		err := client.Connect("weather")
+		if err == nil {
+
+			client.Subscribe("config/weather")
+
+			for {
+				select {
+				case msg := <-client.InMsgs:
+					if msg.Topic() == "config/weather" {
+						if weather.config == nil {
+							weather.config, err = config.WeatherConfigFromJSON(string(msg.Payload()))
+							if err != nil {
+								weather.config = nil
+							}
+						}
+					}
+					break
+				case <-time.After(time.Second * 60):
+					if weather.config != nil {
+						weather.Process()
+					}
+					break
+				}
+			}
+		}
+
+		// Wait for 10 seconds before retrying
+		time.Sleep(10 * time.Second)
+	}
+
 }

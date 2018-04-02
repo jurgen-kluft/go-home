@@ -15,14 +15,14 @@ func (r *PresenceConfig) ToJSON() ([]byte, error) {
 }
 
 type PresenceConfig struct {
-	Name       string  `json:"name"`
-	Host       string  `json:"host"`
-	Port       int     `json:"port"`
-	User       string  `json:"user"`
-	Password   string  `json:"password"`
-	UpdateHist int     `json:"uhist"`
-	UpdateFreq float64 `json:"ufreq"`
-	Devices    []struct {
+	Name              string `json:"name"`
+	Host              string `json:"host"`
+	Port              int    `json:"port"`
+	User              string `json:"user"`
+	Password          string `json:"password"`
+	UpdateHistory     int    `json:"update_history"`
+	UpdateIntervalSec int    `json:"update_interval_sec"`
+	Devices           []struct {
 		Name string `json:"name"`
 		Mac  string `json:"mac"`
 	} `json:"devices"`

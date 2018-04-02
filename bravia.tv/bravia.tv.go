@@ -67,15 +67,17 @@ func main() {
 		if err == nil {
 
 			fmt.Println("Connected to emitter")
-			client.Subscribe(config.EmitterSensorLightChannelKey, "sensor/tv.sony/+")
+
+			client.Subscribe("config/tv/sony")
+			client.Subscribe("state/tv/sony")
 
 			for {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
-					if topic == "tv.sony/config" {
+					if topic == "config/tv/sony" {
 						//huelighting.config, err = config.HueConfigFromJSON(string(msg.Payload()))
-					} else if topic == "tv.sony/state" {
+					} else if topic == "state/tv/sony" {
 						state, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
 							if state.Value == "off" {
