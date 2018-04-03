@@ -24,19 +24,28 @@ type FluxConfig struct {
 }
 
 type Lighttime struct {
-	CT          []float64   `json:"ct"`
-	Bri         []float64   `json:"bri"`
+	CT          FromTo      `json:"ct"`
+	Bri         FromTo      `json:"bri"`
 	Darkorlight Darkorlight `json:"darkorlight"`
-	StartMoment string      `json:"startMoment"`
-	EndMoment   string      `json:"endMoment"`
-	Start       time.Time
-	End         time.Time
+	TimeSlot    TimeSlot    `json:"timeslot"`
+}
+
+type TimeSlot struct {
+	StartMoment string `json:"start"`
+	StartTime   time.Time
+	EndMoment   string `json:"end"`
+	EndTime     time.Time
 }
 
 type Lighttype struct {
 	Name string `json:"name"`
 	CT   MinMax `json:"ct"`
 	BRI  MinMax `json:"bri"`
+}
+
+type FromTo struct {
+	From float64 `json:"from"`
+	To   float64 `json:"to"`
 }
 
 type MinMax struct {
@@ -53,7 +62,7 @@ type Season struct {
 type AddSuncalcMoment struct {
 	Name  string `json:"name"`
 	Tag   string `json:"tag"`
-	Shift int64  `json:"shift"`
+	Shift int64  `json:"shift"` // Shift in minutes +/-
 }
 
 type Weather struct {

@@ -69,19 +69,20 @@ func (c *Calendar) updateSensorStates(when time.Time) error {
 			var dstate string
 			title := strings.Replace(e.Summary, ":", " : ", 1)
 			title = strings.Replace(title, "=", " = ", 1)
-			fmt.Sscanf(title, "%s : %s : %s = %s", &domain, &dproduct, &dname, &dstate)
-			//fmt.Printf("Parsed: '%s' - '%s' - '%s' - '%s'\n", domain, dproduct, dname, dstate)
+			n, err := fmt.Sscanf(title, "%s : %s : %s = %s", &domain, &dproduct, &dname, &dstate)
+			if n == 4 && err == nil {
+				//fmt.Printf("Parsed: '%s' - '%s' - '%s' - '%s'\n", domain, dproduct, dname, dstate)
+				domain = strings.ToLower(strings.Trim(domain, " "))
+				dproduct = strings.ToLower(strings.Trim(dproduct, " "))
+				dname = strings.ToLower(strings.Trim(dname, " "))
+				dstate = strings.ToLower(strings.Trim(dstate, " "))
+				ekey := domain + ":" + dproduct + ":" + dname
 
-			domain = strings.ToLower(domain)
-			dproduct = strings.ToLower(dproduct)
-			dname = strings.ToLower(dname)
-			dstate = strings.ToLower(dstate)
-			ekey := domain + ":" + dproduct + ":" + dname
-
-			sensor, exists := c.sensorStates[ekey]
-			if exists {
-				sensor.Value = dstate
-				sensor.Time = time.Now()
+				sensor, exists := c.sensorStates[ekey]
+				if exists {
+					sensor.Value = dstate
+					sensor.Time = time.Now()
+				}
 			}
 		}
 	}

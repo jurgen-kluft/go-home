@@ -161,19 +161,21 @@ func main() {
 		client := pubsub.New()
 		err := client.Connect("flux")
 		if err == nil {
+			client.Subscribe("config/flux")
 			for {
 				select {
 				case msg := <-client.InMsgs:
-					if msg.Topic() == "config/flux" {
+					topic := msg.Topic()
+					if topic == "config/flux" {
 						if flux.config == nil {
 							flux.config, err = config.FluxConfigFromJSON(string(msg.Payload()))
 						}
-					} else if msg.Topic() == "sensor/weather/clouds" {
+					} else if topic == "state/sensor/clouds" {
 						flux.clouds, err = config.SensorStateFromJSON(string(msg.Payload()))
-					} else if msg.Topic() == "sensor//clouds" {
-						flux.suncalc, err = NewSuncalc(msg.Data)
-					} else if msg.Topic() == "sensor/weather/clouds" {
-						flux.updateSeasonFromName(msg.Data)
+					} else if topic == "state/sensor/sun" {
+						flux.suncalc, err = config.SuncalcStateFromJSON(string(msg.Payload()))
+					} else if topic == "state/sensor/season" {
+						flux.updateSeasonFromName(string(msg.Payload()))
 					}
 					break
 				case <-time.After(time.Second * 10):

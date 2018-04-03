@@ -86,7 +86,13 @@ func (a *automation) TurnOffLight(name string) {
 func (a *automation) ToggleLight(name string) {
 
 }
+func (a *automation) TurnOffSwitch(name string) {
+
+}
 func (a *automation) ToggleSwitch(name string) {
+
+}
+func (a *automation) TurnOffTV(name string) {
 
 }
 
@@ -180,7 +186,8 @@ func (a *automation) HandleSwitch(name string, value string) {
 }
 
 func (a *automation) HandlePresenceLeaving() {
-
+	// Turn off everything
+	a.TurnOffEverything()
 }
 
 func (a *automation) HandlePresenceArriving() {
@@ -188,6 +195,22 @@ func (a *automation) HandlePresenceArriving() {
 	// Turn on Kitchen
 	// Turn on Living-Room
 
+}
+
+func (a *automation) TurnOffEverything() {
+	a.TurnOffLight("Kitchen")
+	a.TurnOffLight("Living Room")
+	a.TurnOffLight("Bedroom")
+	a.TurnOffLight("Jennifer")
+	a.TurnOffLight("Sophia")
+	a.TurnOffLight("Front door hall light")
+
+	a.TurnOffSwitch("Bedroom power plug")
+	a.TurnOffSwitch("Bedroom chandelier")
+	a.TurnOffSwitch("Bedroom ceiling")
+
+	a.TurnOffTV("Samsung bedroom")
+	a.TurnOffTV("Sony livingroom")
 }
 
 func (a *automation) HandleTime(now time.Time) {

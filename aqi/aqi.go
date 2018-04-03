@@ -109,7 +109,7 @@ func main() {
 					select {
 					case msg := <-client.InMsgs:
 						topic := msg.Topic()
-						if topic == "aqi/config" {
+						if topic == "config/aqi" {
 							jsonmsg := string(msg.Payload())
 							config, err := config.AqiConfigFromJSON(jsonmsg)
 							if err == nil {
@@ -124,7 +124,7 @@ func main() {
 							if aqi.shouldPoll(time.Now(), false) {
 								jsonstate, err := aqi.Poll()
 								if err == nil {
-									client.PublishTTL("sensor/weather/aqi", jsonstate, 5*60)
+									client.PublishTTL("state/sensor/aqi", jsonstate, 5*60)
 								}
 								aqi.computeNextPoll(time.Now(), err)
 							}

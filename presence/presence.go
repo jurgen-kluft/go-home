@@ -2,6 +2,7 @@ package presence
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
@@ -167,7 +168,7 @@ func (p *Presence) publish(client *pubsub.Context) {
 		data, err := json.Marshal(sensor)
 		if err == nil {
 			jsonstr := string(data)
-			client.Publish("sensor/presence/LAN", jsonstr)
+			client.Publish("state/sensor/presence", jsonstr)
 		}
 	}
 }
@@ -192,10 +193,8 @@ func main() {
 					case msg := <-client.InMsgs:
 						topic := msg.Topic()
 						if topic == "presence/config" {
-							if msg.Topic() == "presence/config" {
-								presence = New(string(msg.Payload()))
-								updateIntervalSec = time.Second * time.Duration(presence.config.UpdateIntervalSec)
-							}
+							presence = New(string(msg.Payload()))
+							updateIntervalSec = time.Second * time.Duration(presence.config.UpdateIntervalSec)
 						} else if topic == "client/disconnected" {
 							connected = false
 						}
@@ -210,11 +209,11 @@ func main() {
 					}
 				}
 			} else {
-				panic("Error on Client.Connect(): " + err.Error())
+				panic("Error on emitter.Connect(): " + err.Error())
 			}
 		}
 
-		// Wait for 10 seconds before retrying
+		fmt.Println("Waiting 10 seconds before re-connecting to pubsub...")
 		time.Sleep(10 * time.Second)
 	}
 }

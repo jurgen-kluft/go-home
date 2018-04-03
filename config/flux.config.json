@@ -1,0 +1,406 @@
+{
+    "seasons": [
+        {
+            "name": "winter",
+            "CT": {
+                "min": 0.0,
+                "max": 1.0
+            },
+            "BRI": {
+                "min": 0.0,
+                "max": 0.80
+            }
+        },
+        {
+            "name": "spring",
+            "CT": {
+                "min": 0.1,
+                "max": 1.0
+            },
+            "BRI": {
+                "min": 0.0,
+                "max": 0.75
+            }
+        },
+        {
+            "name": "summer",
+            "CT": {
+                "min": 0.2,
+                "max": 1.0
+            },
+            "BRI": {
+                "min": 0.0,
+                "max": 0.70
+            }
+        },
+        {
+            "name": "autumn",
+            "CT": {
+                "min": 0.1,
+                "max": 1.0
+            },
+            "BRI": {
+                "min": 0.0,
+                "max": 0.75
+            }
+        }
+    ],
+    "weather": [
+        {
+            "clouds": {
+                "min": 0.0,
+                "max": 0.05
+            },
+            "ct_pct": 0.1,
+            "bri_pct": 0.0
+        },
+        {
+            "clouds": {
+                "min": 0.05,
+                "max": 0.15
+            },
+            "ct_pct": 0.1,
+            "bri_pct": 0.0
+        },
+        {
+            "clouds": {
+                "min": 0.15,
+                "max": 0.35
+            },
+            "ct_pct": -0.05,
+            "bri_pct": 0.01
+        },
+        {
+            "clouds": {
+                "min": 0.35,
+                "max": 0.5
+            },
+            "ct_pct": -0.07,
+            "bri_pct": 0.02
+        },
+        {
+            "clouds": {
+                "min": 0.5,
+                "max": 0.9
+            },
+            "ct_pct": -0.1,
+            "bri_pct": 0.08
+        },
+        {
+            "clouds": {
+                "min": 0.9,
+                "max": 1.0
+            },
+            "ct_pct": -0.2,
+            "bri_pct": 0.1
+        }
+    ],
+    "suncalc_moments": [
+        {
+            "name": "sun.noon.begin",
+            "tag": ".-3h",
+            "shift": -180
+        },
+        {
+            "name": "sun.noon.end",
+            "tag": ".+2h",
+            "shift": 120
+        },
+        {
+            "name": "sun.noon.end",
+            "tag": ".+8h",
+            "shift": 480
+        },
+        {
+            "name": "sun.noon.end",
+            "tag": ".+9h",
+            "shift": 540
+        },
+        {
+            "name": "sun.noon.end",
+            "tag": ".+10h",
+            "shift": 600
+        }
+    ],
+    "lighttype": [
+        {
+            "name": "hue",
+            "ct": {
+                "min": 154.0,
+                "max": 500.0
+            },
+            "bri": {
+                "min": 1.0,
+                "max": 254.0
+            }
+        },
+        {
+            "name": "yee",
+            "ct": {
+                "min": 154.0,
+                "maxT": 500.0
+            },
+            "bri": {
+                "min": 1.0,
+                "max": 254.0
+            }
+        }
+    ],
+    "lighttime": [
+        {
+            "ct": {
+                "from": 1.0,
+                "to": 0.96
+            },
+            "bri": {
+                "from": 0.0,
+                "to": 0.5
+            },
+            "darkorlight": "dark",
+            "timeslot": {
+                "start": "night.dawn.begin",
+                "end": "astronomical.dawn.begin"
+            }
+        },
+        {
+            "ct": {
+                "from": 0.96,
+                "to": 0.94
+            },
+            "bri": {
+                "from": 0.5,
+                "to": 0.6
+            },
+            "darkorlight": "twilight",
+            "timeslot": {
+                "start": "astronomical.dawn.begin",
+                "end": "astronomical.dawn.end"
+            }
+        },
+        {
+            "ct": {
+                "from": 0.94,
+                "to": 0.89
+            },
+            "bri": {
+                "from": 0.6,
+                "to": 0.8
+            },
+            "darkorlight": "twilight",
+            "timeslot": {
+                "start": "nautical.dawn.begin",
+                "end": "nautical.dawn.end"
+            }
+        },
+        {
+            "ct": {
+                "from": 0.89,
+                "to": 0.85
+            },
+            "bri": {
+                "from": 0.8,
+                "to": 0.8
+            },
+            "darkorlight": "twilight",
+            "timeslot": {
+                "start": "civil.dawn.begin",
+                "end": "civil.dawn.end"
+            }
+        },
+        {
+            "ct": {
+                "from": 0.85,
+                "to": 0.3
+            },
+            "bri": {
+                "from": 0.8,
+                "to": 0.85
+            },
+            "darkorlight": "light",
+            "timeslot": {
+                "start": "sun.rise.begin",
+                "end": "sun.noon.begin.-3h"
+            }
+        },
+        {
+            "ct": {
+                "from": 0.3,
+                "to": 0.0
+            },
+            "bri": {
+                "from": 0.85,
+                "to": 0.9
+            },
+            "darkorlight": "light",
+            "timeslot": {
+                "start": "sun.noon.begin.-3h",
+                "end": "sun.noon.begin"
+            }
+        },
+        {
+            "ct": {
+                "from": 0.0,
+                "to": 0.0
+            },
+            "bri": {
+                "from": 0.9,
+                "to": 0.9
+            },
+            "darkorlight": "light",
+            "timeslot": {
+                "start": "sun.noon.begin",
+                "end": "sun.noon.end"
+            }
+        },
+        {
+            "ct": {
+                "from": 0.0,
+                "to": 0.2
+            },
+            "bri": {
+                "from": 0.9,
+                "to": 0.9
+            },
+            "darkorlight": "light",
+            "timeslot": {
+                "start": "sun.noon.end",
+                "end": "sun.noon.end.+2h"
+            }
+        },
+        {
+            "ct": {
+                "from": 0.2,
+                "to": 0.4
+            },
+            "bri": {
+                "from": 0.9,
+                "to": 0.85
+            },
+            "darkorlight": "light",
+            "timeslot": {
+                "start": "sun.noon.end.+2h",
+                "end": "sun.set.begin"
+            }
+        },
+        {
+            "ct": {
+                "from": 0.4,
+                "to": 0.4
+            },
+            "bri": {
+                "from": 0.85,
+                "to": 0.85
+            },
+            "darkorlight": "light",
+            "timeslot": {
+                "start": "sun.set.begin",
+                "end": "sun.set.end"
+            }
+        },
+        {
+            "ct": {
+                "from": 0.4,
+                "to": 0.5
+            },
+            "bri": {
+                "from": 0.85,
+                "to": 0.8
+            },
+            "darkorlight": "twilight",
+            "timeslot": {
+                "start": "civil.dusk.begin",
+                "end": "civil.dusk.end"
+            }
+        },
+        {
+            "ct": {
+                "from": 0.5,
+                "to": 0.5
+            },
+            "bri": {
+                "from": 0.8,
+                "to": 0.8
+            },
+            "darkorlight": "twilight",
+            "timeslot": {
+                "start": "nautical.dusk.begin",
+                "end": "nautical.dusk.end"
+            }
+        },
+        {
+            "ct": {
+                "from": 0.5,
+                "to": 0.5
+            },
+            "bri": {
+                "from": 0.8,
+                "to": 0.8
+            },
+            "darkorlight": "twilight",
+            "timeslot": {
+                "start": "astronomical.dusk.begin",
+                "end": "astronomical.dusk.end"
+            }
+        },
+        {
+            "ct": {
+                "from": 0.5,
+                "to": 0.7
+            },
+            "bri": {
+                "from": 0.8,
+                "to": 0.8
+            },
+            "darkorlight": "dark",
+            "timeslot": {
+                "start": "astronomical.dusk.end",
+                "end": "sun.noon.end.+8h"
+            }
+        },
+        {
+            "ct": {
+                "from": 0.7,
+                "to": 0.9
+            },
+            "bri": {
+                "from": 0.8,
+                "to": 0.5
+            },
+            "darkorlight": "dark",
+            "timeslot": {
+                "start": "sun.noon.end.+8h",
+                "end": "sun.noon.end.+9h"
+            }
+        },
+        {
+            "ct": {
+                "from": 0.9,
+                "to": 1.0
+            },
+            "bri": {
+                "from": 0.5,
+                "to": 0.1
+            },
+            "darkorlight": "dark",
+            "timeslot": {
+                "start": "sun.noon.end.+9h",
+                "end": "sun.noon.end.+10h"
+            }
+        },
+        {
+            "ct": {
+                "from": 1.0,
+                "to": 1.0
+            },
+            "bri": {
+                "from": 0.1,
+                "to": 0.0
+            },
+            "darkorlight": "dark",
+            "timeslot": {
+                "start": "sun.noon.end.+10h",
+                "end": "night.dusk.end"
+            }
+        }
+    ]
+}
