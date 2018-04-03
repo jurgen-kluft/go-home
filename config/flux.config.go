@@ -24,13 +24,13 @@ type FluxConfig struct {
 }
 
 type Lighttime struct {
-	CT          FromTo      `json:"ct"`
-	Bri         FromTo      `json:"bri"`
-	Darkorlight Darkorlight `json:"darkorlight"`
-	TimeSlot    TimeSlot    `json:"timeslot"`
+	CT          FromTo         `json:"ct"`
+	Bri         FromTo         `json:"bri"`
+	Darkorlight Darkorlight    `json:"darkorlight"`
+	TimeSlot    TaggedTimeSlot `json:"timeslot"`
 }
 
-type TimeSlot struct {
+type TaggedTimeSlot struct {
 	StartMoment string `json:"start"`
 	StartTime   time.Time
 	EndMoment   string `json:"end"`
@@ -48,9 +48,19 @@ type FromTo struct {
 	To   float64 `json:"to"`
 }
 
+// LinearInterpolated returns interpolated value between From-To
+func (f FromTo) LinearInterpolated(x float64) float64 {
+	return f.From + x*(f.To-f.From)
+}
+
 type MinMax struct {
 	Min float64 `json:"min"`
 	Max float64 `json:"max"`
+}
+
+// LinearInterpolated returns interpolated value between Min-Max
+func (m MinMax) LinearInterpolated(x float64) float64 {
+	return m.Min + x*(m.Max-m.Min)
 }
 
 type Season struct {

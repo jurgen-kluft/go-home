@@ -51,10 +51,11 @@ func main() {
 }
 
 type automation struct {
-	sensors    map[string]string
-	presence   map[string]bool
-	timeofday  string
-	lastmotion time.Time
+	sensors             map[string]string
+	presence            map[string]bool
+	timeofday           string
+	lastmotion          time.Time
+	lastmotionFrontDoor time.Time
 }
 
 func (a *automation) FamilyIsHome() bool {
@@ -126,9 +127,11 @@ func (a *automation) HandleTimeOfDay(to string) {
 			a.TurnOnLight("Bedroom")
 		}
 	case "night":
+		if a.IsSensor("sensor.calendar.jennifer", "school") {
+			a.TurnOffLight("Bedroom")
+		}
 		a.TurnOffLight("Kitchen")
 		a.TurnOffLight("Living Room")
-		a.TurnOffLight("Bedroom")
 		a.TurnOffLight("Jennifer")
 		a.TurnOffLight("Sophia")
 		a.TurnOffLight("Front door hall light")
@@ -139,11 +142,21 @@ func (a *automation) HandleSensor(product string, name string, valuetype string,
 	if product == "xiaomi" && name == "motion_sensor_158d0001a9113b" {
 		if value == "on" {
 			a.lastmotion = time.Now() // Update the time we last detected motion
+			a.lastmotionFrontDoor = time.Now()
 
 			if a.timeofday == "breakfast" {
 				a.TurnOnLight("Kitchen")
 				a.TurnOnLight("Living Room")
 			}
+		} else {
+			if time.Now().Sub(a.lastmotionFrontDoor) > time.Minute*5 {
+				a.TurnOffLight("Front door hall light")
+			}
+		}
+	}
+	if product == "xiaomi" && name == "magnet_158d0001a9113b" {
+		if value == "open" {
+			a.TurnOnLight("Front door hall light")
 		}
 	}
 }

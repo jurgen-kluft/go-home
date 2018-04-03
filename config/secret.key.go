@@ -31,6 +31,7 @@ var EmitterSecrets = map[string]string{
 	"config/xiaomi":            "",
 	"state/xiaomi/switch":      "",
 	"state/xiaomi/gateway":     "",
+	"state/sensor/battery":     "",
 	"state/sensor/motion":      "",
 	"config/hue":               "",
 	"state/hue/light":          "",

@@ -1,8 +1,8 @@
 package calendar
 
 import (
-	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -33,9 +33,17 @@ func New(jsonstr string) (*Calendar, error) {
 	}
 	//c.ccal.print()
 	for _, sn := range c.config.Sensors {
-		ekey := strings.ToLower(sn.Domain) + ":" + strings.ToLower(sn.Product) + ":" + strings.ToLower(sn.Name)
+		ekey := strings.ToLower(sn.Domain) + "." + strings.ToLower(sn.Product) + "." + strings.ToLower(sn.Name)
 		c.sensors[ekey] = sn
-		sensor := &config.SensorState{Domain: sn.Domain, Product: sn.Product, Name: sn.Name, Type: sn.Type, Value: sn.State, Time: time.Now()}
+		sensor := &config.SensorState{Name: ekey, Time: time.Now()}
+		if sn.Type == "string" {
+			sensor.AddValueSensor(sn.Name, sn.State)
+		} else if sn.Type == "float" {
+			value, _ := strconv.ParseFloat(sn.State, 64)
+			sensor.AddFloatSensor(sn.Name, value)
+		} else if sn.Type == "bool" {
+			sensor.AddValueSensor(sn.Name, sn.State)
+		}
 		c.sensorStates[ekey] = sensor
 	}
 
@@ -79,8 +87,8 @@ func (c *Calendar) updateSensorStates(when time.Time) error {
 				ekey := domain + ":" + dproduct + ":" + dname
 
 				sensor, exists := c.sensorStates[ekey]
-				if exists {
-					sensor.Value = dstate
+				if exists && sensor.ValueSensors != nil {
+					(*sensor.ValueSensors)[0].Value = dstate
 					sensor.Time = time.Now()
 				}
 			}
@@ -164,22 +172,20 @@ func (c *Calendar) applyRulesToSensorStates() {
 		var ifthen *config.SensorState
 		var exists bool
 		sensor, exists = c.sensorStates[p.Key]
-		if exists {
+		if exists && sensor.ValueSensors != nil {
 			ifthen, exists = c.sensorStates[p.IfThen.Key]
-			if exists {
-				if ifthen.Type == "string" && ifthen.Value == p.IfThen.State {
-					sensor.Value = p.State
+			if exists && ifthen.ValueSensors != nil {
+				ifthenValue := (*ifthen.ValueSensors)[0].Value
+				if ifthenValue == p.IfThen.State {
+					(*sensor.ValueSensors)[0].Value = p.State
 				}
 			}
 		}
 	}
 }
 
-func publishSensorState(s *config.SensorState, client *pubsub.Context) {
-	jsonbytes, err := json.Marshal(s)
-	if err == nil {
-		client.Publish("state/sensor/calendar", string(jsonbytes))
-	}
+func publishSensorState(sensorjson string, client *pubsub.Context) {
+	client.Publish("state/sensor/calendar", string(sensorjson))
 }
 
 // Process will update 'events' from the calendar
@@ -202,8 +208,8 @@ func (c *Calendar) Process(client *pubsub.Context) {
 
 	// Other general states
 	weekend, _, _, _, _ := weekOrWeekEndStartEnd(now)
-	sensor := &config.SensorState{Domain: "sensor", Product: "calendar", Name: "weekend", Type: "bool", Value: fmt.Sprintf("%v", weekend), Time: time.Now()}
-	publishSensorState(sensor, client)
+	sensorjson, err := config.ValueSensorAsJSON("sensor.calendar.weekend", "weekend", fmt.Sprintf("%v", weekend))
+	publishSensorState(sensorjson, client)
 
 	// Update sensors and apply configured rules to sensors
 	err = c.updateSensorStates(now)
@@ -212,7 +218,10 @@ func (c *Calendar) Process(client *pubsub.Context) {
 
 		// Publish sensor states
 		for _, ss := range c.sensorStates {
-			publishSensorState(ss, client)
+			jsonstr, err := ss.ToJSON()
+			if err == nil {
+				publishSensorState(jsonstr, client)
+			}
 		}
 	}
 }

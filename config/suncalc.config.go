@@ -2,29 +2,7 @@ package config
 
 import (
 	"encoding/json"
-	"time"
 )
-
-func SuncalcStateFromJSON(jsonstr string) (*SuncalcState, error) {
-	r := &SuncalcState{}
-	err := json.Unmarshal([]byte(jsonstr), r)
-	return r, err
-}
-
-func (r *SuncalcState) ToJSON() ([]byte, error) {
-	return json.Marshal(r)
-}
-
-type SuncalcMoment struct {
-	Name  string    `json:"name"`
-	Begin time.Time `json:"begin"`
-	End   time.Time `json:"end"`
-}
-
-type SuncalcState struct {
-	Moments          []SuncalcMoment `json:"moments"`
-	MoonIllumination float64         `json:"moonillumination"`
-}
 
 func SuncalcConfigFromJSON(jsonstr string) (*SuncalcConfig, error) {
 	data := []byte(jsonstr)

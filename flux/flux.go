@@ -1,9 +1,6 @@
 package flux
 
 import (
-	"encoding/json"
-	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
@@ -31,9 +28,9 @@ func computeTimeSpanX(start, end, t time.Time) float64 {
 
 type instance struct {
 	config  *config.FluxConfig
-	suncalc *config.SuncalcState
+	suncalc config.SensorState
 	season  *config.Season
-	clouds  *config.SensorState
+	clouds  config.SensorState
 }
 
 func (s *instance) updateSeasonFromName(season string) {
@@ -47,15 +44,15 @@ func (s *instance) updateSeasonFromName(season string) {
 
 func (s *instance) updateLighttimes() {
 	sunmoments := map[string]time.Time{}
-	for _, sm := range s.suncalc.Moments {
-		sunmoments[sm.Name] = sm.Begin
+	for _, tss := range *s.suncalc.TimeSlotSensors {
+		sunmoments[tss.Name] = tss.Begin
 	}
 
 	for i, lt := range s.config.Lighttime {
-		start := sunmoments[lt.StartMoment]
-		end := sunmoments[lt.EndMoment]
-		s.config.Lighttime[i].Start = start
-		s.config.Lighttime[i].End = end
+		start := sunmoments[lt.TimeSlot.StartMoment]
+		end := sunmoments[lt.TimeSlot.EndMoment]
+		s.config.Lighttime[i].TimeSlot.StartTime = start
+		s.config.Lighttime[i].TimeSlot.EndTime = end
 	}
 }
 
@@ -64,7 +61,7 @@ func (s *instance) updateLighttimes() {
 // there are Season/Weather states like 'Season':'Winter'
 // and 'Clouds':0.5
 func Process(f *instance, client *pubsub.Context) {
-	if f.config == nil || f.suncalc == nil || f.season == nil || f.clouds == nil {
+	if f.config == nil || f.season == nil {
 		return
 	}
 
@@ -72,19 +69,19 @@ func Process(f *instance, client *pubsub.Context) {
 
 	current := config.Lighttime{}
 	for _, sm := range f.config.Lighttime {
-		t0 := sm.Start
-		t1 := sm.End
+		t0 := sm.TimeSlot.StartTime
+		t1 := sm.TimeSlot.EndTime
 		if inTimeSpan(t0, t1, now) {
 			current = sm
 		}
 	}
 
 	// Time interpolation factor, where are we between startMoment - endMoment
-	currentx := computeTimeSpanX(current.Start, current.End, now)
+	currentx := computeTimeSpanX(current.TimeSlot.StartTime, current.TimeSlot.EndTime, now)
 	currentx = float64(int64(currentx*100.0)) / 100.0
 
-	clouds := config.Weather{Clouds: config.MinMax{0.0, 0.001}, CTPct: 0.0, BriPct: 0.0}
-	cloudFac, err := strconv.ParseFloat(f.clouds.Value, 64)
+	clouds := config.Weather{Clouds: config.MinMax{Min: 0.0, Max: 0.001}, CTPct: 0.0, BriPct: 0.0}
+	cloudFac := f.clouds.GetFloatValue("clouds", 0.0)
 	for _, w := range f.config.Weather {
 		if cloudFac >= w.Clouds.Min && cloudFac < w.Clouds.Max {
 			clouds = w
@@ -98,7 +95,7 @@ func Process(f *instance, client *pubsub.Context) {
 	//       of blue-light is also higher than normal.
 	// CT = 0.0 -> Coldest (>6500K)
 	// CT = 1.0 -> Warmest (2000K)
-	CT := current.CT[0] + currentx*(current.CT[1]-current.CT[0])
+	CT := current.CT.LinearInterpolated(currentx)
 	if current.Darkorlight != "dark" {
 		if clouds.CTPct >= 0 {
 			CT = CT + clouds.CTPct*(1.0-CT)
@@ -106,12 +103,12 @@ func Process(f *instance, client *pubsub.Context) {
 			CT = CT - clouds.CTPct*CT
 		}
 	}
-	CT = f.season.CT.Min + (CT * (f.season.CT.Max - f.season.CT.Min))
+	CT = f.season.CT.LinearInterpolated(CT)
 
 	// Full cloud cover will increase brightness by 10% of (Max - Current)
 	// BRI = 0 -> Very dim light
 	// BRI = 1 -> Very bright light
-	BRI := current.Bri[0] + currentx*(current.Bri[1]-current.Bri[0])
+	BRI := current.Bri.LinearInterpolated(currentx)
 	BRI = BRI + cloudFac*0.1*(1.0-BRI)
 	if current.Darkorlight != "dark" {
 		// A bit brighter lights when there are clouds during the day.
@@ -121,38 +118,36 @@ func Process(f *instance, client *pubsub.Context) {
 			BRI = BRI - clouds.BriPct*BRI
 		}
 	}
-	BRI = f.season.BRI.Min + (BRI * (f.season.BRI.Max - f.season.BRI.Min))
+	BRI = f.season.BRI.LinearInterpolated(BRI)
 
 	// Publishing the following sensors:
-	//  - Sensor.Light.HUE_CT = float64(100.0)
-	//  - Sensor.Light.HUE_BRI = float64(100.0)
-	//  - Sensor.Light.YEE_CT = float64(100.0)
-	//  - Sensor.Light.YEE_BRI = float64(100.0)
+	//  - Sensor.Light.HUE, Name = CT, Value = float64(100.0)
+	//  - Sensor.Light.HUE, Name = BRI, Value = float64(100.0)
+	//  - Sensor.Light.YEE, Name = CT, Value = float64(100.0)
+	//  - Sensor.Light.YEE, Name = BRI, Value = float64(100.0)
 	//  - Sensor.Light.DarkOrLight = string(Dark)
 
 	for _, ltype := range f.config.Lighttype {
-		lct := ltype.CT.Min + CT*(ltype.CT.Max-ltype.CT.Min)
-		sensorCT := config.SensorState{Domain: "sensor", Product: "light", Name: ltype.Name + "_CT", Type: "float", Value: fmt.Sprintf("%f", lct), Time: time.Now()}
-		publishSensor(sensorCT, client)
-		lbri := ltype.BRI.Min + BRI*(ltype.BRI.Max-ltype.BRI.Min)
-		sensorBRI := config.SensorState{Domain: "sensor", Product: "light", Name: ltype.Name + "_BRI", Type: "float", Value: fmt.Sprintf("%f", lbri), Time: time.Now()}
-		publishSensor(sensorBRI, client)
-
-		//	json += fmt.Sprintf("\"type\": %s, ", ltype.Name)
-		//	json += fmt.Sprintf("\"ct\": %f, ", math.Floor(lct))
-		//	json += fmt.Sprintf("\"bri\": %f ", math.Floor(lbri))
+		lct := ltype.CT.LinearInterpolated(CT)
+		sensorCT, err := config.FloatSensorAsJSON("sensor.light."+ltype.Name, "CT", lct)
+		if err == nil {
+			publishSensor("state/sensor/light", sensorCT, client)
+		}
+		lbri := ltype.BRI.LinearInterpolated(BRI)
+		sensorBRI, err := config.FloatSensorAsJSON("sensor.light."+ltype.Name, "BRI", lbri)
+		if err == nil {
+			publishSensor("state/sensor/light", sensorBRI, client)
+		}
 	}
 
-	sensorDOL := config.SensorState{Domain: "sensor", Product: "light", Name: "DarkOrLight", Type: "string", Value: string(current.Darkorlight), Time: time.Now()}
-	publishSensor(sensorDOL, client)
+	sensorDOL, err := config.ValueSensorAsJSON("sensor.light.darkorlight", "DarkOrLight", string(current.Darkorlight))
+	if err == nil {
+		publishSensor("state/sensor/light", sensorDOL, client)
+	}
 }
 
-func publishSensor(sensor config.SensorState, client *pubsub.Context) {
-	data, err := json.Marshal(sensor)
-	if err == nil {
-		jsonstr := string(data)
-		client.Publish(fmt.Sprintf("%s/%s/%s", sensor.Domain, sensor.Product, sensor.Name), jsonstr)
-	}
+func publishSensor(channel string, sensorjson string, client *pubsub.Context) {
+	client.Publish(channel, sensorjson)
 }
 
 func main() {
@@ -173,7 +168,7 @@ func main() {
 					} else if topic == "state/sensor/clouds" {
 						flux.clouds, err = config.SensorStateFromJSON(string(msg.Payload()))
 					} else if topic == "state/sensor/sun" {
-						flux.suncalc, err = config.SuncalcStateFromJSON(string(msg.Payload()))
+						flux.suncalc, err = config.SensorStateFromJSON(string(msg.Payload()))
 					} else if topic == "state/sensor/season" {
 						flux.updateSeasonFromName(string(msg.Payload()))
 					}

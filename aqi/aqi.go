@@ -1,7 +1,6 @@
 package aqi
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -83,11 +82,7 @@ func (c *instance) Poll() (aqiStateJSON string, err error) {
 	aqiStateJSON = ""
 	aqi, err := c.getResponse()
 	if err == nil {
-		sensor := config.SensorState{Domain: "sensor", Product: "weather", Name: "aqi", Type: "float", Value: fmt.Sprintf("%f", aqi), Time: time.Now()}
-		jsonbytes, err := json.Marshal(sensor)
-		if err == nil {
-			aqiStateJSON = string(jsonbytes)
-		}
+		aqiStateJSON, err = config.FloatSensorAsJSON("sensor.weather.aqi", "aqi", aqi)
 	}
 	return aqiStateJSON, err
 }

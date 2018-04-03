@@ -1,7 +1,6 @@
 package presence
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -87,13 +86,13 @@ func getNameOfState(state state) string {
 
 // Presence contains multiple device tracking states
 type Presence struct {
-	config        *config.PresenceConfig
-	provider      provider
-	macToIndex    map[string]int
-	macToPresence map[string]bool
-	members       []*Member
-	updateFreq    float64
-	state         *PresenceState
+	config            *config.PresenceConfig
+	provider          provider
+	macToIndex        map[string]int
+	macToPresence     map[string]bool
+	members           []*Member
+	updateIntervalSec int
+	state             *PresenceState
 }
 
 // New will return an instance of presence.Home
@@ -107,7 +106,7 @@ func New(configjson string) *Presence {
 	presence.provider = newProvider(presence.config.Name, presence.config.Host, presence.config.User, presence.config.Password)
 	presence.macToIndex = map[string]int{}
 
-	updateHist := presence.config.UpdateHist
+	updateHist := presence.config.UpdateHistory
 	for i, device := range presence.config.Devices {
 		member := &Member{name: device.Name}
 		member.last = Detect{Time: time.Now(), State: away}
@@ -121,7 +120,7 @@ func New(configjson string) *Presence {
 		presence.members = append(presence.members, member)
 	}
 
-	presence.updateFreq = presence.config.UpdateFreq
+	presence.updateIntervalSec = presence.config.UpdateIntervalSec
 
 	return presence
 }
@@ -159,17 +158,15 @@ func (p *Presence) Presence(currentTime time.Time) bool {
 	return false
 }
 
-func (p *Presence) publish(client *pubsub.Context) {
-
+func (p *Presence) publish(now time.Time, client *pubsub.Context) {
+	sensor := config.NewSensorState("state.sensor.presence")
+	sensor.Time = now
 	for _, m := range p.members {
-		sensor := config.SensorState{Domain: "sensor", Product: "presence", Name: m.name, Type: "string", Value: getNameOfState(home), Time: m.current.Time}
-		sensor.Value = getNameOfState(m.current.State)
-
-		data, err := json.Marshal(sensor)
-		if err == nil {
-			jsonstr := string(data)
-			client.Publish("state/sensor/presence", jsonstr)
-		}
+		sensor.AddValueSensor(m.name, getNameOfState(m.current.State))
+	}
+	jsonstr, err := sensor.ToJSON()
+	if err == nil {
+		client.Publish("state/sensor/presence", jsonstr)
 	}
 }
 
@@ -201,8 +198,9 @@ func main() {
 						break
 					case <-time.After(updateIntervalSec):
 						if presence != nil {
-							if presence.Presence(time.Now()) {
-								presence.publish(client)
+							now := time.Now()
+							if presence.Presence(now) {
+								presence.publish(now, client)
 							}
 						}
 						break
