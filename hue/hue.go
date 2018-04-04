@@ -60,6 +60,7 @@ func main() {
 		if err == nil {
 
 			fmt.Println("Connected to emitter")
+			client.Subscribe("config/hue")
 			client.Subscribe("sensor/light/+")
 
 			connected := true
@@ -67,12 +68,10 @@ func main() {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
-					if topic == "hue/config" {
+					if topic == "config/hue" {
 						huelighting.config, err = config.HueConfigFromJSON(string(msg.Payload()))
 					} else if topic == "sensor/light/hue" {
 						//huesensor, _ := config.SensorStateFromJSON(string(msg.Payload()))
-					} else if topic == "sensor/light/yee" {
-						//yeesensor, _ := config.SensorStateFromJSON(string(msg.Payload()))
 					} else if topic == "client/disconnected" {
 						connected = false
 					}
