@@ -12,9 +12,9 @@ import (
 // https://github.com/nunows/goyeelight
 
 type instance struct {
-	key   string
-	lamps map[string]*yee.Yeelight
-	//config *config.YeeConfig
+	key    string
+	lamps  map[string]*yee.Yeelight
+	config *config.YeeConfig
 }
 
 func main() {
@@ -37,33 +37,34 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/yee" {
-						//yeelighting.config, err = config.YeeConfigFromJSON(string(msg.Payload()))
+						yeelighting.config, err = config.YeeConfigFromJSON(string(msg.Payload()))
+						yeelighting.lamps = map[string]*yee.Yeelight{}
+						for _, lamp := range yeelighting.config.Lights {
+							yeelighting.lamps[lamp.Name] = yee.New(lamp.IP, lamp.Port)
+						}
 					} else if topic == "sensor/light/yee" {
 						yeesensor, _ := config.SensorStateFromJSON(string(msg.Payload()))
-						ip := yeesensor.GetValue("ip", "")
-						if ip != "" {
-							lamp, exists := yeelighting.lamps[ip]
-							if !exists {
-								lamp = yee.New(ip, "55443")
-								yeelighting.lamps[ip] = lamp
-							}
-
-							power := yeesensor.GetValue("power", "")
-							if power != "" {
+						lampname := yeesensor.GetValue("name", "")
+						if lampname != "" {
+							lamp, exists := yeelighting.lamps[lampname]
+							if exists {
+								power := yeesensor.GetValue("power", "")
+								if power != "" {
+									if power == "on" {
+										lamp.On()
+									} else if power == "off" {
+										lamp.Off()
+									}
+								}
 								if power == "on" {
-									lamp.On()
-								} else if power == "off" {
-									lamp.Off()
-								}
-							}
-							if power == "on" {
-								ct := yeesensor.GetFloatValue("ct", -1.0)
-								if ct != -1.0 {
-									lamp.SetCtAbx(fmt.Sprintf("%f", ct), "smooth", "500")
-								}
-								bri := yeesensor.GetFloatValue("bri", -1.0)
-								if ct != -1.0 {
-									lamp.SetBright(fmt.Sprintf("%f", bri), "smooth", "500")
+									ct := yeesensor.GetFloatValue("ct", -1.0)
+									if ct != -1.0 {
+										lamp.SetCtAbx(fmt.Sprintf("%f", ct), "smooth", "500")
+									}
+									bri := yeesensor.GetFloatValue("bri", -1.0)
+									if ct != -1.0 {
+										lamp.SetBright(fmt.Sprintf("%f", bri), "smooth", "500")
+									}
 								}
 							}
 						}

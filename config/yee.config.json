@@ -1,0 +1,25 @@
+{
+	"name": "Yee",
+	"lights": [
+		{
+			"name": "Frontdoor hall light",
+			"ip": "10.0.0.111",
+			"port": "55443"
+		},
+		{
+			"name": "Livingroom balcony light",
+			"ip": "10.0.0.112",
+			"port": "55443"
+		},
+		{
+			"name": "Chandelier113",
+			"ip": "10.0.0.113",
+			"port": "55443"
+		},
+		{
+			"name": "Chandelier114",
+			"ip": "10.0.0.114",
+			"port": "55443"
+		}
+	]
+}
