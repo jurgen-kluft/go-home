@@ -31,7 +31,8 @@ Note:
 App Structure:
 - Since every process is just running it's own logic want we need is kindof pub/sub server where every process
   can register itself to specific events that it is interested in.
-  - Mist Server (Pub/Sub server where you can subscribe to 'tagged' messages)
+  - Mist Server (Pub/Sub server where you can subscribe to tag(s))
+  - Emitter.io Server (Pub/Sub server where you can subscribe to channel(s))
 
 - Following sub-processes:
   - Log
