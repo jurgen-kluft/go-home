@@ -9,9 +9,10 @@ import (
 )
 
 type Context struct {
-	Secret string
-	InMsgs chan emitter.Message
-	Client emitter.Emitter
+	Secret      string
+	ChannelKeys map[string]string
+	InMsgs      chan emitter.Message
+	Client      emitter.Emitter
 }
 
 type DisconnectMessage struct {
@@ -26,6 +27,7 @@ func (d *DisconnectMessage) Payload() []byte {
 
 func New() *Context {
 	ctx := &Context{}
+	ctx.ChannelKeys = map[string]string{}
 	ctx.Secret = config.EmitterSecrets["secret"]
 	ctx.InMsgs = make(chan emitter.Message)
 	return ctx
@@ -52,7 +54,12 @@ func (ctx *Context) Connect(username string) error {
 		ctx.InMsgs <- msg
 	})
 
-	options.AddBroker("tcp://10.0.0.22:8080")
+	options.SetOnKeyGenHandler(func(_ emitter.Emitter, r emitter.KeyGenResponse) {
+		fmt.Printf("KeyGenResponse from emitter: '%s' = '%s' (status: %d)\n", r.Channel, r.Key, r.Status)
+		ctx.ChannelKeys[r.Channel] = r.Key
+	})
+
+	options.AddBroker("tcp://127.0.0.1:8080")
 
 	// Create a new emitter client and connect to the broker
 	ctx.Client = emitter.NewClient(options)
@@ -72,8 +79,26 @@ func (ctx *Context) Connect(username string) error {
 	return nil
 }
 
+func (ctx *Context) Register(channel string) error {
+	_, exists := ctx.ChannelKeys[channel]
+	if !exists {
+		keygenRequest := emitter.NewKeyGenRequest()
+		keygenRequest.Key = "hVtJ6AfHC_UoZvy1DYHJf8gUnHsnKiKG"
+		keygenRequest.Channel = channel + "/"
+		keygenToken := ctx.Client.GenerateKey(keygenRequest)
+		if !keygenToken.Wait() {
+			return fmt.Errorf("Emitter.Register did not succeed for channel %s due to a timeout", channel)
+		}
+		_, exists = ctx.ChannelKeys[channel]
+		if !exists {
+			return fmt.Errorf("Emitter.Register did not succeed for channel %s, did not receive keygen response", channel)
+		}
+	}
+	return nil
+}
+
 func (ctx *Context) Subscribe(channel string) error {
-	key, exists := config.EmitterSecrets[channel]
+	key, exists := ctx.ChannelKeys[channel]
 	if exists {
 		ctx.Client.Subscribe(key, channel)
 		return nil

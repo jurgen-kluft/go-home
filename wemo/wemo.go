@@ -10,7 +10,6 @@ import (
 
 	"github.com/jurgen-kluft/go-home/config"
 	"github.com/jurgen-kluft/go-home/pubsub"
-	wemo "github.com/savaki/go.wemo"
 )
 
 type instance struct {
@@ -21,7 +20,7 @@ type instance struct {
 
 func main() {
 	thewemo := &instance{}
-	thewemo.devices = map[string]*wemo.Device{}
+	thewemo.devices = map[string]*Switch{}
 
 	for {
 		client := pubsub.New()
@@ -30,6 +29,9 @@ func main() {
 		if err == nil {
 
 			fmt.Println("Connected to emitter")
+
+			client.Register("config/wemo")
+			client.Register("sensor/device/wemo")
 
 			client.Subscribe("config/wemo")
 			client.Subscribe("sensor/device/wemo")

@@ -5,7 +5,7 @@ var EmitterSecrets = map[string]string{
 	"license":                  "zs39gyr2ThwMwfa3oDLPRWHrAoUgVMApAAAAAAAAAAI",
 	"secret":                   "h3C7sXwQy0GO0FBNCMPxjoxa7vdftXkv",
 	"config":                   "QcrrTb0B4Ta43CjR1dqHalXExdDF0NwX",
-	"config/flux":              "",
+	"config/flux":              "SkkSko9S89Fqs3sDjD4RUmfFHaEbck0x",
 	"state/hue/flux":           "",
 	"state/yee/flux":           "",
 	"state/sensor/aqi":         "",
