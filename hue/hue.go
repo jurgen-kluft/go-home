@@ -6,6 +6,7 @@ import (
 
 	"github.com/jurgen-kluft/go-home/config"
 	"github.com/jurgen-kluft/go-home/pubsub"
+	"github.com/stefanwichmann/go.hue"
 )
 
 type instance struct {
@@ -61,22 +62,23 @@ func main() {
 			fmt.Println("Connected to emitter")
 			client.Subscribe("sensor/light/+")
 
-			for {
+			connected := true
+			for connected {
 				select {
 				case msg := <-client.InMsgs:
-					if msg.Topic() == "hue/config" {
+					topic := msg.Topic()
+					if topic == "hue/config" {
 						huelighting.config, err = config.HueConfigFromJSON(string(msg.Payload()))
-					} else if msg.Topic() == "sensor/light/hue" {
+					} else if topic == "sensor/light/hue" {
 						//huesensor, _ := config.SensorStateFromJSON(string(msg.Payload()))
-					} else if msg.Topic() == "sensor/light/yee" {
+					} else if topic == "sensor/light/yee" {
 						//yeesensor, _ := config.SensorStateFromJSON(string(msg.Payload()))
+					} else if topic == "client/disconnected" {
+						connected = false
 					}
-					break
-				case <-time.After(time.Second * 10):
-					// do something if messages are taking too long
-					// or if we haven't received enough state info.
 
-					break
+				case <-time.After(time.Second * 10):
+
 				}
 			}
 		} else {

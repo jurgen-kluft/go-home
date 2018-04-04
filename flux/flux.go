@@ -157,7 +157,8 @@ func main() {
 		err := client.Connect("flux")
 		if err == nil {
 			client.Subscribe("config/flux")
-			for {
+			connected := true
+			for connected {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
@@ -171,13 +172,13 @@ func main() {
 						flux.suncalc, err = config.SensorStateFromJSON(string(msg.Payload()))
 					} else if topic == "state/sensor/season" {
 						flux.updateSeasonFromName(string(msg.Payload()))
+					} else if topic == "client/disconnected" {
+						connected = false
 					}
-					break
+
 				case <-time.After(time.Second * 10):
-					// do something if messages are taking too long
-					// or if we haven't received enough state info.
 					Process(flux, client)
-					break
+
 				}
 			}
 		}

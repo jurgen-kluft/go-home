@@ -66,12 +66,7 @@ func (c *Client) getWindDescription(wind float64) string {
 	return ""
 }
 
-type State struct {
-	Current config.Forecast   `json:"current"`
-	Hourly  []config.Forecast `json:"hourly"`
-}
-
-func (c *Client) addHourly(from time.Time, until time.Time, hourly *darksky.DataBlock, state *State) {
+func (c *Client) addHourly(from time.Time, until time.Time, hourly *darksky.DataBlock) {
 
 	for _, dp := range hourly.Data {
 		hfrom := time.Unix(dp.Time.Unix(), 0)
@@ -151,7 +146,8 @@ func atHour(date time.Time, h int, m int) time.Time {
 
 func (c *Client) Process() time.Duration {
 	now := time.Now()
-	state := &State{Hourly: []config.Forecast{}}
+
+	state := config.NewSensorState("weather.current")
 
 	// Weather update every 5 minutes
 	if now.Unix() >= c.update.Unix() {
@@ -165,18 +161,13 @@ func (c *Client) Process() time.Duration {
 			from := now
 			until := hoursLater(from, 3.0)
 
-			current := config.Forecast{}
-			current.From = from
-			current.Until = until
+			state.AddTimeSlotSensor("rain", from, until)
+			state.AddFloatSensor("rain", forecast.Currently.PrecipProbability)
+			state.AddFloatSensor("clouds", forecast.Currently.CloudCover)
+			state.AddFloatSensor("wind", forecast.Currently.WindSpeed)
+			state.AddFloatSensor("temperature", forecast.Currently.ApparentTemperature)
 
-			current.Rain = forecast.Currently.PrecipProbability
-			current.Clouds = forecast.Currently.CloudCover
-			current.Wind = forecast.Currently.WindSpeed
-			current.Temperature = forecast.Currently.ApparentTemperature
-
-			state.Current = current
-
-			c.addHourly(atHour(now, 6, 0), atHour(now, 20, 0), forecast.Hourly, state)
+			//			c.addHourly(atHour(now, 6, 0), atHour(now, 20, 0), forecast.Hourly, state)
 		}
 	}
 
@@ -197,23 +188,27 @@ func main() {
 
 			client.Subscribe("config/weather")
 
-			for {
+			connected := true
+			for connected {
 				select {
 				case msg := <-client.InMsgs:
-					if msg.Topic() == "config/weather" {
+					topic := msg.Topic()
+					if topic == "config/weather" {
 						if weather.config == nil {
 							weather.config, err = config.WeatherConfigFromJSON(string(msg.Payload()))
 							if err != nil {
 								weather.config = nil
 							}
 						}
+					} else if topic == "client/disconnected" {
+						connected = false
 					}
-					break
+
 				case <-time.After(time.Second * 60):
 					if weather.config != nil {
 						weather.Process()
 					}
-					break
+
 				}
 			}
 		}

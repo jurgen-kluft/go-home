@@ -44,6 +44,18 @@ func (s SensorState) GetFloatValue(name string, defaultvalue float64) float64 {
 	return defaultvalue
 }
 
+// GetValue returns the value of a FloatSensor with name 'name'
+func (s SensorState) GetValue(name string, defaultvalue string) string {
+	if s.ValueSensors != nil {
+		for _, fs := range *s.ValueSensors {
+			if fs.Name == name {
+				return fs.Value
+			}
+		}
+	}
+	return defaultvalue
+}
+
 // ValueSensor is a sensor holding a string as value
 type ValueSensor struct {
 	Name  string `json:"name"`

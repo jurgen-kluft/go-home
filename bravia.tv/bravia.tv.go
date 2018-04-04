@@ -71,7 +71,8 @@ func main() {
 			client.Subscribe("config/tv/sony")
 			client.Subscribe("state/tv/sony")
 
-			for {
+			connected := true
+			for connected {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
@@ -80,19 +81,19 @@ func main() {
 					} else if topic == "state/tv/sony" {
 						state, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
-							if state.Value == "off" {
+							power := state.GetValue("power", "idle")
+							if power == "off" {
 								sony.poweroff(state.Name)
-							} else if state.Value == "on" {
+							} else if power == "on" {
 								sony.poweron(state.Name)
 							}
 						}
+					} else if topic == "client/disconnected" {
+						connected = false
 					}
-					break
-				case <-time.After(time.Second * 10):
-					// do something if messages are taking too long
-					// or if we haven't received enough state info.
 
-					break
+				case <-time.After(time.Second * 10):
+
 				}
 			}
 		} else {

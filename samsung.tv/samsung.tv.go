@@ -68,31 +68,33 @@ func main() {
 		if err == nil {
 
 			fmt.Println("Connected to emitter")
+
 			client.Subscribe("config/tv/samsung")
 			client.Subscribe("state/tv/samsung")
 
-			for {
+			connected := true
+			for connected {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
-					if topic == "tv.samsung/config" {
+					if topic == "config/tv/samsung" {
 						//huelighting.config, err = config.HueConfigFromJSON(string(msg.Payload()))
-					} else if topic == "tv.samsung/state" {
+					} else if topic == "state/tv/samsung" {
 						state, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
-							if state.Value == "off" {
+							power := state.GetValue("power", "idle")
+							if power == "off" {
 								samsung.poweroff(state.Name)
-							} else if state.Value == "on" {
+							} else if power == "on" {
 								samsung.poweron(state.Name)
 							}
 						}
+					} else if topic == "client/disconnected" {
+						connected = false
 					}
-					break
-				case <-time.After(time.Second * 10):
-					// do something if messages are taking too long
-					// or if we haven't received enough state info.
 
-					break
+				case <-time.After(time.Second * 10):
+
 				}
 			}
 		} else {

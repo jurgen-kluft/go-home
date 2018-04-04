@@ -3,7 +3,6 @@ package suncalc
 // sun calculations are based on http://aa.quae.nl/en/reken/zonpositie.html formulas
 
 import (
-	"encoding/json"
 	"math"
 	"time"
 
@@ -410,21 +409,17 @@ func (s *Instance) Process(client *pubsub.Context) {
 
 	moments := s.getMoments(now, lat, lng)
 
-	suncalc := config.SuncalcState{Moments: []config.SuncalcMoment{}}
+	sunstate := config.NewSensorState("state.sensor.sun")
 	for _, m := range moments {
-		sm := config.SuncalcMoment{}
-		sm.Name = m.title
-		sm.Begin = m.start
-		sm.End = m.end
-		suncalc.Moments = append(suncalc.Moments, sm)
+		sunstate.AddTimeSlotSensor(m.title, m.start, m.end)
 	}
 
 	_, moonPhase, _ := getMoonIllumination(now)
-	suncalc.MoonIllumination = moonPhase
+	sunstate.AddFloatSensor("moon.illumination", moonPhase)
 
-	jsonbytes, err := json.Marshal(suncalc)
+	jsonstr, err := sunstate.ToJSON()
 	if err == nil {
-		client.Publish("state/suncalc", string(jsonbytes))
+		client.Publish("state/sensor/sun", jsonstr)
 	}
 }
 
@@ -437,18 +432,22 @@ func main() {
 
 			client.Subscribe("config/suncalc")
 
-			for {
+			connected := true
+			for connected {
 				select {
 				case msg := <-client.InMsgs:
-					if msg.Topic() == "config/suncalc" {
+					topic := msg.Topic()
+					if topic == "config/suncalc" {
 						if suncalc.config == nil {
 							suncalc.config, err = config.SuncalcConfigFromJSON(string(msg.Payload()))
 						}
+					} else if topic == "client/disconnected" {
+						connected = false
 					}
-					break
+
 				case <-time.After(time.Minute * 1):
 					suncalc.Process(client)
-					break
+
 				}
 			}
 		}

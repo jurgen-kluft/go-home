@@ -113,7 +113,7 @@ func main() {
 						} else if topic == "client/disconnected" {
 							connected = false
 						}
-						break
+
 					case <-time.After(time.Second * 10):
 						if aqi != nil && aqi.config != nil {
 							if aqi.shouldPoll(time.Now(), false) {
@@ -124,7 +124,6 @@ func main() {
 								aqi.computeNextPoll(time.Now(), err)
 							}
 						}
-						break
 
 					}
 				}
