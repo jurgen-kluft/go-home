@@ -430,6 +430,9 @@ func main() {
 		err := client.Connect("suncalc")
 		if err == nil {
 
+			client.Register("config/suncalc")
+			client.Register("state/sensor/sun")
+
 			client.Subscribe("config/suncalc")
 
 			connected := true

@@ -8,7 +8,7 @@ import (
 
 	"github.com/jurgen-kluft/go-home/config"
 	"github.com/jurgen-kluft/go-home/pubsub"
-	"github.com/xuebing1110/migateway"
+	"github.com/jurgen-kluft/migateway"
 )
 
 // Features:
@@ -51,8 +51,19 @@ func main() {
 		if err == nil {
 
 			fmt.Println("Connected to emitter")
-			client.Subscribe("config/xiaomi/+")
-			client.Subscribe("state/xiaomi/+")
+
+			client.Register("config/xiaomi")
+			client.Register("state/xiaomi")
+
+			client.Register("state/xiaomi/gateway")
+			client.Register("state/xiaomi/magnet")
+			client.Register("state/xiaomi/motion")
+			client.Register("state/xiaomi/plug")
+			client.Register("state/xiaomi/switch")
+			client.Register("state/xiaomi/dualwiredwallswitch")
+
+			client.Subscribe("config/xiaomi")
+			client.Subscribe("state/xiaomi")
 
 			connected := true
 			for connected {
@@ -61,15 +72,17 @@ func main() {
 					topic := msg.Topic()
 					if topic == "config/xiaomi" {
 						xiaomi.config, err = config.XiaomiConfigFromJSON(string(msg.Payload()))
-					} else if strings.HasPrefix(topic, "state/xiaomi") {
-						var object string
-						fmt.Sscanf(topic, "state/xiaomi/%s", object)
+					} else if topic == "state/xiaomi" {
+						state, err := config.SensorStateFromJSON(string(msg.Payload()))
+						if err == nil {
+							// TODO: Figure out what state to change on which device
+							// Gateway color
+							// Dualwiredwallswitch Channel 0/1 On/Off
+							// Plug On/Off
+							if state.Name == "" {
 
-						// TODO: Figure out what state to change on which device
-						// Gateway color
-						// Dualwiredwallswitch Channel 0/1 On/Off
-						// Plug On/Off
-
+							}
+						}
 					} else if topic == "client/disconnected" {
 						connected = false
 					}
@@ -82,103 +95,70 @@ func main() {
 					case migateway.GatewayStateChange:
 						state := msg.(migateway.GatewayStateChange)
 						name := "xiaomi.gateway." + state.ID
-						var jsonmsg struct {
-							Name         string  `json:"name"`
-							Illumination float64 `json:"illumination"`
-							RGB          uint32  `json:"rgb"`
-						}
-						jsonmsg.Name = name
-						jsonmsg.Illumination = state.To.Illumination
-						jsonmsg.RGB = state.To.RGB
-						jsondata, err := json.Marshal(jsonmsg)
+						sensor := config.NewSensorState(name)
+						sensor.AddFloatSensor("illumination", state.To.Illumination)
+						sensor.AddIntSensor("rgb", int64(state.To.RGB))
+						jsonstr, err := sensor.ToJSON()
 						if err == nil {
-							client.Publish("state/xiaomi/gateway", string(jsondata))
+							client.Publish("state/xiaomi/gateway", jsonstr)
 						}
 
 					case migateway.MagnetStateChange:
 						state := msg.(migateway.MagnetStateChange)
 						name := "xiaomi.magnet." + state.ID
-						var jsonmsg struct {
-							Name    string  `json:"name"`
-							Battery float64 `json:"battery"`
-							Open    bool    `json:"open"`
-						}
-						jsonmsg.Name = name
-						jsonmsg.Battery = state.To.Battery
-						jsonmsg.Open = state.To.Opened
-						jsondata, err := json.Marshal(jsonmsg)
+						sensor := config.NewSensorState(name)
+						sensor.AddFloatSensor("battery", state.To.Battery)
+						sensor.AddBoolSensor("open", state.To.Opened)
+						jsonstr, err := sensor.ToJSON()
 						if err == nil {
-							client.Publish("state/xiaomi/magnet", string(jsondata))
+							client.Publish("state/xiaomi/magnet", jsonstr)
 						}
 
 					case migateway.MotionStateChange:
 						state := msg.(migateway.MotionStateChange)
 						name := "xiaomi.motion." + state.ID
-						var jsonmsg struct {
-							Name   string    `json:"name"`
-							Motion bool      `json:"motion"`
-							Last   time.Time `json:"last"`
-						}
-						jsonmsg.Name = name
-						jsonmsg.Motion = state.To.HasMotion
-						jsonmsg.Last = state.To.LastMotion
-						jsondata, err := json.Marshal(jsonmsg)
+						sensor := config.NewSensorState(name)
+						sensor.AddTimeSlotSensor("battery", state.To.LastMotion, time.Now())
+						sensor.AddBoolSensor("motion", state.To.HasMotion)
+						jsonstr, err := sensor.ToJSON()
 						if err == nil {
-							client.Publish("state/xiaomi/motion", string(jsondata))
+							client.Publish("state/xiaomi/motion", jsonstr)
 						}
 
 					case migateway.PlugStateChange:
 						state := msg.(migateway.PlugStateChange)
 						name := "xiaomi.plug." + state.ID
-						var jsonmsg struct {
-							Name          string `json:"name"`
-							InUse         bool   `json:"inuse"`
-							IsOn          bool   `json:"ison"`
-							LoadVoltage   uint32 `json:"loadvoltage"`
-							LoadPower     uint32 `json:"loadpower"`
-							PowerConsumed uint32 `json:"powerconsumed"`
-						}
-						jsonmsg.Name = name
-						jsonmsg.InUse = state.To.InUse
-						jsonmsg.IsOn = state.To.IsOn
-						jsonmsg.LoadVoltage = state.To.LoadVoltage
-						jsonmsg.LoadPower = state.To.LoadPower
-						jsonmsg.PowerConsumed = state.To.PowerConsumed
-						jsondata, err := json.Marshal(jsonmsg)
+						sensor := config.NewSensorState(name)
+						sensor.AddBoolSensor("inuse", state.To.InUse)
+						sensor.AddBoolSensor("ison", state.To.IsOn)
+						sensor.AddIntSensor("loadvoltage", int64(state.To.LoadVoltage))
+						sensor.AddIntSensor("loadpower", int64(state.To.LoadPower))
+						sensor.AddIntSensor("powerconsumed", int64(state.To.PowerConsumed))
+						jsonstr, err := sensor.ToJSON()
 						if err == nil {
-							client.Publish("state/xiaomi/plug", string(jsondata))
+							client.Publish("state/xiaomi/plug", jsonstr)
 						}
 
 					case migateway.SwitchStateChange:
 						state := msg.(migateway.SwitchStateChange)
 						name := "xiaomi.switch." + state.ID
-						var jsonmsg struct {
-							Name    string  `json:"name"`
-							Battery float64 `json:"battery"`
-							Click   string  `json:"click"`
-						}
-						jsonmsg.Name = name
-						jsonmsg.Battery = state.To.Battery
-						jsonmsg.Click = state.To.Click.String()
-						jsondata, err := json.Marshal(jsonmsg)
+						sensor := config.NewSensorState(name)
+						sensor.AddIntSensor("battery", int64(state.To.Battery))
+						sensor.AddValueSensor("click", state.To.Click.String())
+						jsonstr, err := sensor.ToJSON()
 						if err == nil {
-							client.Publish("state/xiaomi/switch", string(jsondata))
+							client.Publish("state/xiaomi/switch", jsonstr)
 						}
 
 					case migateway.DualWiredWallSwitchStateChange:
 						state := msg.(migateway.DualWiredWallSwitchStateChange)
 						name := "xiaomi.dualwiredwallswitch." + state.ID
-						var jsonmsg struct {
-							Name     string `json:"name"`
-							Channel0 bool   `json:"channel0"`
-							Channel1 bool   `json:"channel1"`
-						}
-						jsonmsg.Name = name
-						jsonmsg.Channel0 = state.To.Channel0On
-						jsonmsg.Channel1 = state.To.Channel1On
-						jsondata, err := json.Marshal(jsonmsg)
+						sensor := config.NewSensorState(name)
+						sensor.AddBoolSensor("channel0", state.To.Channel0On)
+						sensor.AddBoolSensor("channel1", state.To.Channel1On)
+						jsonstr, err := sensor.ToJSON()
 						if err == nil {
-							client.Publish("state/xiaomi/dualwiredwallswitch", string(jsondata))
+							client.Publish("state/xiaomi/dualwiredwallswitch", jsonstr)
 						}
 
 					}

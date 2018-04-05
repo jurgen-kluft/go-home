@@ -68,6 +68,9 @@ func main() {
 
 			fmt.Println("Connected to emitter")
 
+			client.Register("config/tv/sony")
+			client.Register("state/tv/sony")
+
 			client.Subscribe("config/tv/sony")
 			client.Subscribe("state/tv/sony")
 
@@ -81,7 +84,7 @@ func main() {
 					} else if topic == "state/tv/sony" {
 						state, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
-							power := state.GetValue("power", "idle")
+							power := state.GetValueAttr("power", "idle")
 							if power == "off" {
 								sony.poweroff(state.Name)
 							} else if power == "on" {

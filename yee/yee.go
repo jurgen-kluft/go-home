@@ -28,6 +28,10 @@ func main() {
 		if err == nil {
 
 			fmt.Println("Connected to emitter")
+
+			client.Register("config/yee")
+			client.Register("sensor/light/yee")
+
 			client.Subscribe("config/yee")
 			client.Subscribe("sensor/light/yee")
 

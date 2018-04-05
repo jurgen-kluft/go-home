@@ -144,10 +144,10 @@ func atHour(date time.Time, h int, m int) time.Time {
 	return now
 }
 
-func (c *Client) Process() time.Duration {
+func (c *Client) Process(client *pubsub.Context) time.Duration {
 	now := time.Now()
 
-	state := config.NewSensorState("weather.current")
+	state := config.NewSensorState("weather")
 
 	// Weather update every 5 minutes
 	if now.Unix() >= c.update.Unix() {
@@ -171,6 +171,11 @@ func (c *Client) Process() time.Duration {
 		}
 	}
 
+	jsonstr, err := state.ToJSON()
+	if err == nil {
+		client.Publish("state/sensor/weather", jsonstr)
+	}
+
 	wait := time.Duration(c.update.Unix()-time.Now().Unix()) * time.Second
 	if wait < 0 {
 		wait = 0
@@ -185,6 +190,9 @@ func main() {
 		client := pubsub.New()
 		err := client.Connect("weather")
 		if err == nil {
+
+			client.Register("config/weather")
+			client.Register("state/sensor/weather")
 
 			client.Subscribe("config/weather")
 
@@ -206,7 +214,7 @@ func main() {
 
 				case <-time.After(time.Second * 60):
 					if weather.config != nil {
-						weather.Process()
+						weather.Process(client)
 					}
 
 				}

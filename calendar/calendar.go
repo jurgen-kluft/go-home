@@ -237,14 +237,14 @@ func main() {
 			err := client.Connect("calendar")
 			if err == nil {
 
-				// Subscribe to the presence demo channel
+				client.Register("config/calendar")
 				client.Subscribe("config/calendar")
 
 				for connected {
 					select {
 					case msg := <-client.InMsgs:
 						topic := msg.Topic()
-						if topic == "calendar/config" {
+						if topic == "config/calendar" {
 							jsonmsg := string(msg.Payload())
 							calendar, err = New(jsonmsg)
 							if err != nil {

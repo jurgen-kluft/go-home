@@ -83,7 +83,9 @@ func (ctx *Context) Register(channel string) error {
 	_, exists := ctx.ChannelKeys[channel]
 	if !exists {
 		keygenRequest := emitter.NewKeyGenRequest()
-		keygenRequest.Key = "hVtJ6AfHC_UoZvy1DYHJf8gUnHsnKiKG"
+		// "license": "c1aVVz_sTmIi_FTcugWsjzTsQ4kJrslAAAAAAAAAAAI",
+		// "secret": "1ZPCl42pPIyq6ZsZbaV4OUexWw97cZvf",
+		keygenRequest.Key = "1ZPCl42pPIyq6ZsZbaV4OUexWw97cZvf"
 		keygenRequest.Channel = channel + "/"
 		keygenToken := ctx.Client.GenerateKey(keygenRequest)
 		if !keygenToken.Wait() {

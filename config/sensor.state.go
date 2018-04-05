@@ -10,8 +10,9 @@ import (
 type SensorState struct {
 	Name            string            `json:"name"`
 	Time            time.Time         `json:"time"`
-	FloatSensors    *[]FloatSensor    `json:"float_sensors,omitempty"`
+	BoolSensors     *[]BoolSensor     `json:"bool_sensors,omitempty"`
 	IntSensors      *[]IntSensor      `json:"int_sensors,omitempty"`
+	FloatSensors    *[]FloatSensor    `json:"float_sensors,omitempty"`
 	ValueSensors    *[]ValueSensor    `json:"value_sensors,omitempty"`
 	TimeSlotSensors *[]TimeSlotSensor `json:"timeslot_sensors,omitempty"`
 }
@@ -32,8 +33,32 @@ func (s SensorState) ToJSON() (string, error) {
 	return "", err
 }
 
-// GetFloatValue returns the value of a FloatSensor with name 'name'
-func (s SensorState) GetFloatValue(name string, defaultvalue float64) float64 {
+// GetBoolAttr returns the value of a FloatSensor with name 'name'
+func (s SensorState) GetBoolAttr(name string, defaultvalue bool) bool {
+	if s.BoolSensors != nil {
+		for _, fs := range *s.BoolSensors {
+			if fs.Name == name {
+				return fs.Value
+			}
+		}
+	}
+	return defaultvalue
+}
+
+// GetIntAttr returns the value of a FloatSensor with name 'name'
+func (s SensorState) GetIntAttr(name string, defaultvalue int64) int64 {
+	if s.IntSensors != nil {
+		for _, fs := range *s.IntSensors {
+			if fs.Name == name {
+				return fs.Value
+			}
+		}
+	}
+	return defaultvalue
+}
+
+// GetFloatAttr returns the value of a FloatSensor with name 'name'
+func (s SensorState) GetFloatAttr(name string, defaultvalue float64) float64 {
 	if s.FloatSensors != nil {
 		for _, fs := range *s.FloatSensors {
 			if fs.Name == name {
@@ -44,8 +69,8 @@ func (s SensorState) GetFloatValue(name string, defaultvalue float64) float64 {
 	return defaultvalue
 }
 
-// GetValue returns the value of a FloatSensor with name 'name'
-func (s SensorState) GetValue(name string, defaultvalue string) string {
+// GetValueAttr returns the value of a FloatSensor with name 'name'
+func (s SensorState) GetValueAttr(name string, defaultvalue string) string {
 	if s.ValueSensors != nil {
 		for _, fs := range *s.ValueSensors {
 			if fs.Name == name {
@@ -128,6 +153,17 @@ func IntSensorAsJSON(sensorname string, name string, value int64) (string, error
 	return jsonstr, err
 }
 
+// BoolSensorAsJSON can be called as BoolSensorAsJSON("state.sensor.motion", "motion_98AE7", true) and
+// you will receive the JSON string or an error.
+func BoolSensorAsJSON(sensorname string, name string, value bool) (string, error) {
+	sensorstate := SensorState{}
+	sensorstate.Name = sensorname
+	sensorstate.Time = time.Now()
+	sensorstate.AddBoolSensor(name, value)
+	jsonstr, err := sensorstate.ToJSON()
+	return jsonstr, err
+}
+
 // TimeSlotSensorAsJSON can be called as TimeSlotSensorAsJSON("state.sensor.sun", "sun.rise", sunrise_begin, sunrise_end) and
 // you will receive the JSON string or an error.
 func TimeSlotSensorAsJSON(sensorname string, name string, begin time.Time, end time.Time) (string, error) {
@@ -144,6 +180,15 @@ func NewSensorState(name string) SensorState {
 	sensorstate := SensorState{}
 	sensorstate.Name = name
 	return sensorstate
+}
+
+// AddBoolSensor adds an BoolSensor to SensorState
+func (s SensorState) AddBoolSensor(name string, value bool) {
+	if s.BoolSensors == nil {
+		s.BoolSensors = &[]BoolSensor{BoolSensor{Name: name, Value: value}}
+	} else {
+		*s.BoolSensors = append(*s.BoolSensors, BoolSensor{Name: name, Value: value})
+	}
 }
 
 // AddIntSensor adds an IntSensor to SensorState

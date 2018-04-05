@@ -81,7 +81,7 @@ func Process(f *instance, client *pubsub.Context) {
 	currentx = float64(int64(currentx*100.0)) / 100.0
 
 	clouds := config.Weather{Clouds: config.MinMax{Min: 0.0, Max: 0.001}, CTPct: 0.0, BriPct: 0.0}
-	cloudFac := f.clouds.GetFloatValue("clouds", 0.0)
+	cloudFac := f.clouds.GetFloatAttr("clouds", 0.0)
 	for _, w := range f.config.Weather {
 		if cloudFac >= w.Clouds.Min && cloudFac < w.Clouds.Max {
 			clouds = w
@@ -156,7 +156,13 @@ func main() {
 		client := pubsub.New()
 		err := client.Connect("flux")
 		if err == nil {
+			client.Register("config/flux")
+			client.Register("state/sensor/clouds")
+			client.Register("state/sensor/sun")
+			client.Register("state/sensor/season")
+
 			client.Subscribe("config/flux")
+
 			connected := true
 			for connected {
 				select {

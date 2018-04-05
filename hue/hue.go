@@ -60,8 +60,12 @@ func main() {
 		if err == nil {
 
 			fmt.Println("Connected to emitter")
+
+			client.Register("config/hue")
+			client.Register("sensor/light/hue")
+
 			client.Subscribe("config/hue")
-			client.Subscribe("sensor/light/+")
+			client.Subscribe("sensor/light/hue")
 
 			connected := true
 			for connected {

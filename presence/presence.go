@@ -183,13 +183,14 @@ func main() {
 			err := client.Connect("presence")
 			if err == nil {
 
+				client.Register("config/presence")
 				client.Subscribe("config/presence")
 
 				for connected {
 					select {
 					case msg := <-client.InMsgs:
 						topic := msg.Topic()
-						if topic == "presence/config" {
+						if topic == "config/presence" {
 							presence = New(string(msg.Payload()))
 							updateIntervalSec = time.Second * time.Duration(presence.config.UpdateIntervalSec)
 						} else if topic == "client/disconnected" {

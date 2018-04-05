@@ -98,6 +98,9 @@ func main() {
 			err := client.Connect("aqi")
 			if err == nil {
 
+				client.Register("config/aqi")
+				client.Register("state/sensor/aqi")
+
 				client.Subscribe("config/aqi")
 
 				for connected {

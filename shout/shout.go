@@ -1,7 +1,6 @@
 package shout
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -58,17 +57,21 @@ func main() {
 			if err == nil {
 
 				// Subscribe to the presence demo channel
-				client.Subscribe("shout/+")
+				client.Register("config/shout")
+				client.Register("shout/message")
+
+				client.Subscribe("config/shout")
+				client.Subscribe("shout/message")
 
 				for connected {
 					select {
 					case msg := <-client.InMsgs:
 						topic := msg.Topic()
-						if topic == "shout/config" {
+						if topic == "config/shout" {
 							shout, err = New(string(msg.Payload()))
 						} else if topic == "client/disconnected" {
 							connected = false
-						} else if shout != nil {
+						} else if topic == "shout/message" {
 							// Is this a message to send over slack ?
 							shout.postMessage(string(msg.Payload()))
 						}
