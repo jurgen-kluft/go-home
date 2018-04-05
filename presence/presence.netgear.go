@@ -1,4 +1,4 @@
-package presence
+package main
 
 import (
 	"github.com/jurgen-kluft/go-home/presence/netgear"
@@ -8,7 +8,7 @@ type netgearRouter struct {
 	router *netgear.Router
 }
 
-func (r *netgearRouter) get(mac map[string]bool) error {
+func (r *netgearRouter) get(mac *map[string]bool) error {
 	return r.router.Get(mac)
 }
 

@@ -1,6 +1,7 @@
 package flux
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
@@ -131,18 +132,18 @@ func Process(f *instance, client *pubsub.Context) {
 		lct := ltype.CT.LinearInterpolated(CT)
 		sensorCT, err := config.FloatSensorAsJSON("sensor.light."+ltype.Name, "CT", lct)
 		if err == nil {
-			publishSensor("state/sensor/light", sensorCT, client)
+			publishSensor("state/light/"+ltype.Name+"/", sensorCT, client)
 		}
 		lbri := ltype.BRI.LinearInterpolated(BRI)
 		sensorBRI, err := config.FloatSensorAsJSON("sensor.light."+ltype.Name, "BRI", lbri)
 		if err == nil {
-			publishSensor("state/sensor/light", sensorBRI, client)
+			publishSensor("state/light/"+ltype.Name+"/", sensorBRI, client)
 		}
 	}
 
 	sensorDOL, err := config.ValueSensorAsJSON("sensor.light.darkorlight", "DarkOrLight", string(current.Darkorlight))
 	if err == nil {
-		publishSensor("state/sensor/light", sensorDOL, client)
+		publishSensor("state/sensor/light/", sensorDOL, client)
 	}
 }
 
@@ -153,32 +154,29 @@ func publishSensor(channel string, sensorjson string, client *pubsub.Context) {
 func main() {
 	flux := &instance{}
 	for {
-		client := pubsub.New()
-		err := client.Connect("flux")
+		client := pubsub.New("tcp://10.0.0.22:8080")
+		register := []string{"config/flux/", "state/sensor/clouds/", "state/sensor/sun/", "state/sensor/season/", "state/light/hue/", "state/light/yee/"}
+		subscribe := []string{"config/flux/", "state/sensor/clouds/", "state/sensor/sun/", "state/sensor/season/"}
+		err := client.Connect("flux", register, subscribe)
 		if err == nil {
-			client.Register("config/flux")
-			client.Register("state/sensor/clouds")
-			client.Register("state/sensor/sun")
-			client.Register("state/sensor/season")
-
-			client.Subscribe("config/flux")
+			fmt.Println("Connected to emitter")
 
 			connected := true
 			for connected {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
-					if topic == "config/flux" {
+					if topic == "config/flux/" {
 						if flux.config == nil {
 							flux.config, err = config.FluxConfigFromJSON(string(msg.Payload()))
 						}
-					} else if topic == "state/sensor/clouds" {
+					} else if topic == "state/sensor/clouds/" {
 						flux.clouds, err = config.SensorStateFromJSON(string(msg.Payload()))
-					} else if topic == "state/sensor/sun" {
+					} else if topic == "state/sensor/sun/" {
 						flux.suncalc, err = config.SensorStateFromJSON(string(msg.Payload()))
-					} else if topic == "state/sensor/season" {
+					} else if topic == "state/sensor/season/" {
 						flux.updateSeasonFromName(string(msg.Payload()))
-					} else if topic == "client/disconnected" {
+					} else if topic == "client/disconnected/" {
 						connected = false
 					}
 
@@ -189,7 +187,9 @@ func main() {
 			}
 		}
 
-		// Wait for 10 seconds before retrying
-		time.Sleep(10 * time.Second)
+		if err != nil {
+			fmt.Println("Error: " + err.Error())
+			time.Sleep(5 * time.Second)
+		}
 	}
 }

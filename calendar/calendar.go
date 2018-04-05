@@ -233,24 +233,24 @@ func main() {
 	for {
 		connected := true
 		for connected {
-			client := pubsub.New()
-			err := client.Connect("calendar")
+			client := pubsub.New("tcp://10.0.0.22:8080")
+			register := []string{"config/calendar/", "state/sensor/calendar/"}
+			subscribe := []string{"config/calendar/"}
+			err := client.Connect("calendar", register, subscribe)
 			if err == nil {
-
-				client.Register("config/calendar")
-				client.Subscribe("config/calendar")
+				fmt.Println("Connected to emitter")
 
 				for connected {
 					select {
 					case msg := <-client.InMsgs:
 						topic := msg.Topic()
-						if topic == "config/calendar" {
+						if topic == "config/calendar/" {
 							jsonmsg := string(msg.Payload())
 							calendar, err = New(jsonmsg)
 							if err != nil {
 								calendar = nil
 							}
-						} else if topic == "client/disconnected" {
+						} else if topic == "client/disconnected/" {
 							connected = false
 						}
 						break
@@ -262,8 +262,11 @@ func main() {
 
 					}
 				}
-			} else {
-				panic("Error on Client.Connect(): " + err.Error())
+			}
+
+			if err != nil {
+				fmt.Println("Error: " + err.Error())
+				time.Sleep(1 * time.Second)
 			}
 		}
 

@@ -94,48 +94,46 @@ func main() {
 	for {
 		connected := true
 		for connected {
-			client := pubsub.New()
-			err := client.Connect("aqi")
+			client := pubsub.New("tcp://10.0.0.22:8080")
+			register := []string{"config/aqi/", "state/sensor/aqi/"}
+			subscribe := []string{"config/aqi/"}
+			err := client.Connect("aqi", register, subscribe)
+
 			if err == nil {
-
-				client.Register("config/aqi")
-				client.Register("state/sensor/aqi")
-
-				client.Subscribe("config/aqi")
-
 				for connected {
 					select {
 					case msg := <-client.InMsgs:
 						topic := msg.Topic()
-						if topic == "config/aqi" {
+						if topic == "config/aqi/" {
 							jsonmsg := string(msg.Payload())
 							config, err := config.AqiConfigFromJSON(jsonmsg)
 							if err == nil {
 								aqi.config = config
 							}
-						} else if topic == "client/disconnected" {
+						} else if topic == "client/disconnected/" {
 							connected = false
 						}
 
-					case <-time.After(time.Second * 10):
+					case <-time.After(time.Second * 300):
 						if aqi != nil && aqi.config != nil {
 							if aqi.shouldPoll(time.Now(), false) {
 								jsonstate, err := aqi.Poll()
 								if err == nil {
-									client.PublishTTL("state/sensor/aqi", jsonstate, 5*60)
+									client.PublishTTL("state/sensor/aqi/", jsonstate, 5*60)
 								}
 								aqi.computeNextPoll(time.Now(), err)
 							}
 						}
-
 					}
 				}
-			} else {
-				panic("Error on Client.Connect(): " + err.Error())
+			}
+			if err != nil {
+				fmt.Println("Error: " + err.Error())
+				time.Sleep(1 * time.Second)
 			}
 		}
 
-		// Wait for 10 seconds before retrying
-		time.Sleep(10 * time.Second)
+		// Wait for 5 seconds before retrying
+		time.Sleep(5 * time.Second)
 	}
 }

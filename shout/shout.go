@@ -52,26 +52,22 @@ func main() {
 	for {
 		connected := true
 		for connected {
-			client := pubsub.New()
-			err := client.Connect("shout")
+			client := pubsub.New("tcp://10.0.0.22:8080")
+			register := []string{"config/shout/", "shout/message/"}
+			subscribe := []string{"config/shout/", "shout/message/"}
+			err := client.Connect("shout", register, subscribe)
 			if err == nil {
-
-				// Subscribe to the presence demo channel
-				client.Register("config/shout")
-				client.Register("shout/message")
-
-				client.Subscribe("config/shout")
-				client.Subscribe("shout/message")
+				fmt.Println("Connected to emitter")
 
 				for connected {
 					select {
 					case msg := <-client.InMsgs:
 						topic := msg.Topic()
-						if topic == "config/shout" {
+						if topic == "config/shout/" {
 							shout, err = New(string(msg.Payload()))
-						} else if topic == "client/disconnected" {
+						} else if topic == "client/disconnected/" {
 							connected = false
-						} else if topic == "shout/message" {
+						} else if topic == "shout/message/" {
 							// Is this a message to send over slack ?
 							shout.postMessage(string(msg.Payload()))
 						}
@@ -82,11 +78,14 @@ func main() {
 					}
 				}
 			} else {
-				panic("Error on Client.Connect(): " + err.Error())
+				connected = false
+			}
+
+			if err != nil {
+				fmt.Println("Error: " + err.Error())
 			}
 		}
 
-		// Wait for 10 seconds before retrying
-		time.Sleep(10 * time.Second)
+		time.Sleep(5 * time.Second)
 	}
 }

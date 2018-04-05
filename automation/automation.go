@@ -8,6 +8,7 @@ package automation
 // -
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/pubsub"
@@ -19,13 +20,11 @@ func main() {
 	for {
 		connected := true
 		for connected {
-			client := pubsub.New()
-			err := client.Connect("automation")
+			client := pubsub.New("tcp://10.0.0.22:8080")
+			register := []string{"config/automation/", "state/#/"}
+			subscribe := []string{"config/automation/", "state/#/"}
+			err := client.Connect("automation", register, subscribe)
 			if err == nil {
-
-				client.Subscribe("config/automation")
-				client.Subscribe("state/+")
-
 				for connected {
 					select {
 					case msg := <-client.InMsgs:
@@ -35,18 +34,21 @@ func main() {
 							connected = false
 						}
 
-					case <-time.After(time.Second * 20):
+					case <-time.After(time.Second * 10):
 						auto.HandleTime(time.Now())
-
 					}
 				}
-			} else {
-				panic("Error on Client.Connect(): " + err.Error())
 			}
+
+			if err != nil {
+				fmt.Println("Error: " + err.Error())
+				time.Sleep(1 * time.Second)
+			}
+
 		}
 
-		// Wait for 10 seconds before retrying
-		time.Sleep(10 * time.Second)
+		// Wait for 5 seconds before retrying
+		time.Sleep(5 * time.Second)
 	}
 }
 

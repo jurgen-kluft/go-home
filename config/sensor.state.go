@@ -210,7 +210,7 @@ func (s SensorState) AddFloatSensor(name string, value float64) {
 }
 
 // AddValueSensor adds a TimeSlotSensor to SensorState
-func (s SensorState) AddValueSensor(name string, value string) {
+func (s *SensorState) AddValueSensor(name string, value string) {
 	if s.ValueSensors == nil {
 		s.ValueSensors = &[]ValueSensor{ValueSensor{Name: name, Value: value}}
 	} else {

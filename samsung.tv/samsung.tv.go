@@ -63,26 +63,21 @@ func main() {
 	samsung := New()
 
 	for {
-		client := pubsub.New()
-		err := client.Connect("tv.samsung")
+		client := pubsub.New("tcp://10.0.0.22:8080")
+		register := []string{"config/tv/samsung/", "state/tv/samsung/"}
+		subscribe := []string{"config/tv/samsung/", "state/tv/samsung/"}
+		err := client.Connect("tv.samsung", register, subscribe)
 		if err == nil {
-
 			fmt.Println("Connected to emitter")
-
-			client.Register("config/tv/samsung")
-			client.Register("state/tv/samsung")
-
-			client.Subscribe("config/tv/samsung")
-			client.Subscribe("state/tv/samsung")
 
 			connected := true
 			for connected {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
-					if topic == "config/tv/samsung" {
+					if topic == "config/tv/samsung/" {
 						//huelighting.config, err = config.HueConfigFromJSON(string(msg.Payload()))
-					} else if topic == "state/tv/samsung" {
+					} else if topic == "state/tv/samsung/" {
 						state, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
 							power := state.GetValueAttr("power", "idle")
@@ -92,7 +87,7 @@ func main() {
 								samsung.poweron(state.Name)
 							}
 						}
-					} else if topic == "client/disconnected" {
+					} else if topic == "client/disconnected/" {
 						connected = false
 					}
 
@@ -100,12 +95,11 @@ func main() {
 
 				}
 			}
-		} else {
-			fmt.Println(err.Error())
 		}
 
-		// Wait for 10 seconds before retrying
-		fmt.Println("Connecting to emitter (retry every 10 seconds)")
-		time.Sleep(10 * time.Second)
+		if err != nil {
+			fmt.Println("Error: " + err.Error())
+			time.Sleep(5 * time.Second)
+		}
 	}
 }

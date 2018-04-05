@@ -3,6 +3,7 @@ package suncalc
 // sun calculations are based on http://aa.quae.nl/en/reken/zonpositie.html formulas
 
 import (
+	"fmt"
 	"math"
 	"time"
 
@@ -426,25 +427,23 @@ func (s *Instance) Process(client *pubsub.Context) {
 func main() {
 	suncalc := &Instance{}
 	for {
-		client := pubsub.New()
-		err := client.Connect("suncalc")
+		client := pubsub.New("tcp://10.0.0.22:8080")
+		register := []string{"config/suncalc/", "state/sensor/sun/"}
+		subscribe := []string{"config/suncalc/"}
+		err := client.Connect("suncalc", register, subscribe)
 		if err == nil {
-
-			client.Register("config/suncalc")
-			client.Register("state/sensor/sun")
-
-			client.Subscribe("config/suncalc")
+			fmt.Println("Connected to emitter")
 
 			connected := true
 			for connected {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
-					if topic == "config/suncalc" {
+					if topic == "config/suncalc/" {
 						if suncalc.config == nil {
 							suncalc.config, err = config.SuncalcConfigFromJSON(string(msg.Payload()))
 						}
-					} else if topic == "client/disconnected" {
+					} else if topic == "client/disconnected/" {
 						connected = false
 					}
 
@@ -455,7 +454,10 @@ func main() {
 			}
 		}
 
-		// Wait for 10 seconds before retrying
-		time.Sleep(10 * time.Second)
+		if err != nil {
+			fmt.Println("Error: " + err.Error())
+		}
+
+		time.Sleep(5 * time.Second)
 	}
 }

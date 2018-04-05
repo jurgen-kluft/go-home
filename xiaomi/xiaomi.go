@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
@@ -46,33 +44,21 @@ func main() {
 	xiaomi.aqara.SetAESKey(xiaomi.key)
 
 	for {
-		client := pubsub.New()
-		err := client.Connect("xiaomi")
+		client := pubsub.New("tcp://10.0.0.22:8080")
+		register := []string{"config/xiaomi/", "state/xiaomi", "state/xiaomi/gateway", "state/xiaomi/magnet", "state/xiaomi/motion", "state/xiaomi/plug", "state/xiaomi/switch", "state/xiaomi/dualwiredwallswitch"}
+		subscribe := []string{"config/xiaomi/", "state/xiaomi"}
+		err := client.Connect("xiaomi", register, subscribe)
 		if err == nil {
-
 			fmt.Println("Connected to emitter")
-
-			client.Register("config/xiaomi")
-			client.Register("state/xiaomi")
-
-			client.Register("state/xiaomi/gateway")
-			client.Register("state/xiaomi/magnet")
-			client.Register("state/xiaomi/motion")
-			client.Register("state/xiaomi/plug")
-			client.Register("state/xiaomi/switch")
-			client.Register("state/xiaomi/dualwiredwallswitch")
-
-			client.Subscribe("config/xiaomi")
-			client.Subscribe("state/xiaomi")
 
 			connected := true
 			for connected {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
-					if topic == "config/xiaomi" {
+					if topic == "config/xiaomi/" {
 						xiaomi.config, err = config.XiaomiConfigFromJSON(string(msg.Payload()))
-					} else if topic == "state/xiaomi" {
+					} else if topic == "state/xiaomi/" {
 						state, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
 							// TODO: Figure out what state to change on which device
@@ -83,7 +69,7 @@ func main() {
 
 							}
 						}
-					} else if topic == "client/disconnected" {
+					} else if topic == "client/disconnected/" {
 						connected = false
 					}
 
@@ -100,7 +86,7 @@ func main() {
 						sensor.AddIntSensor("rgb", int64(state.To.RGB))
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
-							client.Publish("state/xiaomi/gateway", jsonstr)
+							client.Publish("state/xiaomi/gateway/", jsonstr)
 						}
 
 					case migateway.MagnetStateChange:
@@ -111,7 +97,7 @@ func main() {
 						sensor.AddBoolSensor("open", state.To.Opened)
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
-							client.Publish("state/xiaomi/magnet", jsonstr)
+							client.Publish("state/xiaomi/magnet/", jsonstr)
 						}
 
 					case migateway.MotionStateChange:
@@ -122,7 +108,7 @@ func main() {
 						sensor.AddBoolSensor("motion", state.To.HasMotion)
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
-							client.Publish("state/xiaomi/motion", jsonstr)
+							client.Publish("state/xiaomi/motion/", jsonstr)
 						}
 
 					case migateway.PlugStateChange:
@@ -136,7 +122,7 @@ func main() {
 						sensor.AddIntSensor("powerconsumed", int64(state.To.PowerConsumed))
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
-							client.Publish("state/xiaomi/plug", jsonstr)
+							client.Publish("state/xiaomi/plug/", jsonstr)
 						}
 
 					case migateway.SwitchStateChange:
@@ -147,7 +133,7 @@ func main() {
 						sensor.AddValueSensor("click", state.To.Click.String())
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
-							client.Publish("state/xiaomi/switch", jsonstr)
+							client.Publish("state/xiaomi/switch/", jsonstr)
 						}
 
 					case migateway.DualWiredWallSwitchStateChange:
@@ -158,7 +144,7 @@ func main() {
 						sensor.AddBoolSensor("channel1", state.To.Channel1On)
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
-							client.Publish("state/xiaomi/dualwiredwallswitch", jsonstr)
+							client.Publish("state/xiaomi/dualwiredwallswitch/", jsonstr)
 						}
 
 					}
@@ -176,13 +162,13 @@ func main() {
 					break
 				}
 			}
-		} else {
-			fmt.Println(err.Error())
 		}
 
-		// Wait for 10 seconds before retrying
-		fmt.Println("Connecting to emitter (retry every 10 seconds)")
-		time.Sleep(10 * time.Second)
+		if err != nil {
+			fmt.Println("Error: " + err.Error())
+		}
+
+		time.Sleep(5 * time.Second)
 	}
 }
 

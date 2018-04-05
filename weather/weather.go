@@ -187,28 +187,27 @@ func main() {
 	weather := New()
 
 	for {
-		client := pubsub.New()
-		err := client.Connect("weather")
+
+		client := pubsub.New("tcp://10.0.0.22:8080")
+		register := []string{"config/weather/", "state/sensor/weather/"}
+		subscribe := []string{"config/weather/"}
+		err := client.Connect("weather", register, subscribe)
 		if err == nil {
-
-			client.Register("config/weather")
-			client.Register("state/sensor/weather")
-
-			client.Subscribe("config/weather")
+			fmt.Println("Connected to emitter")
 
 			connected := true
 			for connected {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
-					if topic == "config/weather" {
+					if topic == "config/weather/" {
 						if weather.config == nil {
 							weather.config, err = config.WeatherConfigFromJSON(string(msg.Payload()))
 							if err != nil {
 								weather.config = nil
 							}
 						}
-					} else if topic == "client/disconnected" {
+					} else if topic == "client/disconnected/" {
 						connected = false
 					}
 
@@ -221,8 +220,11 @@ func main() {
 			}
 		}
 
-		// Wait for 10 seconds before retrying
-		time.Sleep(10 * time.Second)
+		if err != nil {
+			fmt.Println("Error: " + err.Error())
+		}
+
+		time.Sleep(5 * time.Second)
 	}
 
 }

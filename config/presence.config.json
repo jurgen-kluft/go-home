@@ -1,28 +1,28 @@
 {
-    "name": "netgear",
-	"host": "10.0.0.3",
+    "name": "Netgear Nighthawk R6900",
+	"host": "routerlogin.net",
 	"port": 5000,
 	"user": "admin",
-	"password": "*********",
-	"update_history": 4,
+	"password": "postulate518",
+	"update_history": 84,
 	"update_interval_sec": 10,
 	"devices": 
 	[
 		{
 			"name": "Faith",
-			"mac": "D8:1D:72:97:51:94"
+			"mac": "70:F0:87:70:07:81"
 		}, 
 		{
 			"name": "Jurgen",
-			"mac": "90:3C:92:72:0D:C8"
+			"mac": "B8:C1:11:82:E4:72"
 		},
 		{
 			"name": "GrandPa",
-			"mac": "BC:44:86:5A:CD:D4"
+			"mac": "78:02:F8:2A:70:1A"
 		},
 		{
 			"name": "GrandMa",
-			"mac": "94:94:26:B5:E6:1C"
+			"mac": "90:3C:92:72:0D:C8"
 		}
 	]
 }

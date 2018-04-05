@@ -9,31 +9,35 @@ import (
 )
 
 type Context struct {
+	Host        string
 	Secret      string
 	ChannelKeys map[string]string
 	InMsgs      chan emitter.Message
 	Client      emitter.Emitter
+	KeyRequest  chan bool
 }
 
 type DisconnectMessage struct {
 }
 
 func (d *DisconnectMessage) Topic() string {
-	return "client/disconnected"
+	return "client/disconnected/"
 }
 func (d *DisconnectMessage) Payload() []byte {
 	return []byte{}
 }
 
-func New() *Context {
+func New(host string) *Context {
 	ctx := &Context{}
+	ctx.Host = host
 	ctx.ChannelKeys = map[string]string{}
 	ctx.Secret = config.EmitterSecrets["secret"]
 	ctx.InMsgs = make(chan emitter.Message)
+	ctx.KeyRequest = make(chan bool)
 	return ctx
 }
 
-func (ctx *Context) Connect(username string) error {
+func (ctx *Context) Connect(username string, register, subscribe []string) error {
 	// Create the options with default values
 	options := emitter.NewClientOptions()
 	options.SetUsername(username)
@@ -57,9 +61,10 @@ func (ctx *Context) Connect(username string) error {
 	options.SetOnKeyGenHandler(func(_ emitter.Emitter, r emitter.KeyGenResponse) {
 		fmt.Printf("KeyGenResponse from emitter: '%s' = '%s' (status: %d)\n", r.Channel, r.Key, r.Status)
 		ctx.ChannelKeys[r.Channel] = r.Key
+		ctx.KeyRequest <- true
 	})
 
-	options.AddBroker("tcp://127.0.0.1:8080")
+	options.AddBroker(ctx.Host)
 
 	// Create a new emitter client and connect to the broker
 	ctx.Client = emitter.NewClient(options)
@@ -76,6 +81,19 @@ func (ctx *Context) Connect(username string) error {
 		return fmt.Errorf("Unknown error when connecting to emitter.io server")
 	}
 
+	for _, reg := range register {
+		err := ctx.Register(reg)
+		if err != nil {
+			return err
+		}
+	}
+	for _, sub := range subscribe {
+		err := ctx.Subscribe(sub)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -86,14 +104,25 @@ func (ctx *Context) Register(channel string) error {
 		// "license": "c1aVVz_sTmIi_FTcugWsjzTsQ4kJrslAAAAAAAAAAAI",
 		// "secret": "1ZPCl42pPIyq6ZsZbaV4OUexWw97cZvf",
 		keygenRequest.Key = "1ZPCl42pPIyq6ZsZbaV4OUexWw97cZvf"
-		keygenRequest.Channel = channel + "/"
+		keygenRequest.Channel = channel
+		keygenRequest.Type = "rwslp"
 		keygenToken := ctx.Client.GenerateKey(keygenRequest)
-		if !keygenToken.Wait() {
-			return fmt.Errorf("Emitter.Register did not succeed for channel %s due to a timeout", channel)
+		if !keygenToken.WaitTimeout(5 * time.Second) {
+			return fmt.Errorf("Emitter.GenerateKey did not succeed for channel %s due to a timeout", channel)
 		}
-		_, exists = ctx.ChannelKeys[channel]
-		if !exists {
-			return fmt.Errorf("Emitter.Register did not succeed for channel %s, did not receive keygen response", channel)
+
+		for {
+			select {
+			case request := <-ctx.KeyRequest:
+				if request {
+					return nil
+				}
+				return fmt.Errorf("Emitter.Register did not succeed for channel %s due to a fail", channel)
+
+			case <-time.After(5 * time.Second):
+				return fmt.Errorf("Emitter.Register did not succeed for channel %s due to a timeout", channel)
+
+			}
 		}
 	}
 	return nil
@@ -109,7 +138,7 @@ func (ctx *Context) Subscribe(channel string) error {
 }
 
 func (ctx *Context) Publish(channel string, message string) error {
-	key, exists := config.EmitterSecrets[channel]
+	key, exists := ctx.ChannelKeys[channel]
 	if exists {
 		ctx.Client.Publish(key, channel, message)
 		return nil
@@ -118,7 +147,7 @@ func (ctx *Context) Publish(channel string, message string) error {
 }
 
 func (ctx *Context) PublishTTL(channel string, message string, ttl int) error {
-	key, exists := config.EmitterSecrets[channel]
+	key, exists := ctx.ChannelKeys[channel]
 	if exists {
 		ctx.Client.PublishWithTTL(key, channel, message, ttl)
 		return nil

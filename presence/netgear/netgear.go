@@ -105,27 +105,37 @@ func (netgear *Router) makeRequest(action string, message string) (string, error
 // Get queries the Netgear router for attached network
 // devices and returns a list of them. If an error occures an empty list
 // and the respective error is returned.
-func (netgear *Router) Get(mac map[string]bool) error {
+func (netgear *Router) Get(mac *map[string]bool) error {
+	if netgear.isLoggedIn() == false {
+		loggedIn, err := netgear.login()
+		if err != nil {
+			return err
+		} else if !loggedIn {
+			return fmt.Errorf("Error, not logged into the router")
+		}
+	}
+
 	message := fmt.Sprintf(soapGetAttachedDevicesMesssage, sessionID)
 	resp, err := netgear.makeRequest(soapActionGetAttachedDevices, message)
+	if err == nil {
+		if strings.Contains(resp, "<ResponseCode>000</ResponseCode>") {
+			re := netgear.regex.FindStringSubmatch(resp)
+			if len(re) < 2 {
+				err = fmt.Errorf("Invalid response code")
+				return err
+			}
 
-	if strings.Contains(resp, "<ResponseCode>000</ResponseCode>") {
-		re := netgear.regex.FindStringSubmatch(resp)
-		if len(re) < 2 {
-			err = fmt.Errorf("Invalid response code")
-			return err
-		}
+			filteredDevicesStr := strings.Replace(re[1], "&lt;unknown&gt;", "unknown", -1)
 
-		filteredDevicesStr := strings.Replace(re[1], "&lt;unknown&gt;", "unknown", -1)
-
-		deviceStrs := strings.Split(filteredDevicesStr, "@")
-		for _, deviceStr := range deviceStrs {
-			fields := strings.Split(deviceStr, ";")
-			if len(fields) >= 4 {
-				macStr := fields[3]
-				_, macExists := mac[macStr]
-				if macExists {
-					mac[macStr] = true
+			deviceStrs := strings.Split(filteredDevicesStr, "@")
+			for _, deviceStr := range deviceStrs {
+				fields := strings.Split(deviceStr, ";")
+				if len(fields) >= 4 {
+					macStr := fields[3]
+					_, macExists := (*mac)[macStr]
+					if macExists {
+						(*mac)[macStr] = true
+					}
 				}
 			}
 		}
@@ -133,7 +143,7 @@ func (netgear *Router) Get(mac map[string]bool) error {
 	return err
 }
 
-// newNetgearRouter returns a new and already initialized Netgear router instance
+// New returns a new and already initialized Netgear router instance
 // However, the Netgear SOAP session has not been authenticated at this point.
 // Use Login() to authenticate against the router
 func New(host, username, password string) *Router {

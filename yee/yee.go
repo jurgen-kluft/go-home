@@ -22,37 +22,31 @@ func main() {
 	yeelighting.lamps = map[string]*yee.Yeelight{}
 
 	for {
-		client := pubsub.New()
-		err := client.Connect("yee")
-
+		client := pubsub.New("tcp://10.0.0.22:8080")
+		register := []string{"config/yee/", "sensor/light/yee/"}
+		subscribe := []string{"config/yee/", "sensor/light/yee/"}
+		err := client.Connect("yee", register, subscribe)
 		if err == nil {
-
 			fmt.Println("Connected to emitter")
-
-			client.Register("config/yee")
-			client.Register("sensor/light/yee")
-
-			client.Subscribe("config/yee")
-			client.Subscribe("sensor/light/yee")
 
 			connected := true
 			for connected {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
-					if topic == "config/yee" {
+					if topic == "config/yee/" {
 						yeelighting.config, err = config.YeeConfigFromJSON(string(msg.Payload()))
 						yeelighting.lamps = map[string]*yee.Yeelight{}
 						for _, lamp := range yeelighting.config.Lights {
 							yeelighting.lamps[lamp.Name] = yee.New(lamp.IP, lamp.Port)
 						}
-					} else if topic == "sensor/light/yee" {
+					} else if topic == "sensor/light/yee/" {
 						yeesensor, _ := config.SensorStateFromJSON(string(msg.Payload()))
-						lampname := yeesensor.GetValue("name", "")
+						lampname := yeesensor.GetValueAttr("name", "")
 						if lampname != "" {
 							lamp, exists := yeelighting.lamps[lampname]
 							if exists {
-								power := yeesensor.GetValue("power", "")
+								power := yeesensor.GetValueAttr("power", "")
 								if power != "" {
 									if power == "on" {
 										lamp.On()
@@ -61,11 +55,11 @@ func main() {
 									}
 								}
 								if power == "on" {
-									ct := yeesensor.GetFloatValue("ct", -1.0)
+									ct := yeesensor.GetFloatAttr("ct", -1.0)
 									if ct != -1.0 {
 										lamp.SetCtAbx(fmt.Sprintf("%f", ct), "smooth", "500")
 									}
-									bri := yeesensor.GetFloatValue("bri", -1.0)
+									bri := yeesensor.GetFloatAttr("bri", -1.0)
 									if ct != -1.0 {
 										lamp.SetBright(fmt.Sprintf("%f", bri), "smooth", "500")
 									}
@@ -73,7 +67,7 @@ func main() {
 							}
 						}
 
-					} else if topic == "client/disconnected" {
+					} else if topic == "client/disconnected/" {
 						connected = false
 					}
 
@@ -81,12 +75,12 @@ func main() {
 
 				}
 			}
-		} else {
-			fmt.Println(err.Error())
 		}
 
-		// Wait for 10 seconds before retrying
-		fmt.Println("Connecting to emitter (retry every 10 seconds)")
-		time.Sleep(10 * time.Second)
+		if err != nil {
+			fmt.Println("Error: " + err.Error())
+		}
+
+		time.Sleep(5 * time.Second)
 	}
 }

@@ -23,37 +23,31 @@ func main() {
 	thewemo.devices = map[string]*Switch{}
 
 	for {
-		client := pubsub.New()
-		err := client.Connect("wemo")
-
+		client := pubsub.New("tcp://10.0.0.22:8080")
+		register := []string{"config/wemo/", "sensor/device/wemo/"}
+		subscribe := []string{"config/wemo/", "sensor/device/wemo/"}
+		err := client.Connect("wemo", register, subscribe)
 		if err == nil {
-
 			fmt.Println("Connected to emitter")
-
-			client.Register("config/wemo")
-			client.Register("sensor/device/wemo")
-
-			client.Subscribe("config/wemo")
-			client.Subscribe("sensor/device/wemo")
 
 			connected := true
 			for connected {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
-					if topic == "config/wemo" {
+					if topic == "config/wemo/" {
 						thewemo.config, err = config.WemoConfigFromJSON(string(msg.Payload()))
 						thewemo.devices = map[string]*Switch{}
 						for _, d := range thewemo.config.Devices {
 							thewemo.devices[d.Name] = NewSwitch(d.Name, d.IP+":"+d.Port)
 						}
-					} else if topic == "sensor/device/wemo" {
+					} else if topic == "sensor/device/wemo/" {
 						sensor, _ := config.SensorStateFromJSON(string(msg.Payload()))
-						devicename := sensor.GetValue("name", "")
+						devicename := sensor.GetValueAttr("name", "")
 						if devicename != "" {
 							device, exists := thewemo.devices[devicename]
 							if exists {
-								power := sensor.GetValue("power", "")
+								power := sensor.GetValueAttr("power", "")
 								if power != "" {
 									if power == "on" {
 										device.On()
@@ -64,7 +58,7 @@ func main() {
 							}
 						}
 
-					} else if topic == "client/disconnected" {
+					} else if topic == "client/disconnected/" {
 						connected = false
 					}
 
@@ -72,12 +66,12 @@ func main() {
 
 				}
 			}
-		} else {
-			fmt.Println(err.Error())
 		}
 
-		// Wait for 10 seconds before retrying
-		fmt.Println("Connecting to emitter (retry every 10 seconds)")
-		time.Sleep(10 * time.Second)
+		if err != nil {
+			fmt.Println("Error: " + err.Error())
+		}
+
+		time.Sleep(5 * time.Second)
 	}
 }

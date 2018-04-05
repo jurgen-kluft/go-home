@@ -1,4 +1,4 @@
-package presence
+package main
 
 import (
 	"fmt"
@@ -20,18 +20,33 @@ const (
 	arriving
 )
 
+func (s state) String() string {
+	switch s {
+	case home:
+		return "home"
+	case away:
+		return "away"
+	case leaving:
+		return "leaving"
+	case arriving:
+		return "arriving"
+	default:
+		return "unknown"
+	}
+}
+
 // LEFT    is a trigger that happens when state changes from HOME => AWAY
 // ARRIVED is a trigger that happens when state changes from AWAY => HOME
 
 // Config is the configuration needed to call presence.New
 // Router is the public interface with one member function to obtain devices
 type provider interface {
-	get(mac map[string]bool) error
+	get(mac *map[string]bool) error
 }
 
 func newProvider(name string, host string, username string, password string) provider {
-	switch {
-	case name == "netgear":
+	switch name {
+	case "netgear", "Netgear Nighthawk R6900":
 		return newNetgearRouter(host, username, password)
 	}
 	return nil
@@ -89,10 +104,9 @@ type Presence struct {
 	config            *config.PresenceConfig
 	provider          provider
 	macToIndex        map[string]int
-	macToPresence     map[string]bool
+	macToPresence     *map[string]bool
 	members           []*Member
 	updateIntervalSec int
-	state             *PresenceState
 }
 
 // New will return an instance of presence.Home
@@ -105,6 +119,7 @@ func New(configjson string) *Presence {
 	presence.config = config
 	presence.provider = newProvider(presence.config.Name, presence.config.Host, presence.config.User, presence.config.Password)
 	presence.macToIndex = map[string]int{}
+	presence.macToPresence = &map[string]bool{}
 
 	updateHist := presence.config.UpdateHistory
 	for i, device := range presence.config.Devices {
@@ -117,6 +132,7 @@ func New(configjson string) *Presence {
 			member.detect[i] = Detect{Time: time.Now(), State: away}
 		}
 		presence.macToIndex[device.Mac] = i
+		(*presence.macToPresence)[device.Mac] = false
 		presence.members = append(presence.members, member)
 	}
 
@@ -135,14 +151,16 @@ func (p *Presence) Presence(currentTime time.Time) bool {
 			m.index = (m.index + 1) % len(m.detect)
 		}
 		// For any member registered at the Router mark them as 'home'
-		for mac, presence := range p.macToPresence {
-			mi := p.macToIndex[mac]
-			m := p.members[mi]
-			pi := (m.index + len(m.detect) - 1) % len(m.detect)
-			if presence {
-				m.detect[pi] = Detect{Time: currentTime, State: home}
-			} else {
-				m.detect[pi] = Detect{Time: currentTime, State: away}
+		for mac, presence := range *p.macToPresence {
+			mi, exists := p.macToIndex[mac]
+			if exists {
+				m := p.members[mi]
+				pi := (m.index + len(m.detect) - 1) % len(m.detect)
+				if presence {
+					m.detect[pi] = Detect{Time: currentTime, State: home}
+				} else {
+					m.detect[pi] = Detect{Time: currentTime, State: away}
+				}
 			}
 		}
 		// Update final presence state for all members
@@ -150,11 +168,9 @@ func (p *Presence) Presence(currentTime time.Time) bool {
 			m.updateCurrent(currentTime)
 		}
 
-		// Build JSON structure of members
-		// {"datetime":"30/12", "members": [{"name": "Faith", "state": "HOME"},{"name": "Jurgen", "state": "LEAVING"}]}
-		p.state.time = currentTime
 		return true
 	}
+	fmt.Println(result)
 	return false
 }
 
@@ -162,11 +178,15 @@ func (p *Presence) publish(now time.Time, client *pubsub.Context) {
 	sensor := config.NewSensorState("state.sensor.presence")
 	sensor.Time = now
 	for _, m := range p.members {
-		sensor.AddValueSensor(m.name, getNameOfState(m.current.State))
+		fmt.Printf("member: %s, presence: %v\n", m.name, m.current.State.String())
+		sensor.AddValueSensor(m.name, m.current.State.String())
 	}
 	jsonstr, err := sensor.ToJSON()
 	if err == nil {
 		client.Publish("state/sensor/presence", jsonstr)
+		fmt.Println(jsonstr)
+	} else {
+		fmt.Println(err)
 	}
 }
 
@@ -179,36 +199,47 @@ func main() {
 	for {
 		connected := true
 		for connected {
-			client := pubsub.New()
+			client := pubsub.New("tcp://10.0.0.22:8080")
+
 			err := client.Connect("presence")
 			if err == nil {
 
-				client.Register("config/presence")
-				client.Subscribe("config/presence")
+				err = client.Register("config/presence/")
+				if err == nil {
 
-				for connected {
-					select {
-					case msg := <-client.InMsgs:
-						topic := msg.Topic()
-						if topic == "config/presence" {
-							presence = New(string(msg.Payload()))
-							updateIntervalSec = time.Second * time.Duration(presence.config.UpdateIntervalSec)
-						} else if topic == "client/disconnected" {
-							connected = false
-						}
-						break
-					case <-time.After(updateIntervalSec):
-						if presence != nil {
-							now := time.Now()
-							if presence.Presence(now) {
-								presence.publish(now, client)
+					err = client.Subscribe("config/presence/")
+					if err == nil {
+
+						for connected {
+							select {
+							case msg := <-client.InMsgs:
+								fmt.Printf("Emitter message received, topic:'%s', msg:'%s'\n", msg.Topic(), string(msg.Payload()))
+
+								topic := msg.Topic()
+								if topic == "config/presence/" {
+									fmt.Println("Received configuration ...")
+									presence = New(string(msg.Payload()))
+									updateIntervalSec = time.Second * time.Duration(presence.config.UpdateIntervalSec)
+								} else if topic == "client/disconnected/" {
+									connected = false
+								}
+
+							case <-time.After(updateIntervalSec):
+								if presence != nil {
+									now := time.Now()
+									if presence.Presence(now) {
+										presence.publish(now, client)
+									}
+								}
+
 							}
 						}
-						break
 					}
 				}
-			} else {
-				panic("Error on emitter.Connect(): " + err.Error())
+			}
+
+			if err != nil {
+				fmt.Println("Error: " + err.Error())
 			}
 		}
 

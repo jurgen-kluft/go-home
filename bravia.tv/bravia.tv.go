@@ -36,8 +36,8 @@ func New() *instance {
 func (x *instance) AddTV(host string, mac string, name string) {
 	tv := &tv{}
 	tv.name = name
-	tv.host = "10.0.0.77"
-	tv.mac = "C4:3A:BE:95:0C:1E"
+	tv.host = host
+	tv.mac = mac
 
 	tv.tv = gobravia.GetBravia(tv.host, "0000", tv.mac)
 	tv.tv.GetCommands()
@@ -60,28 +60,25 @@ func (x *instance) poweroff(name string) {
 
 func main() {
 	sony := New()
+	sony.AddTV("10.0.0.77", "C4:3A:BE:95:0C:1E", "Livingroom TV")
+	sony.poweroff("Livingroom TV")
 
 	for {
-		client := pubsub.New()
-		err := client.Connect("tv.sony")
+		client := pubsub.New("tcp://10.0.0.22:8080")
+		register := []string{"config/tv/sony/", "state/tv/sony/"}
+		subscribe := []string{"config/tv/sony/", "state/tv/sony/"}
+		err := client.Connect("bravia.tv", register, subscribe)
 		if err == nil {
-
 			fmt.Println("Connected to emitter")
-
-			client.Register("config/tv/sony")
-			client.Register("state/tv/sony")
-
-			client.Subscribe("config/tv/sony")
-			client.Subscribe("state/tv/sony")
 
 			connected := true
 			for connected {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
-					if topic == "config/tv/sony" {
+					if topic == "config/tv/sony/" {
 						//huelighting.config, err = config.HueConfigFromJSON(string(msg.Payload()))
-					} else if topic == "state/tv/sony" {
+					} else if topic == "state/tv/sony/" {
 						state, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
 							power := state.GetValueAttr("power", "idle")
@@ -91,7 +88,7 @@ func main() {
 								sony.poweron(state.Name)
 							}
 						}
-					} else if topic == "client/disconnected" {
+					} else if topic == "client/disconnected/" {
 						connected = false
 					}
 
@@ -99,12 +96,15 @@ func main() {
 
 				}
 			}
-		} else {
-			fmt.Println(err.Error())
 		}
 
-		// Wait for 10 seconds before retrying
-		fmt.Println("Connecting to emitter (retry every 10 seconds)")
-		time.Sleep(10 * time.Second)
+		if err != nil {
+			fmt.Println("Error: " + err.Error())
+			time.Sleep(1 * time.Second)
+		}
+
+		// Wait for 5 seconds before retrying
+		fmt.Println("Connecting to emitter (retry every 5 seconds)")
+		time.Sleep(5 * time.Second)
 	}
 }
