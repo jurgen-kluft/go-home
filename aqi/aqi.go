@@ -82,7 +82,7 @@ func (c *instance) Poll() (aqiStateJSON string, err error) {
 	aqiStateJSON = ""
 	aqi, err := c.getResponse()
 	if err == nil {
-		aqiStateJSON, err = config.FloatSensorAsJSON("sensor.weather.aqi", "aqi", aqi)
+		aqiStateJSON, err = config.FloatAttrAsJSON("sensor.weather.aqi", "aqi", aqi)
 	}
 	return aqiStateJSON, err
 }

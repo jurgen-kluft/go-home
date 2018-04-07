@@ -17,9 +17,25 @@ type instance struct {
 	config *config.YeeConfig
 }
 
+func (x *instance) poweron(name string) {
+	lamp, exists := x.lamps[name]
+	if exists {
+		lamp.On()
+	}
+}
+func (x *instance) poweroff(name string) {
+	lamp, exists := x.lamps[name]
+	if exists {
+		lamp.Off()
+	}
+}
+
 func main() {
 	yeelighting := &instance{}
 	yeelighting.lamps = map[string]*yee.Yeelight{}
+
+	// yeelighting.lamps["Front door hall light"] = yee.New("10.0.0.113", "55443")
+	// yeelighting.poweroff("Front door hall light")
 
 	for {
 		client := pubsub.New("tcp://10.0.0.22:8080")
@@ -41,28 +57,34 @@ func main() {
 							yeelighting.lamps[lamp.Name] = yee.New(lamp.IP, lamp.Port)
 						}
 					} else if topic == "sensor/light/yee/" {
-						yeesensor, _ := config.SensorStateFromJSON(string(msg.Payload()))
-						lampname := yeesensor.GetValueAttr("name", "")
-						if lampname != "" {
-							lamp, exists := yeelighting.lamps[lampname]
-							if exists {
-								power := yeesensor.GetValueAttr("power", "")
-								if power != "" {
-									if power == "on" {
-										lamp.On()
-									} else if power == "off" {
-										lamp.Off()
-									}
-								}
-								if power == "on" {
-									ct := yeesensor.GetFloatAttr("ct", -1.0)
-									if ct != -1.0 {
+						yeesensor, err := config.SensorStateFromJSON(string(msg.Payload()))
+						if err == nil {
+							lampname := yeesensor.GetValueAttr("name", "")
+							if lampname != "" {
+								lamp, exists := yeelighting.lamps[lampname]
+								if exists {
+									yeesensor.ExecValueAttr("power", func(power string) {
+										if power == "on" {
+											lamp.On()
+										} else if power == "off" {
+											lamp.Off()
+										}
+									})
+									yeesensor.ExecFloatAttr("ct", func(ct float64) {
 										lamp.SetCtAbx(fmt.Sprintf("%f", ct), "smooth", "500")
-									}
-									bri := yeesensor.GetFloatAttr("bri", -1.0)
-									if ct != -1.0 {
+									})
+									yeesensor.ExecFloatAttr("bri", func(bri float64) {
 										lamp.SetBright(fmt.Sprintf("%f", bri), "smooth", "500")
-									}
+									})
+								}
+							} else if lampname == "all" {
+								for _, lamp := range yeelighting.lamps {
+									yeesensor.ExecFloatAttr("ct", func(ct float64) {
+										lamp.SetCtAbx(fmt.Sprintf("%f", ct), "smooth", "500")
+									})
+									yeesensor.ExecFloatAttr("bri", func(bri float64) {
+										lamp.SetBright(fmt.Sprintf("%f", bri), "smooth", "500")
+									})
 								}
 							}
 						}

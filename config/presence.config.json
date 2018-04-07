@@ -1,10 +1,10 @@
 {
     "name": "Netgear Nighthawk R6900",
-	"host": "routerlogin.net",
+	"host": "10.0.0.1",
 	"port": 5000,
 	"user": "admin",
 	"password": "postulate518",
-	"update_history": 84,
+	"update_history": 64,
 	"update_interval_sec": 10,
 	"devices": 
 	[

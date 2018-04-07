@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/jurgen-kluft/go-home/config"
 	"github.com/jurgen-kluft/go-home/pubsub"
 	"github.com/jurgen-kluft/migateway"
+	"time"
+	//"github.com/xuebing1110/migateway"
 )
 
 // Features:
@@ -45,8 +45,8 @@ func main() {
 
 	for {
 		client := pubsub.New("tcp://10.0.0.22:8080")
-		register := []string{"config/xiaomi/", "state/xiaomi", "state/xiaomi/gateway", "state/xiaomi/magnet", "state/xiaomi/motion", "state/xiaomi/plug", "state/xiaomi/switch", "state/xiaomi/dualwiredwallswitch"}
-		subscribe := []string{"config/xiaomi/", "state/xiaomi"}
+		register := []string{"config/xiaomi/", "state/xiaomi/", "state/xiaomi/gateway/", "state/xiaomi/magnet/", "state/xiaomi/motion/", "state/xiaomi/plug/", "state/xiaomi/switch/", "state/xiaomi/dualwiredwallswitch/"}
+		subscribe := []string{"config/xiaomi/", "state/xiaomi/"}
 		err := client.Connect("xiaomi", register, subscribe)
 		if err == nil {
 			fmt.Println("Connected to emitter")
@@ -76,74 +76,84 @@ func main() {
 				case msg := <-xiaomi.aqara.StateMessages:
 
 					// Push xiaomi gateway and device state changes onto pubsub channels
+					// cfmt.Printf("STATE message received %v (type: %s)\n", msg, reflect.TypeOf(msg))
 
 					switch msg.(type) {
-					case migateway.GatewayStateChange:
-						state := msg.(migateway.GatewayStateChange)
+					case *migateway.GatewayStateChange:
+						state := msg.(*migateway.GatewayStateChange)
 						name := "xiaomi.gateway." + state.ID
 						sensor := config.NewSensorState(name)
-						sensor.AddFloatSensor("illumination", state.To.Illumination)
-						sensor.AddIntSensor("rgb", int64(state.To.RGB))
+						sensor.AddFloatAttr("illumination", state.To.Illumination)
+						sensor.AddIntAttr("rgb", int64(state.To.RGB))
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
+							fmt.Println(jsonstr)
 							client.Publish("state/xiaomi/gateway/", jsonstr)
 						}
 
-					case migateway.MagnetStateChange:
-						state := msg.(migateway.MagnetStateChange)
+					case *migateway.MagnetStateChange:
+						state := msg.(*migateway.MagnetStateChange)
 						name := "xiaomi.magnet." + state.ID
 						sensor := config.NewSensorState(name)
-						sensor.AddFloatSensor("battery", state.To.Battery)
-						sensor.AddBoolSensor("open", state.To.Opened)
+						sensor.AddBoolAttr("open", state.To.Opened)
+						sensor.AddFloatAttr("battery", float64(state.To.Battery))
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
+							fmt.Println(jsonstr)
 							client.Publish("state/xiaomi/magnet/", jsonstr)
 						}
 
-					case migateway.MotionStateChange:
-						state := msg.(migateway.MotionStateChange)
+					case *migateway.MotionStateChange:
+						fmt.Println("STATE motion change message received")
+
+						state := msg.(*migateway.MotionStateChange)
 						name := "xiaomi.motion." + state.ID
 						sensor := config.NewSensorState(name)
-						sensor.AddTimeSlotSensor("battery", state.To.LastMotion, time.Now())
-						sensor.AddBoolSensor("motion", state.To.HasMotion)
+						sensor.AddTimeWndAttr("lastmotion", state.To.LastMotion, time.Now())
+						sensor.AddBoolAttr("motion", state.To.HasMotion)
+						sensor.AddFloatAttr("battery", float64(state.To.Battery))
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
+							fmt.Println(jsonstr)
 							client.Publish("state/xiaomi/motion/", jsonstr)
 						}
 
-					case migateway.PlugStateChange:
-						state := msg.(migateway.PlugStateChange)
+					case *migateway.PlugStateChange:
+						state := msg.(*migateway.PlugStateChange)
 						name := "xiaomi.plug." + state.ID
 						sensor := config.NewSensorState(name)
-						sensor.AddBoolSensor("inuse", state.To.InUse)
-						sensor.AddBoolSensor("ison", state.To.IsOn)
-						sensor.AddIntSensor("loadvoltage", int64(state.To.LoadVoltage))
-						sensor.AddIntSensor("loadpower", int64(state.To.LoadPower))
-						sensor.AddIntSensor("powerconsumed", int64(state.To.PowerConsumed))
+						sensor.AddBoolAttr("inuse", state.To.InUse)
+						sensor.AddBoolAttr("ison", state.To.IsOn)
+						sensor.AddIntAttr("loadvoltage", int64(state.To.LoadVoltage))
+						sensor.AddIntAttr("loadpower", int64(state.To.LoadPower))
+						sensor.AddIntAttr("powerconsumed", int64(state.To.PowerConsumed))
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
+							fmt.Println(jsonstr)
 							client.Publish("state/xiaomi/plug/", jsonstr)
 						}
 
-					case migateway.SwitchStateChange:
-						state := msg.(migateway.SwitchStateChange)
+					case *migateway.SwitchStateChange:
+						state := msg.(*migateway.SwitchStateChange)
 						name := "xiaomi.switch." + state.ID
 						sensor := config.NewSensorState(name)
-						sensor.AddIntSensor("battery", int64(state.To.Battery))
-						sensor.AddValueSensor("click", state.To.Click.String())
+						sensor.AddStringAttr("click", state.To.Click.String())
+						sensor.AddFloatAttr("battery", float64(state.To.Battery))
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
+							fmt.Println(jsonstr)
 							client.Publish("state/xiaomi/switch/", jsonstr)
 						}
 
-					case migateway.DualWiredWallSwitchStateChange:
-						state := msg.(migateway.DualWiredWallSwitchStateChange)
+					case *migateway.DualWiredWallSwitchStateChange:
+						state := msg.(*migateway.DualWiredWallSwitchStateChange)
 						name := "xiaomi.dualwiredwallswitch." + state.ID
 						sensor := config.NewSensorState(name)
-						sensor.AddBoolSensor("channel0", state.To.Channel0On)
-						sensor.AddBoolSensor("channel1", state.To.Channel1On)
+						sensor.AddBoolAttr("channel0", state.To.Channel0On)
+						sensor.AddBoolAttr("channel1", state.To.Channel1On)
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
+							fmt.Println(jsonstr)
 							client.Publish("state/xiaomi/dualwiredwallswitch/", jsonstr)
 						}
 

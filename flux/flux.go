@@ -45,7 +45,7 @@ func (s *instance) updateSeasonFromName(season string) {
 
 func (s *instance) updateLighttimes() {
 	sunmoments := map[string]time.Time{}
-	for _, tss := range *s.suncalc.TimeSlotSensors {
+	for _, tss := range *s.suncalc.TimeWndAttrs {
 		sunmoments[tss.Name] = tss.Begin
 	}
 
@@ -130,18 +130,18 @@ func Process(f *instance, client *pubsub.Context) {
 
 	for _, ltype := range f.config.Lighttype {
 		lct := ltype.CT.LinearInterpolated(CT)
-		sensorCT, err := config.FloatSensorAsJSON("sensor.light."+ltype.Name, "CT", lct)
+		sensorCT, err := config.FloatAttrAsJSON("sensor.light."+ltype.Name, "CT", lct)
 		if err == nil {
 			publishSensor("state/light/"+ltype.Name+"/", sensorCT, client)
 		}
 		lbri := ltype.BRI.LinearInterpolated(BRI)
-		sensorBRI, err := config.FloatSensorAsJSON("sensor.light."+ltype.Name, "BRI", lbri)
+		sensorBRI, err := config.FloatAttrAsJSON("sensor.light."+ltype.Name, "BRI", lbri)
 		if err == nil {
 			publishSensor("state/light/"+ltype.Name+"/", sensorBRI, client)
 		}
 	}
 
-	sensorDOL, err := config.ValueSensorAsJSON("sensor.light.darkorlight", "DarkOrLight", string(current.Darkorlight))
+	sensorDOL, err := config.StringAttrAsJSON("sensor.light.darkorlight", "DarkOrLight", string(current.Darkorlight))
 	if err == nil {
 		publishSensor("state/sensor/light/", sensorDOL, client)
 	}

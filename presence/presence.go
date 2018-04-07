@@ -179,7 +179,7 @@ func (p *Presence) publish(now time.Time, client *pubsub.Context) {
 	sensor.Time = now
 	for _, m := range p.members {
 		fmt.Printf("member: %s, presence: %v\n", m.name, m.current.State.String())
-		sensor.AddValueSensor(m.name, m.current.State.String())
+		sensor.AddStringAttr(m.name, m.current.State.String())
 	}
 	jsonstr, err := sensor.ToJSON()
 	if err == nil {

@@ -15,7 +15,6 @@ import (
 type tv struct {
 	host   string
 	name   string
-	mac    string
 	id     string
 	remote samote.Remote
 }
@@ -39,9 +38,9 @@ func (x *instance) Add(host string, name string, id string) error {
 	tv.id = id
 
 	var err error
-	tv.remote, err = samote.Dial(tv.host, tv.name, tv.mac)
+	tv.remote, err = samote.Dial(tv.host, tv.name, tv.id)
 	if err == nil {
-		x.tvs[id] = tv
+		x.tvs[name] = tv
 	}
 	return err
 }
@@ -61,6 +60,10 @@ func (x *instance) poweroff(name string) {
 
 func main() {
 	samsung := New()
+	err := samsung.Add("10.0.0.76:55000", "Bedroom Samsung-TV", "Remote")
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	for {
 		client := pubsub.New("tcp://10.0.0.22:8080")

@@ -2,7 +2,7 @@
 	"name": "Yee",
 	"lights": [
 		{
-			"name": "Frontdoor hall light",
+			"name": "Chandelier111",
 			"ip": "10.0.0.111",
 			"port": "55443"
 		},
@@ -12,7 +12,7 @@
 			"port": "55443"
 		},
 		{
-			"name": "Chandelier113",
+			"name": "Frontdoor hall light",
 			"ip": "10.0.0.113",
 			"port": "55443"
 		},

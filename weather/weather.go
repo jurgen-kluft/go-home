@@ -161,11 +161,11 @@ func (c *Client) Process(client *pubsub.Context) time.Duration {
 			from := now
 			until := hoursLater(from, 3.0)
 
-			state.AddTimeSlotSensor("rain", from, until)
-			state.AddFloatSensor("rain", forecast.Currently.PrecipProbability)
-			state.AddFloatSensor("clouds", forecast.Currently.CloudCover)
-			state.AddFloatSensor("wind", forecast.Currently.WindSpeed)
-			state.AddFloatSensor("temperature", forecast.Currently.ApparentTemperature)
+			state.AddTimeWndAttr("rain", from, until)
+			state.AddFloatAttr("rain", forecast.Currently.PrecipProbability)
+			state.AddFloatAttr("clouds", forecast.Currently.CloudCover)
+			state.AddFloatAttr("wind", forecast.Currently.WindSpeed)
+			state.AddFloatAttr("temperature", forecast.Currently.ApparentTemperature)
 
 			//			c.addHourly(atHour(now, 6, 0), atHour(now, 20, 0), forecast.Hourly, state)
 		}

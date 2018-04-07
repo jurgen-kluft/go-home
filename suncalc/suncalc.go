@@ -412,11 +412,11 @@ func (s *Instance) Process(client *pubsub.Context) {
 
 	sunstate := config.NewSensorState("state.sensor.sun")
 	for _, m := range moments {
-		sunstate.AddTimeSlotSensor(m.title, m.start, m.end)
+		sunstate.AddTimeWndAttr(m.title, m.start, m.end)
 	}
 
 	_, moonPhase, _ := getMoonIllumination(now)
-	sunstate.AddFloatSensor("moon.illumination", moonPhase)
+	sunstate.AddFloatAttr("moon.illumination", moonPhase)
 
 	jsonstr, err := sunstate.ToJSON()
 	if err == nil {

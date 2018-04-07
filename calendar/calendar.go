@@ -37,12 +37,12 @@ func New(jsonstr string) (*Calendar, error) {
 		c.sensors[ekey] = sn
 		sensor := &config.SensorState{Name: ekey, Time: time.Now()}
 		if sn.Type == "string" {
-			sensor.AddValueSensor(sn.Name, sn.State)
+			sensor.AddStringAttr(sn.Name, sn.State)
 		} else if sn.Type == "float" {
 			value, _ := strconv.ParseFloat(sn.State, 64)
-			sensor.AddFloatSensor(sn.Name, value)
+			sensor.AddFloatAttr(sn.Name, value)
 		} else if sn.Type == "bool" {
-			sensor.AddValueSensor(sn.Name, sn.State)
+			sensor.AddStringAttr(sn.Name, sn.State)
 		}
 		c.sensorStates[ekey] = sensor
 	}
@@ -87,8 +87,8 @@ func (c *Calendar) updateSensorStates(when time.Time) error {
 				ekey := domain + ":" + dproduct + ":" + dname
 
 				sensor, exists := c.sensorStates[ekey]
-				if exists && sensor.ValueSensors != nil {
-					(*sensor.ValueSensors)[0].Value = dstate
+				if exists && sensor.StringAttrs != nil {
+					(*sensor.StringAttrs)[0].Value = dstate
 					sensor.Time = time.Now()
 				}
 			}
@@ -172,12 +172,12 @@ func (c *Calendar) applyRulesToSensorStates() {
 		var ifthen *config.SensorState
 		var exists bool
 		sensor, exists = c.sensorStates[p.Key]
-		if exists && sensor.ValueSensors != nil {
+		if exists && sensor.StringAttrs != nil {
 			ifthen, exists = c.sensorStates[p.IfThen.Key]
-			if exists && ifthen.ValueSensors != nil {
-				ifthenValue := (*ifthen.ValueSensors)[0].Value
+			if exists && ifthen.StringAttrs != nil {
+				ifthenValue := (*ifthen.StringAttrs)[0].Value
 				if ifthenValue == p.IfThen.State {
-					(*sensor.ValueSensors)[0].Value = p.State
+					(*sensor.StringAttrs)[0].Value = p.State
 				}
 			}
 		}
@@ -208,7 +208,7 @@ func (c *Calendar) Process(client *pubsub.Context) {
 
 	// Other general states
 	weekend, _, _, _, _ := weekOrWeekEndStartEnd(now)
-	sensorjson, err := config.ValueSensorAsJSON("sensor.calendar.weekend", "weekend", fmt.Sprintf("%v", weekend))
+	sensorjson, err := config.StringAttrAsJSON("sensor.calendar.weekend", "weekend", fmt.Sprintf("%v", weekend))
 	publishSensorState(sensorjson, client)
 
 	// Update sensors and apply configured rules to sensors
