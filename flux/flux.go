@@ -29,9 +29,9 @@ func computeTimeSpanX(start, end, t time.Time) float64 {
 
 type instance struct {
 	config  *config.FluxConfig
-	suncalc config.SensorState
+	suncalc *config.SensorState
 	season  *config.Season
-	clouds  config.SensorState
+	clouds  *config.SensorState
 }
 
 func (s *instance) updateSeasonFromName(season string) {
@@ -154,7 +154,7 @@ func publishSensor(channel string, sensorjson string, client *pubsub.Context) {
 func main() {
 	flux := &instance{}
 	for {
-		client := pubsub.New("tcp://10.0.0.22:8080")
+		client := pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/flux/", "state/sensor/clouds/", "state/sensor/sun/", "state/sensor/season/", "state/light/hue/", "state/light/yee/"}
 		subscribe := []string{"config/flux/", "state/sensor/clouds/", "state/sensor/sun/", "state/sensor/season/"}
 		err := client.Connect("flux", register, subscribe)

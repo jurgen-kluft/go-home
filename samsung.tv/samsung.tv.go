@@ -66,7 +66,7 @@ func main() {
 	}
 
 	for {
-		client := pubsub.New("tcp://10.0.0.22:8080")
+		client := pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/tv/samsung/", "state/tv/samsung/"}
 		subscribe := []string{"config/tv/samsung/", "state/tv/samsung/"}
 		err := client.Connect("tv.samsung", register, subscribe)

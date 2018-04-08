@@ -64,7 +64,7 @@ func main() {
 	sony.poweroff("Livingroom TV")
 
 	for {
-		client := pubsub.New("tcp://10.0.0.22:8080")
+		client := pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/tv/sony/", "state/tv/sony/"}
 		subscribe := []string{"config/tv/sony/", "state/tv/sony/"}
 		err := client.Connect("bravia.tv", register, subscribe)

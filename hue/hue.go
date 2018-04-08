@@ -55,7 +55,7 @@ func main() {
 	}
 
 	for {
-		client := pubsub.New("tcp://10.0.0.22:8080")
+		client := pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/hue/", "sensor/light/hue/"}
 		subscribe := []string{"config/hue/", "sensor/light/hue/"}
 		err := client.Connect("hue", register, subscribe)

@@ -94,7 +94,7 @@ func main() {
 	for {
 		connected := true
 		for connected {
-			client := pubsub.New("tcp://10.0.0.22:8080")
+			client := pubsub.New(config.EmitterSecrets["host"])
 			register := []string{"config/aqi/", "state/sensor/aqi/"}
 			subscribe := []string{"config/aqi/"}
 			err := client.Connect("aqi", register, subscribe)

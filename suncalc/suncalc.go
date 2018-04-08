@@ -401,6 +401,10 @@ func New(jsonstr string) (*Instance, error) {
 }
 
 func (s *Instance) Process(client *pubsub.Context) {
+	if s.config == nil {
+		// We do not have received a configuration yet
+		return
+	}
 
 	now := time.Now()
 	now = time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, time.Local)
@@ -420,14 +424,14 @@ func (s *Instance) Process(client *pubsub.Context) {
 
 	jsonstr, err := sunstate.ToJSON()
 	if err == nil {
-		client.Publish("state/sensor/sun", jsonstr)
+		client.Publish("state/sensor/sun/", jsonstr)
 	}
 }
 
 func main() {
 	suncalc := &Instance{}
 	for {
-		client := pubsub.New("tcp://10.0.0.22:8080")
+		client := pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/suncalc/", "state/sensor/sun/"}
 		subscribe := []string{"config/suncalc/"}
 		err := client.Connect("suncalc", register, subscribe)

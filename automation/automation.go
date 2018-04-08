@@ -5,12 +5,13 @@ package automation
 // - presence (people arriving/leaving)
 // - switches (pressed)
 // - events (timeofday, calendar)
-// -
+// - time-based logic (morning 6:20 turn on bedroom lights)
 
 import (
 	"fmt"
 	"time"
 
+	"github.com/jurgen-kluft/go-home/config"
 	"github.com/jurgen-kluft/go-home/pubsub"
 )
 
@@ -20,7 +21,7 @@ func main() {
 	for {
 		connected := true
 		for connected {
-			client := pubsub.New("tcp://10.0.0.22:8080")
+			client := pubsub.New(config.EmitterSecrets["host"])
 			register := []string{"config/automation/", "state/#/"}
 			subscribe := []string{"config/automation/", "state/#/"}
 			err := client.Connect("automation", register, subscribe)
@@ -29,24 +30,20 @@ func main() {
 					select {
 					case msg := <-client.InMsgs:
 						topic := msg.Topic()
-						if topic == "automation/config" {
-						} else if topic == "client/disconnected" {
+						if topic == "automation/config/" {
+						} else if topic == "client/disconnected/" {
 							connected = false
 						}
-
-					case <-time.After(time.Second * 10):
+					case <-time.After(time.Second * 30):
 						auto.HandleTime(time.Now())
 					}
 				}
 			}
-
 			if err != nil {
 				fmt.Println("Error: " + err.Error())
 				time.Sleep(1 * time.Second)
 			}
-
 		}
-
 		// Wait for 5 seconds before retrying
 		time.Sleep(5 * time.Second)
 	}

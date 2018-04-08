@@ -173,7 +173,7 @@ func (c *Client) Process(client *pubsub.Context) time.Duration {
 
 	jsonstr, err := state.ToJSON()
 	if err == nil {
-		client.Publish("state/sensor/weather", jsonstr)
+		client.Publish("state/sensor/weather/", jsonstr)
 	}
 
 	wait := time.Duration(c.update.Unix()-time.Now().Unix()) * time.Second
@@ -187,8 +187,7 @@ func main() {
 	weather := New()
 
 	for {
-
-		client := pubsub.New("tcp://10.0.0.22:8080")
+		client := pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/weather/", "state/sensor/weather/"}
 		subscribe := []string{"config/weather/"}
 		err := client.Connect("weather", register, subscribe)
@@ -215,7 +214,6 @@ func main() {
 					if weather.config != nil {
 						weather.Process(client)
 					}
-
 				}
 			}
 		}

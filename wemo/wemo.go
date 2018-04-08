@@ -23,7 +23,7 @@ func main() {
 	thewemo.devices = map[string]*Switch{}
 
 	for {
-		client := pubsub.New("tcp://10.0.0.22:8080")
+		client := pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/wemo/", "sensor/device/wemo/"}
 		subscribe := []string{"config/wemo/", "sensor/device/wemo/"}
 		err := client.Connect("wemo", register, subscribe)

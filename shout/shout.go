@@ -12,7 +12,7 @@ import (
 // Instance is our instant-messenger instance (currently Slack)
 type Instance struct {
 	config *config.ShoutConfig
-	slack  *slack.Client
+	client *slack.Client
 }
 
 // New creates a new instance of Slack
@@ -21,7 +21,7 @@ func New(jsonstr string) (*Instance, error) {
 	config, err := config.ShoutConfigFromJSON(jsonstr)
 	if err == nil {
 		shout.config = config
-		shout.slack = slack.New(config.Key)
+		shout.client = slack.New(config.Key)
 	}
 	return shout, err
 }
@@ -37,7 +37,7 @@ func (s *Instance) postMessage(jsonmsg string) {
 			Text:    m.Prebody,
 		}
 		params.Attachments = []slack.Attachment{attachment}
-		_, timestamp, err := s.slack.PostMessage(m.Channel, m.Message, params)
+		_, timestamp, err := s.client.PostMessage(m.Channel, m.Message, params)
 		if err != nil {
 			fmt.Printf("Error '%s' at %s\n", err, timestamp)
 		}
@@ -52,7 +52,7 @@ func main() {
 	for {
 		connected := true
 		for connected {
-			client := pubsub.New("tcp://10.0.0.22:8080")
+			client := pubsub.New(config.EmitterSecrets["host"])
 			register := []string{"config/shout/", "shout/message/"}
 			subscribe := []string{"config/shout/", "shout/message/"}
 			err := client.Connect("shout", register, subscribe)
@@ -69,7 +69,9 @@ func main() {
 							connected = false
 						} else if topic == "shout/message/" {
 							// Is this a message to send over slack ?
-							shout.postMessage(string(msg.Payload()))
+							if shout != nil {
+								shout.postMessage(string(msg.Payload()))
+							}
 						}
 						break
 					case <-time.After(time.Second * 10):

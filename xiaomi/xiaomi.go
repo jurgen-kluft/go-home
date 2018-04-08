@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/jurgen-kluft/go-home/config"
+	log "github.com/jurgen-kluft/go-home/logging"
 	"github.com/jurgen-kluft/go-home/pubsub"
 	"github.com/jurgen-kluft/migateway"
-	"time"
-	//"github.com/xuebing1110/migateway"
 )
 
 // Features:
@@ -32,9 +33,6 @@ type instance struct {
 func main() {
 	xiaomi := &instance{}
 
-	//gatewayIP := "10.0.0.78"
-	xiaomi.key = "3C8FA0275CAF4567"
-
 	aqara, err := migateway.NewAqaraManager(nil)
 	if err != nil {
 		panic(err)
@@ -43,22 +41,27 @@ func main() {
 	xiaomi.aqara = aqara
 	xiaomi.aqara.SetAESKey(xiaomi.key)
 
+	logger := log.New()
+	logger.AddEntry("emitter")
+	logger.AddEntry("xiaomi")
+
 	for {
-		client := pubsub.New("tcp://10.0.0.22:8080")
+		client := pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/xiaomi/", "state/xiaomi/", "state/xiaomi/gateway/", "state/xiaomi/magnet/", "state/xiaomi/motion/", "state/xiaomi/plug/", "state/xiaomi/switch/", "state/xiaomi/dualwiredwallswitch/"}
 		subscribe := []string{"config/xiaomi/", "state/xiaomi/"}
 		err := client.Connect("xiaomi", register, subscribe)
 		if err == nil {
-			fmt.Println("Connected to emitter")
-
+			logger.LogInfo("emitter", "connected")
 			connected := true
 			for connected {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/xiaomi/" {
+						logger.LogInfo("xiaomi", "received configuration")
 						xiaomi.config, err = config.XiaomiConfigFromJSON(string(msg.Payload()))
 					} else if topic == "state/xiaomi/" {
+						logger.LogInfo("xiaomi", "received state")
 						state, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
 							// TODO: Figure out what state to change on which device
@@ -70,6 +73,7 @@ func main() {
 							}
 						}
 					} else if topic == "client/disconnected/" {
+						logger.LogInfo("emitter", "disconnected")
 						connected = false
 					}
 
@@ -175,7 +179,7 @@ func main() {
 		}
 
 		if err != nil {
-			fmt.Println("Error: " + err.Error())
+			logger.LogError("xiaomi", err.Error())
 		}
 
 		time.Sleep(5 * time.Second)

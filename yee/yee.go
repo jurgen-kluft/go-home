@@ -38,7 +38,7 @@ func main() {
 	// yeelighting.poweroff("Front door hall light")
 
 	for {
-		client := pubsub.New("tcp://10.0.0.22:8080")
+		client := pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/yee/", "sensor/light/yee/"}
 		subscribe := []string{"config/yee/", "sensor/light/yee/"}
 		err := client.Connect("yee", register, subscribe)
