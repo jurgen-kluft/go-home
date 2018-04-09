@@ -1,9 +1,9 @@
+package main
+
 // To parse and unparse this JSON data, add this code to your project and do:
 //
 //    r, err := UnmarshalCaqiResponse(bytes)
 //    bytes, err = r.Marshal()
-
-package aqi
 
 import "encoding/json"
 

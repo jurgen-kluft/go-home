@@ -1,4 +1,4 @@
-package aqi
+package main
 
 import (
 	"bytes"
