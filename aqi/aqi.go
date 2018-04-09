@@ -83,7 +83,13 @@ func (c *instance) Poll() (aqiStateJSON string, err error) {
 	aqiStateJSON = ""
 	aqi, err := c.getResponse()
 	if err == nil {
-		aqiStateJSON, err = config.FloatAttrAsJSON("sensor.weather.aqi", "aqi", aqi)
+		sensor := config.NewSensorState("sensor.weather.aqi")
+		sensor.AddFloatAttr("aqi", aqi)
+		level := c.getAiqTagAndDescr(aqi)
+		sensor.AddStringAttr("name", level.Tag)
+		sensor.AddStringAttr("caution", level.Caution)
+		sensor.AddStringAttr("implications", level.Implications)
+		aqiStateJSON, err = sensor.ToJSON()
 	}
 	return aqiStateJSON, err
 }
@@ -104,6 +110,7 @@ func main() {
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
 
+			pollCount := int64(0)
 			connected := true
 			for connected {
 				select {
@@ -115,6 +122,7 @@ func main() {
 						if err == nil {
 							logger.LogInfo("aqi", "received configuration")
 							aqi.config = config
+							pollCount = 0
 						} else {
 							logger.LogError("aqi", "received bad configuration, "+err.Error())
 						}
@@ -123,20 +131,20 @@ func main() {
 						connected = false
 					}
 
-				case <-time.After(time.Second * 60):
+				case <-time.After(time.Second * 10):
 					if aqi != nil && aqi.config != nil {
-						if aqi.shouldPoll(time.Now(), false) {
+						if aqi.shouldPoll(time.Now(), pollCount == 0) {
+							logger.LogInfo("aqi", "polling Aqi")
 							jsonstate, err := aqi.Poll()
-							fmt.Println(jsonstate)
 							if err == nil {
+								logger.LogInfo("aqi", "publish Aqi")
+								fmt.Println(jsonstate)
 								client.PublishTTL("state/sensor/aqi/", jsonstate, 5*60)
 							} else {
-								logger.LogError("aqi", fmt.Sprintf("polling Aqi URI with error %s", err.Error()))
+								logger.LogError("aqi", err.Error())
 							}
+							pollCount += 1
 							aqi.computeNextPoll(time.Now(), err)
-						} else {
-							logger.LogError("aqi", "not time yet to poll Aqi")
-
 						}
 					}
 				}

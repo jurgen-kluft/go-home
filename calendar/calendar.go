@@ -19,18 +19,20 @@ type Calendar struct {
 	sensorStates map[string]*config.SensorState
 	cals         []*icalendar.Calendar
 	update       time.Time
+	log          *logpkg.Logger
 }
 
 // New  ... create a new Calendar from the given JSON configuration
-func New(jsonstr string) (*Calendar, error) {
+func New(jsonstr string, log *logpkg.Logger) (*Calendar, error) {
 	var err error
 
 	c := &Calendar{}
+	c.log = log
 	c.sensors = map[string]config.Csensor{}
 	c.sensorStates = map[string]*config.SensorState{}
 	c.config, err = config.CalendarConfigFromJSON(jsonstr)
 	if err != nil {
-		fmt.Printf("ERROR: '%s'\n", err.Error())
+		log.LogError("calendar", err.Error())
 	}
 	//c.ccal.print()
 	for _, sn := range c.config.Sensors {
@@ -54,9 +56,8 @@ func New(jsonstr string) (*Calendar, error) {
 			c.cals = append(c.cals, icalendar.NewURLCalendar(cal.URL))
 		} else if strings.HasPrefix(cal.URL, "file") {
 			c.cals = append(c.cals, icalendar.NewFileCalendar(cal.URL))
-		} else if strings.HasPrefix(cal.URL, "file") {
-			filepath := strings.Replace(cal.URL, "file://", "", 1)
-			fmt.Printf("ERROR: Unknown Calendar source: '%s'\n", filepath)
+		} else {
+			log.LogError("calendar", fmt.Sprintf("Unknown calendar source '%s'", cal.URL))
 		}
 	}
 
@@ -210,7 +211,7 @@ func (c *Calendar) Process(client *pubsub.Context) {
 		// fmt.Println("CALENDAR: LOAD")
 		err := c.load()
 		if err != nil {
-			fmt.Printf("ERROR: '%s'\n", err.Error())
+			c.log.LogError("calendar", err.Error())
 			return
 		}
 	}
@@ -259,7 +260,7 @@ func main() {
 					if topic == "config/calendar/" {
 						logger.LogInfo("calendar", "received configuration")
 						jsonmsg := string(msg.Payload())
-						calendar, err = New(jsonmsg)
+						calendar, err = New(jsonmsg, logger)
 						if err != nil {
 							calendar = nil
 						}

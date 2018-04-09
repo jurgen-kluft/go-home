@@ -5,15 +5,33 @@
   "levels": [
     {
       "lessthan": 50,
-      "tag": "Ok",
-      "implications": "",
-      "caution": ""
+      "tag": "Good",
+      "implications": "Air quality is considered satisfactory, and air pollution poses little or no risk",
+      "caution": "None"
     },
     {
-      "lessthan": 500,
-      "tag": "Serious Shit",
-      "implications": "",
-      "caution": ""
+      "lessthan": 100,
+      "tag": "Moderate",
+      "implications": "Air quality is acceptable; however, for some pollutants there may be a moderate health concern for a very small number of people who are unusually sensitive to air pollution.",
+      "caution": "Active children and adults, and people with respiratory disease, such as asthma, should limit prolonged outdoor exertion."
+    },
+    {
+      "lessthan": 150,
+      "tag": "Unhealthy for Sensitive Groups (warning)",
+      "implications": "Members of sensitive groups may experience health effects. The general public is not likely to be affected.",
+      "caution": "Active children and adults, and people with respiratory disease, such as asthma, should limit prolonged outdoor exertion."
+    },
+    {
+      "lessthan": 200,
+      "tag": "Unhealthy (warning)",
+      "implications": "Everyone may begin to experience health effects; members of sensitive groups may experience more serious health effects",
+      "caution": "Active children and adults, and people with respiratory disease, such as asthma, should avoid prolonged outdoor exertion; everyone else, especially children, should limit prolonged outdoor exertion"
+    },
+    {
+      "lessthan": 300,
+      "tag": "Very Unhealthy (warning)",
+      "implications": "Health warnings of emergency conditions. The entire population is more likely to be affected.",
+      "caution": "Active children and adults, and people with respiratory disease, such as asthma, should avoid all outdoor exertion; everyone else, especially children, should limit outdoor exertion."
     }
   ]
 }
