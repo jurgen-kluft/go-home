@@ -15,13 +15,11 @@ import (
 type instance struct {
 	config *config.AqiConfig
 	update time.Time
-	period time.Duration
 }
 
 func construct() (c *instance) {
 	c = &instance{}
 	c.update = time.Now()
-	c.period = time.Minute * 5
 	return c
 }
 
@@ -74,7 +72,7 @@ func (c *instance) computeNextPoll(now time.Time, err error) {
 	if err != nil {
 		c.update = now.Add(time.Minute * 1)
 	} else {
-		c.update = now.Add(c.period)
+		c.update = now.Add(time.Duration(c.config.Interval) * time.Second)
 	}
 }
 
@@ -143,7 +141,7 @@ func main() {
 							} else {
 								logger.LogError("aqi", err.Error())
 							}
-							pollCount += 1
+							pollCount++
 							aqi.computeNextPoll(time.Now(), err)
 						}
 					}

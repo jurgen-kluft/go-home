@@ -2,6 +2,7 @@
   "token": "94aba5be0d555d3f44507dc8554b979bf3430a80",
   "city": "@1437",
   "url": "https://api.waqi.info/feed/${CITY}/?token=${TOKEN}",
+  "interval": 300,
   "levels": [
     {
       "lessthan": 50,
