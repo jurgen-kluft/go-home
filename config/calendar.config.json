@@ -15,65 +15,47 @@
   ],
   "sensors": [
     {
-      "domain": "sensor",
-      "product": "geo",
-      "name": "latitude",
+      "name": "sensor.geo.latitude",
       "type": "float",
       "state": "31.2304"
     },
     {
-      "domain": "sensor",
-      "product": "geo",
-      "name": "longitude",
+      "name": "sensor.geo.longitude",
       "state": "121.4737",
       "type": "float"
     },
     {
-      "domain": "sensor",
-      "product": "calendar",
-      "name": "jennifer",
+      "name": "sensor.calendar.jennifer",
       "state": "free",
       "type": "string"
     },
     {
-      "domain": "sensor",
-      "product": "calendar",
-      "name": "sophia",
+      "name": "sensor.calendar.sophia",
       "state": "free",
       "type": "string"
     },
     {
-      "domain": "sensor",
-      "product": "calendar",
-      "name": "parents",
+      "name": "sensor.calendar.parents",
       "state": "free",
       "type": "string"
     },
     {
-      "domain": "sensor",
-      "product": "calendar",
-      "name": "alarm",
+      "name": "sensor.calendar.alarm",
       "state": "off",
       "type": "string"
     },
     {
-      "domain": "sensor",
-      "product": "calendar",
-      "name": "season",
+      "name": "sensor.calendar.season",
       "state": "winter",
       "type": "string"
     },
     {
-      "domain": "sensor",
-      "product": "calendar",
-      "name": "tod",
+      "name": "sensor.calendar.tod",
       "state": "morning",
       "type": "string"
     },
     {
-      "domain": "sensor",
-      "product": "calendar",
-      "name": "weekend",
+      "name": "sensor.calendar.weekend",
       "state": "false",
       "type": "bool"
     }

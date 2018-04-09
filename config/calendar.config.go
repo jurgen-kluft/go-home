@@ -49,16 +49,12 @@ func (c Ccal) print() {
 }
 
 type Csensor struct {
-	Domain  string `json:"domain"`
-	Product string `json:"product"`
-	Name    string `json:"name"`
-	State   string `json:"state"`
-	Type    string `json:"type"`
+	Name  string `json:"name"`
+	State string `json:"state"`
+	Type  string `json:"type"`
 }
 
 func (c Csensor) print() {
-	fmt.Printf("sensor.domain = %s\n", c.Domain)
-	fmt.Printf("sensor.product = %s\n", c.Product)
 	fmt.Printf("sensor.name = %s\n", c.Name)
 	fmt.Printf("sensor.state = %s\n", c.State)
 	fmt.Printf("sensor.type = %s\n", c.Type)

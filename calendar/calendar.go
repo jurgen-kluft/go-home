@@ -34,7 +34,7 @@ func New(jsonstr string) (*Calendar, error) {
 	}
 	//c.ccal.print()
 	for _, sn := range c.config.Sensors {
-		ekey := strings.ToLower(sn.Domain) + "." + strings.ToLower(sn.Product) + "." + strings.ToLower(sn.Name)
+		ekey := strings.ToLower(sn.Name)
 		c.sensors[ekey] = sn
 		sensor := &config.SensorState{Name: ekey, Time: time.Now()}
 		if sn.Type == "string" {
@@ -43,7 +43,8 @@ func New(jsonstr string) (*Calendar, error) {
 			value, _ := strconv.ParseFloat(sn.State, 64)
 			sensor.AddFloatAttr(sn.Name, value)
 		} else if sn.Type == "bool" {
-			sensor.AddStringAttr(sn.Name, sn.State)
+			value, _ := strconv.ParseBool(sn.State)
+			sensor.AddBoolAttr(sn.Name, value)
 		}
 		c.sensorStates[ekey] = sensor
 	}
@@ -72,25 +73,32 @@ func (c *Calendar) updateSensorStates(when time.Time) error {
 
 		eventsForDay := cal.GetEventsByDate(when)
 		for _, e := range eventsForDay {
-			var domain string
-			var dproduct string
 			var dname string
 			var dstate string
-			title := strings.Replace(e.Summary, ":", " : ", 1)
+			title := strings.Replace(e.Summary, ":", ".", 3)
 			title = strings.Replace(title, "=", " = ", 1)
-			n, err := fmt.Sscanf(title, "%s : %s : %s = %s", &domain, &dproduct, &dname, &dstate)
-			if n == 4 && err == nil {
+			n, err := fmt.Sscanf(title, "%s = %s", &dname, &dstate)
+			if n == 2 && err == nil {
 				//fmt.Printf("Parsed: '%s' - '%s' - '%s' - '%s'\n", domain, dproduct, dname, dstate)
-				domain = strings.ToLower(strings.Trim(domain, " "))
-				dproduct = strings.ToLower(strings.Trim(dproduct, " "))
 				dname = strings.ToLower(strings.Trim(dname, " "))
 				dstate = strings.ToLower(strings.Trim(dstate, " "))
-				ekey := domain + ":" + dproduct + ":" + dname
+				ekey := dname
 
 				sensor, exists := c.sensorStates[ekey]
-				if exists && sensor.StringAttrs != nil {
-					(*sensor.StringAttrs)[0].Value = dstate
+				if exists {
 					sensor.Time = time.Now()
+					if sensor.StringAttrs != nil {
+						(*sensor.StringAttrs)[0].Value = dstate
+					} else if sensor.IntAttrs != nil {
+						value, _ := strconv.ParseInt(dstate, 10, 64)
+						(*sensor.IntAttrs)[0].Value = value
+					} else if sensor.FloatAttrs != nil {
+						value, _ := strconv.ParseFloat(dstate, 64)
+						(*sensor.FloatAttrs)[0].Value = value
+					} else if sensor.BoolAttrs != nil {
+						value, _ := strconv.ParseBool(dstate)
+						(*sensor.BoolAttrs)[0].Value = value
+					}
 				}
 			}
 		}
@@ -186,7 +194,7 @@ func (c *Calendar) applyRulesToSensorStates() {
 }
 
 func publishSensorState(sensorjson string, client *pubsub.Context) {
-	client.Publish("state/sensor/calendar", string(sensorjson))
+	client.Publish("state/sensor/calendar/", string(sensorjson))
 }
 
 // Process will update 'events' from the calendar
