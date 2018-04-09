@@ -61,7 +61,12 @@ func (ctx *Context) Connect(username string, register, subscribe []string) error
 	options.SetOnKeyGenHandler(func(_ emitter.Emitter, r emitter.KeyGenResponse) {
 		fmt.Printf("KeyGenResponse from emitter: '%s' = '%s' (status: %d)\n", r.Channel, r.Key, r.Status)
 		ctx.ChannelKeys[r.Channel] = r.Key
-		ctx.KeyRequest <- true
+		if r.Channel == "" || r.Key == "" {
+			ctx.KeyRequest <- false
+		} else {
+			ctx.KeyRequest <- true
+		}
+
 	})
 
 	options.AddBroker(ctx.Host)
@@ -101,9 +106,7 @@ func (ctx *Context) Register(channel string) error {
 	_, exists := ctx.ChannelKeys[channel]
 	if !exists {
 		keygenRequest := emitter.NewKeyGenRequest()
-		// "license": "c1aVVz_sTmIi_FTcugWsjzTsQ4kJrslAAAAAAAAAAAI",
-		// "secret": "1ZPCl42pPIyq6ZsZbaV4OUexWw97cZvf",
-		keygenRequest.Key = "1ZPCl42pPIyq6ZsZbaV4OUexWw97cZvf"
+		keygenRequest.Key = config.EmitterSecrets["secret"]
 		keygenRequest.Channel = channel
 		keygenRequest.Type = "rwslp"
 		keygenToken := ctx.Client.GenerateKey(keygenRequest)

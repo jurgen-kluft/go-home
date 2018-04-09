@@ -13,7 +13,6 @@ tags
 !*.pl
 
 !*.go
-!*.*.go
 !*.lua
 !*.json
 

@@ -21,7 +21,7 @@ type instance struct {
 func construct() (c *instance) {
 	c = &instance{}
 	c.update = time.Now()
-	c.period = time.Minute * 15
+	c.period = time.Minute * 5
 	return c
 }
 
@@ -31,7 +31,7 @@ func (c *instance) getResponse() (AQI float64, err error) {
 	url = strings.Replace(url, "${TOKEN}", c.config.Token, 1)
 	if strings.HasPrefix(url, "http") {
 		var resp *http.Response
-		fmt.Printf("HTTP Get, '%s'\n", url)
+		//fmt.Printf("HTTP Get, '%s'\n", url)
 		resp, err = http.Get(url)
 		if err != nil {
 			AQI = 99.0
@@ -110,27 +110,33 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/aqi/" {
-						logger.LogInfo("aqi", "received configuration")
 						jsonmsg := string(msg.Payload())
 						config, err := config.AqiConfigFromJSON(jsonmsg)
 						if err == nil {
+							logger.LogInfo("aqi", "received configuration")
 							aqi.config = config
+						} else {
+							logger.LogError("aqi", "received bad configuration, "+err.Error())
 						}
 					} else if topic == "client/disconnected/" {
 						logger.LogInfo("emitter", "disconnected")
 						connected = false
 					}
 
-				case <-time.After(time.Second * 300):
+				case <-time.After(time.Second * 60):
 					if aqi != nil && aqi.config != nil {
 						if aqi.shouldPoll(time.Now(), false) {
 							jsonstate, err := aqi.Poll()
+							fmt.Println(jsonstate)
 							if err == nil {
 								client.PublishTTL("state/sensor/aqi/", jsonstate, 5*60)
 							} else {
 								logger.LogError("aqi", fmt.Sprintf("polling Aqi URI with error %s", err.Error()))
 							}
 							aqi.computeNextPoll(time.Now(), err)
+						} else {
+							logger.LogError("aqi", "not time yet to poll Aqi")
+
 						}
 					}
 				}

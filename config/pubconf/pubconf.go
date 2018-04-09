@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/jurgen-kluft/go-home/config"
 	"github.com/jurgen-kluft/go-home/pubsub"
 	"github.com/urfave/cli"
 )
@@ -17,17 +18,17 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "host",
-			Value: "tcp://10.0.0.22:8080",
+			Value: config.EmitterSecrets["host"],
 			Usage: "The 'IP:Port' URI of the emitter broker",
 		},
 		cli.StringFlag{
 			Name:  "file",
-			Value: "presence.config.json",
+			Value: "aqi.config.json",
 			Usage: "The JSON configuration file to read and publish",
 		},
 		cli.StringFlag{
 			Name:  "channel",
-			Value: "config/presence/",
+			Value: "config/aqi/",
 			Usage: "The channel to publish to",
 		},
 	}
@@ -45,37 +46,32 @@ func main() {
 
 		running := true
 		for running {
-			connected := true
-			for connected {
-				client := pubsub.New(host)
-				err := client.Connect("pubconf")
-				if err == nil {
-					channel := c.String("channel")
-					//client.ChannelKeys[channel] = "YoKCKrErRTvhz8yZs_ZEyrVO6ILlUCUc"
-					err = client.Register(channel)
-					if err == nil {
-						for connected {
-							select {
-							case msg := <-client.InMsgs:
-								fmt.Printf("Emitter message received, topic:'%s', msg:'%s'\n", msg.Topic(), string(msg.Payload()))
+			client := pubsub.New(host)
+			channel := c.String("channel")
+			register := []string{channel}
+			subscribe := []string{}
+			err := client.Connect("pubconf", register, subscribe)
+			if err == nil {
+				connected := true
+				for connected {
+					select {
+					case msg := <-client.InMsgs:
+						fmt.Printf("Emitter message received, topic:'%s', msg:'%s'\n", msg.Topic(), string(msg.Payload()))
 
-							case <-time.After(time.Second * 1):
-								err = client.PublishTTL(channel, jsonstr, 5*60)
-								if err != nil {
-									fmt.Println(err)
-								}
-								connected = false
-								running = false
-							}
+					case <-time.After(time.Second * 1):
+						err = client.PublishTTL(channel, jsonstr, 5*60)
+						if err != nil {
+							fmt.Println(err)
 						}
+						connected = false
+						running = false
 					}
-				}
-
-				if err != nil {
-					panic("Error: " + err.Error())
 				}
 			}
 
+			if err != nil {
+				panic("Error: " + err.Error())
+			}
 			// Wait for 10 seconds before retrying
 			time.Sleep(10 * time.Second)
 		}
