@@ -41,7 +41,7 @@ func main() {
 	xiaomi.aqara = aqara
 	xiaomi.aqara.SetAESKey(xiaomi.key)
 
-	logger := log.New()
+	logger := log.New("xiaomi")
 	logger.AddEntry("emitter")
 	logger.AddEntry("xiaomi")
 

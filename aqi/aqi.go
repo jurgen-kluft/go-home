@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
+	logpkg "github.com/jurgen-kluft/go-home/logging"
 	"github.com/jurgen-kluft/go-home/pubsub"
 )
 
@@ -91,49 +92,53 @@ func main() {
 
 	aqi := construct()
 
+	logger := logpkg.New("aqi")
+	logger.AddEntry("emitter")
+	logger.AddEntry("aqi")
+
 	for {
-		connected := true
-		for connected {
-			client := pubsub.New(config.EmitterSecrets["host"])
-			register := []string{"config/aqi/", "state/sensor/aqi/"}
-			subscribe := []string{"config/aqi/"}
-			err := client.Connect("aqi", register, subscribe)
+		client := pubsub.New(config.EmitterSecrets["host"])
+		register := []string{"config/aqi/", "state/sensor/aqi/"}
+		subscribe := []string{"config/aqi/"}
+		err := client.Connect("aqi", register, subscribe)
+		if err == nil {
+			logger.LogInfo("emitter", "connected")
 
-			if err == nil {
-				for connected {
-					select {
-					case msg := <-client.InMsgs:
-						topic := msg.Topic()
-						if topic == "config/aqi/" {
-							jsonmsg := string(msg.Payload())
-							config, err := config.AqiConfigFromJSON(jsonmsg)
-							if err == nil {
-								aqi.config = config
-							}
-						} else if topic == "client/disconnected/" {
-							connected = false
+			connected := true
+			for connected {
+				select {
+				case msg := <-client.InMsgs:
+					topic := msg.Topic()
+					if topic == "config/aqi/" {
+						logger.LogInfo("aqi", "received configuration")
+						jsonmsg := string(msg.Payload())
+						config, err := config.AqiConfigFromJSON(jsonmsg)
+						if err == nil {
+							aqi.config = config
 						}
+					} else if topic == "client/disconnected/" {
+						logger.LogInfo("emitter", "disconnected")
+						connected = false
+					}
 
-					case <-time.After(time.Second * 300):
-						if aqi != nil && aqi.config != nil {
-							if aqi.shouldPoll(time.Now(), false) {
-								jsonstate, err := aqi.Poll()
-								if err == nil {
-									client.PublishTTL("state/sensor/aqi/", jsonstate, 5*60)
-								}
-								aqi.computeNextPoll(time.Now(), err)
+				case <-time.After(time.Second * 300):
+					if aqi != nil && aqi.config != nil {
+						if aqi.shouldPoll(time.Now(), false) {
+							jsonstate, err := aqi.Poll()
+							if err == nil {
+								client.PublishTTL("state/sensor/aqi/", jsonstate, 5*60)
+							} else {
+								logger.LogError("aqi", fmt.Sprintf("polling Aqi URI with error %s", err.Error()))
 							}
+							aqi.computeNextPoll(time.Now(), err)
 						}
 					}
 				}
 			}
-			if err != nil {
-				fmt.Println("Error: " + err.Error())
-				time.Sleep(1 * time.Second)
-			}
 		}
-
-		// Wait for 5 seconds before retrying
+		if err != nil {
+			logger.LogError("aqi", err.Error())
+		}
 		time.Sleep(5 * time.Second)
 	}
 }

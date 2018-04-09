@@ -1,10 +1,10 @@
 package flux
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
+	logpkg "github.com/jurgen-kluft/go-home/logging"
 	"github.com/jurgen-kluft/go-home/pubsub"
 )
 
@@ -153,13 +153,18 @@ func publishSensor(channel string, sensorjson string, client *pubsub.Context) {
 
 func main() {
 	flux := &instance{}
+
+	logger := logpkg.New("flux")
+	logger.AddEntry("emitter")
+	logger.AddEntry("flux")
+
 	for {
 		client := pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/flux/", "state/sensor/clouds/", "state/sensor/sun/", "state/sensor/season/", "state/light/hue/", "state/light/yee/"}
 		subscribe := []string{"config/flux/", "state/sensor/clouds/", "state/sensor/sun/", "state/sensor/season/"}
 		err := client.Connect("flux", register, subscribe)
 		if err == nil {
-			fmt.Println("Connected to emitter")
+			logger.LogInfo("emitter", "connected")
 
 			connected := true
 			for connected {
@@ -177,6 +182,7 @@ func main() {
 					} else if topic == "state/sensor/season/" {
 						flux.updateSeasonFromName(string(msg.Payload()))
 					} else if topic == "client/disconnected/" {
+						logger.LogInfo("emitter", "disconnected")
 						connected = false
 					}
 
@@ -188,8 +194,8 @@ func main() {
 		}
 
 		if err != nil {
-			fmt.Println("Error: " + err.Error())
-			time.Sleep(5 * time.Second)
+			logger.LogError("flux", err.Error())
 		}
+		time.Sleep(5 * time.Second)
 	}
 }

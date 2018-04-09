@@ -6,6 +6,7 @@ import (
 
 	"github.com/adlio/darksky"
 	"github.com/jurgen-kluft/go-home/config"
+	logpkg "github.com/jurgen-kluft/go-home/logging"
 	"github.com/jurgen-kluft/go-home/pubsub"
 )
 
@@ -186,13 +187,17 @@ func (c *Client) Process(client *pubsub.Context) time.Duration {
 func main() {
 	weather := New()
 
+	logger := logpkg.New("shout")
+	logger.AddEntry("emitter")
+	logger.AddEntry("shout")
+
 	for {
 		client := pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/weather/", "state/sensor/weather/"}
 		subscribe := []string{"config/weather/"}
 		err := client.Connect("weather", register, subscribe)
 		if err == nil {
-			fmt.Println("Connected to emitter")
+			logger.LogInfo("emitter", "connected")
 
 			connected := true
 			for connected {
@@ -201,12 +206,14 @@ func main() {
 					topic := msg.Topic()
 					if topic == "config/weather/" {
 						if weather.config == nil {
+							logger.LogInfo("weather", "received configuration")
 							weather.config, err = config.WeatherConfigFromJSON(string(msg.Payload()))
 							if err != nil {
 								weather.config = nil
 							}
 						}
 					} else if topic == "client/disconnected/" {
+						logger.LogInfo("emitter", "disconnected")
 						connected = false
 					}
 
@@ -219,7 +226,7 @@ func main() {
 		}
 
 		if err != nil {
-			fmt.Println("Error: " + err.Error())
+			logger.LogError("shout", err.Error())
 		}
 
 		time.Sleep(5 * time.Second)

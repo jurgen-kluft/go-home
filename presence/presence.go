@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
+	logpkg "github.com/jurgen-kluft/go-home/logging"
 	"github.com/jurgen-kluft/go-home/pubsub"
 )
 
@@ -192,8 +193,12 @@ func (p *Presence) publish(now time.Time, client *pubsub.Context) {
 }
 
 func main() {
-
 	var presence *Presence
+
+	logger := logpkg.New("presence")
+	logger.AddEntry("emitter")
+	logger.AddEntry("presence")
+
 	updateIntervalSec := time.Second * 10
 	for {
 		connected := true
@@ -203,17 +208,17 @@ func main() {
 			subscribe := []string{"config/presence/"}
 			err := client.Connect("presence", register, subscribe)
 			if err == nil {
+				logger.LogInfo("emitter", "connected")
 				for connected {
 					select {
 					case msg := <-client.InMsgs:
-						fmt.Printf("Emitter message received, topic:'%s', msg:'%s'\n", msg.Topic(), string(msg.Payload()))
-
 						topic := msg.Topic()
 						if topic == "config/presence/" {
-							fmt.Println("Received configuration ...")
+							logger.LogInfo("presence", "received configuration")
 							presence = New(string(msg.Payload()))
 							updateIntervalSec = time.Second * time.Duration(presence.config.UpdateIntervalSec)
 						} else if topic == "client/disconnected/" {
+							logger.LogInfo("emitter", "disconnected")
 							connected = false
 						}
 
@@ -233,7 +238,7 @@ func main() {
 			}
 
 			if err != nil {
-				fmt.Println("Error: " + err.Error())
+				logger.LogError("presence", err.Error())
 			}
 		}
 

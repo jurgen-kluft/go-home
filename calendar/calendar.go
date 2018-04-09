@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
+	logpkg "github.com/jurgen-kluft/go-home/logging"
 	"github.com/jurgen-kluft/go-home/pubsub"
 	"github.com/jurgen-kluft/go-icloud-calendar"
 )
@@ -230,48 +231,49 @@ func main() {
 
 	var calendar *Calendar
 
+	logger := logpkg.New("calendar")
+	logger.AddEntry("emitter")
+	logger.AddEntry("calendar")
+
 	for {
-		connected := true
-		for connected {
-			client := pubsub.New(config.EmitterSecrets["host"])
-			register := []string{"config/calendar/", "state/sensor/calendar/"}
-			subscribe := []string{"config/calendar/"}
-			err := client.Connect("calendar", register, subscribe)
-			if err == nil {
-				fmt.Println("Connected to emitter")
+		client := pubsub.New(config.EmitterSecrets["host"])
+		register := []string{"config/calendar/", "state/sensor/calendar/"}
+		subscribe := []string{"config/calendar/"}
+		err := client.Connect("calendar", register, subscribe)
+		if err == nil {
+			logger.LogInfo("emitter", "connected")
 
-				for connected {
-					select {
-					case msg := <-client.InMsgs:
-						topic := msg.Topic()
-						if topic == "config/calendar/" {
-							jsonmsg := string(msg.Payload())
-							calendar, err = New(jsonmsg)
-							if err != nil {
-								calendar = nil
-							}
-						} else if topic == "client/disconnected/" {
-							connected = false
+			connected := true
+			for connected {
+				select {
+				case msg := <-client.InMsgs:
+					topic := msg.Topic()
+					if topic == "config/calendar/" {
+						logger.LogInfo("calendar", "received configuration")
+						jsonmsg := string(msg.Payload())
+						calendar, err = New(jsonmsg)
+						if err != nil {
+							calendar = nil
 						}
-						break
-					case <-time.After(time.Second * 60):
-						if calendar != nil && calendar.config != nil {
-							calendar.Process(client)
-						}
-						break
-
+					} else if topic == "client/disconnected/" {
+						logger.LogInfo("emitter", "disconnected")
+						connected = false
 					}
-				}
-			}
+					break
+				case <-time.After(time.Second * 60):
+					if calendar != nil && calendar.config != nil {
+						calendar.Process(client)
+					}
+					break
 
-			if err != nil {
-				fmt.Println("Error: " + err.Error())
-				time.Sleep(1 * time.Second)
+				}
 			}
 		}
 
-		// Wait for 10 seconds before retrying
-		time.Sleep(10 * time.Second)
+		if err != nil {
+			logger.LogError("calendar", err.Error())
+		}
+		time.Sleep(5 * time.Second)
 	}
 
 }

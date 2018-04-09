@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
+	logpkg "github.com/jurgen-kluft/go-home/logging"
 	"github.com/jurgen-kluft/go-home/pubsub"
 	"github.com/nlopes/slack"
 )
@@ -49,6 +50,10 @@ func main() {
 
 	var shout *Instance
 
+	logger := logpkg.New("shout")
+	logger.AddEntry("emitter")
+	logger.AddEntry("shout")
+
 	for {
 		connected := true
 		for connected {
@@ -57,19 +62,22 @@ func main() {
 			subscribe := []string{"config/shout/", "shout/message/"}
 			err := client.Connect("shout", register, subscribe)
 			if err == nil {
-				fmt.Println("Connected to emitter")
+				logger.LogInfo("emitter", "connected")
 
 				for connected {
 					select {
 					case msg := <-client.InMsgs:
 						topic := msg.Topic()
 						if topic == "config/shout/" {
+							logger.LogInfo("shout", "received configuration")
 							shout, err = New(string(msg.Payload()))
 						} else if topic == "client/disconnected/" {
+							logger.LogInfo("emitter", "disconnected")
 							connected = false
 						} else if topic == "shout/message/" {
 							// Is this a message to send over slack ?
 							if shout != nil {
+								logger.LogInfo("shout", "message")
 								shout.postMessage(string(msg.Payload()))
 							}
 						}
@@ -84,7 +92,7 @@ func main() {
 			}
 
 			if err != nil {
-				fmt.Println("Error: " + err.Error())
+				logger.LogError("shout", err.Error())
 			}
 		}
 

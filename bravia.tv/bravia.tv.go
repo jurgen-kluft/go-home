@@ -6,11 +6,11 @@ package main
 // - Sony Bravia TVs: Turn On/Off
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/czerwe/gobravia"
 	"github.com/jurgen-kluft/go-home/config"
+	logpkg "github.com/jurgen-kluft/go-home/logging"
 	"github.com/jurgen-kluft/go-home/pubsub"
 )
 
@@ -63,13 +63,17 @@ func main() {
 	sony.AddTV("10.0.0.77", "C4:3A:BE:95:0C:1E", "Livingroom TV")
 	sony.poweroff("Livingroom TV")
 
+	logger := logpkg.New("bravia.tv")
+	logger.AddEntry("emitter")
+	logger.AddEntry("bravia.tv")
+
 	for {
 		client := pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/tv/sony/", "state/tv/sony/"}
 		subscribe := []string{"config/tv/sony/", "state/tv/sony/"}
 		err := client.Connect("bravia.tv", register, subscribe)
 		if err == nil {
-			fmt.Println("Connected to emitter")
+			logger.LogInfo("emitter", "connected")
 
 			connected := true
 			for connected {
@@ -78,7 +82,9 @@ func main() {
 					topic := msg.Topic()
 					if topic == "config/tv/sony/" {
 						//huelighting.config, err = config.HueConfigFromJSON(string(msg.Payload()))
+						logger.LogInfo("bravia.tv", "received configuration")
 					} else if topic == "state/tv/sony/" {
+						logger.LogInfo("bravia.tv", "received state")
 						state, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
 							power := state.GetValueAttr("power", "idle")
@@ -99,12 +105,9 @@ func main() {
 		}
 
 		if err != nil {
-			fmt.Println("Error: " + err.Error())
-			time.Sleep(1 * time.Second)
+			logger.LogError("bravia.tv", err.Error())
 		}
-
-		// Wait for 5 seconds before retrying
-		fmt.Println("Connecting to emitter (retry every 5 seconds)")
 		time.Sleep(5 * time.Second)
+
 	}
 }

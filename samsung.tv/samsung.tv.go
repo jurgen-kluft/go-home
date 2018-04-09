@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
+	logpkg "github.com/jurgen-kluft/go-home/logging"
 	"github.com/jurgen-kluft/go-home/pubsub"
 	"github.com/saljam/samote"
 )
@@ -65,13 +66,17 @@ func main() {
 		fmt.Println(err)
 	}
 
+	logger := logpkg.New("samsung.tv")
+	logger.AddEntry("emitter")
+	logger.AddEntry("samsung.tv")
+
 	for {
 		client := pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/tv/samsung/", "state/tv/samsung/"}
 		subscribe := []string{"config/tv/samsung/", "state/tv/samsung/"}
 		err := client.Connect("tv.samsung", register, subscribe)
 		if err == nil {
-			fmt.Println("Connected to emitter")
+			logger.LogInfo("emitter", "connected")
 
 			connected := true
 			for connected {
@@ -81,6 +86,7 @@ func main() {
 					if topic == "config/tv/samsung/" {
 						//huelighting.config, err = config.HueConfigFromJSON(string(msg.Payload()))
 					} else if topic == "state/tv/samsung/" {
+						logger.LogInfo("samsung.tv", "received configuration")
 						state, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
 							power := state.GetValueAttr("power", "idle")
@@ -91,6 +97,7 @@ func main() {
 							}
 						}
 					} else if topic == "client/disconnected/" {
+						logger.LogInfo("emitter", "disconnected")
 						connected = false
 					}
 
@@ -101,8 +108,8 @@ func main() {
 		}
 
 		if err != nil {
-			fmt.Println("Error: " + err.Error())
-			time.Sleep(5 * time.Second)
+			logger.LogError("samsung.tv", err.Error())
 		}
+		time.Sleep(5 * time.Second)
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
+	logpkg "github.com/jurgen-kluft/go-home/logging"
 	"github.com/jurgen-kluft/go-home/pubsub"
 	yee "github.com/nunows/goyeelight"
 )
@@ -37,13 +38,17 @@ func main() {
 	// yeelighting.lamps["Front door hall light"] = yee.New("10.0.0.113", "55443")
 	// yeelighting.poweroff("Front door hall light")
 
+	logger := logpkg.New("yee")
+	logger.AddEntry("emitter")
+	logger.AddEntry("yee")
+
 	for {
 		client := pubsub.New(config.EmitterSecrets["host"])
-		register := []string{"config/yee/", "sensor/light/yee/"}
-		subscribe := []string{"config/yee/", "sensor/light/yee/"}
+		register := []string{"config/yee/", "state/light/yee/"}
+		subscribe := []string{"config/yee/", "state/light/yee/"}
 		err := client.Connect("yee", register, subscribe)
 		if err == nil {
-			fmt.Println("Connected to emitter")
+			logger.LogInfo("emitter", "connected")
 
 			connected := true
 			for connected {
@@ -51,14 +56,17 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/yee/" {
+						logger.LogInfo("yee", "received configuration")
 						yeelighting.config, err = config.YeeConfigFromJSON(string(msg.Payload()))
 						yeelighting.lamps = map[string]*yee.Yeelight{}
 						for _, lamp := range yeelighting.config.Lights {
 							yeelighting.lamps[lamp.Name] = yee.New(lamp.IP, lamp.Port)
 						}
-					} else if topic == "sensor/light/yee/" {
+					} else if topic == "state/light/yee/" {
 						yeesensor, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
+							logger.LogInfo("yee", "received state")
+
 							lampname := yeesensor.GetValueAttr("name", "")
 							if lampname != "" {
 								lamp, exists := yeelighting.lamps[lampname]
@@ -90,6 +98,7 @@ func main() {
 						}
 
 					} else if topic == "client/disconnected/" {
+						logger.LogInfo("emitter", "disconnected")
 						connected = false
 					}
 
@@ -100,7 +109,7 @@ func main() {
 		}
 
 		if err != nil {
-			fmt.Println("Error: " + err.Error())
+			logger.LogError("yee", err.Error())
 		}
 
 		time.Sleep(5 * time.Second)

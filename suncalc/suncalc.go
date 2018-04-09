@@ -3,11 +3,11 @@ package suncalc
 // sun calculations are based on http://aa.quae.nl/en/reken/zonpositie.html formulas
 
 import (
-	"fmt"
 	"math"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
+	logpkg "github.com/jurgen-kluft/go-home/logging"
 	"github.com/jurgen-kluft/go-home/pubsub"
 )
 
@@ -430,13 +430,18 @@ func (s *Instance) Process(client *pubsub.Context) {
 
 func main() {
 	suncalc := &Instance{}
+
+	logger := logpkg.New("suncalc")
+	logger.AddEntry("emitter")
+	logger.AddEntry("suncalc")
+
 	for {
 		client := pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/suncalc/", "state/sensor/sun/"}
 		subscribe := []string{"config/suncalc/"}
 		err := client.Connect("suncalc", register, subscribe)
 		if err == nil {
-			fmt.Println("Connected to emitter")
+			logger.LogInfo("emitter", "connected")
 
 			connected := true
 			for connected {
@@ -445,9 +450,11 @@ func main() {
 					topic := msg.Topic()
 					if topic == "config/suncalc/" {
 						if suncalc.config == nil {
+							logger.LogInfo("suncalc", "received configuration")
 							suncalc.config, err = config.SuncalcConfigFromJSON(string(msg.Payload()))
 						}
 					} else if topic == "client/disconnected/" {
+						logger.LogInfo("emitter", "disconnected")
 						connected = false
 					}
 
@@ -459,7 +466,7 @@ func main() {
 		}
 
 		if err != nil {
-			fmt.Println("Error: " + err.Error())
+			logger.LogError("suncalc", err.Error())
 		}
 
 		time.Sleep(5 * time.Second)
