@@ -1,4 +1,4 @@
-package flux
+package main
 
 import (
 	"fmt"
@@ -63,7 +63,7 @@ func (s *instance) updateLighttimes() {
 // there are Season/Weather states like 'Season':'Winter'
 // and 'Clouds':0.5
 func Process(f *instance, client *pubsub.Context) {
-	if f.config == nil || f.season == nil {
+	if f.config == nil || f.suncalc == nil || f.season == nil {
 		return
 	}
 
@@ -83,7 +83,10 @@ func Process(f *instance, client *pubsub.Context) {
 	currentx = float64(int64(currentx*100.0)) / 100.0
 
 	clouds := config.Weather{Clouds: config.MinMax{Min: 0.0, Max: 0.001}, CTPct: 0.0, BriPct: 0.0}
-	cloudFac := f.weather.GetFloatAttr("clouds", 0.0)
+	cloudFac := float64(0.0)
+	if f.weather != nil {
+		cloudFac = f.weather.GetFloatAttr("clouds", 0.0)
+	}
 	for _, w := range f.config.Weather {
 		if cloudFac >= w.Clouds.Min && cloudFac < w.Clouds.Max {
 			clouds = w

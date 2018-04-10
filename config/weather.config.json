@@ -3,15 +3,7 @@
     "latitude": 31.2304,
     "longitude": 121.4737
   },
-  "darksky": {
-    "key": "5044c4d80e9004d3d6100fd3a736d7c3"
-  },
-  "aqi": {
-    "key": "94aba5be0d555d3f44507dc8554b979bf3430a80"
-  },
-  "im": {
-    "channel": "weather"
-  },
+  "key": "5044c4d80e9004d3d6100fd3a736d7c3",
   "notify": [
     {
       "type": "rain",

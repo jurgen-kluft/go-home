@@ -42,7 +42,6 @@ func (s *Instance) postMessage(jsonmsg string) {
 		if err != nil {
 			fmt.Printf("Error '%s' at %s\n", err, timestamp)
 		}
-		//fmt.Printf("Message successfully sent to channel %s at %s\n", channel, timestamp)
 	}
 }
 

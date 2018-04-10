@@ -17,9 +17,7 @@ func (r *WeatherConfig) FromJSON() ([]byte, error) {
 
 type WeatherConfig struct {
 	Location    Geo      `json:"location"`
-	Darksky     Aqi      `json:"darksky"`
-	Aqi         Aqi      `json:"aqi"`
-	IM          IM       `json:"im"`
+	Key         string   `json:"key"`
 	Notify      []Notify `json:"notify"`
 	Clouds      []WItem  `json:"clouds"`
 	Rain        []WItem  `json:"rain"`
@@ -27,19 +25,11 @@ type WeatherConfig struct {
 	Temperature []WItem  `json:"temperature"`
 }
 
-type Aqi struct {
-	Key string `json:"key"`
-}
-
 type WItem struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Unit        Unit   `json:"unit"`
 	Range       MinMax `json:"range"`
-}
-
-type IM struct {
-	Channel string `json:"channel"`
 }
 
 type Notify struct {
