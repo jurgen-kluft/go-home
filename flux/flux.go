@@ -1,6 +1,7 @@
 package flux
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
@@ -31,7 +32,7 @@ type instance struct {
 	config  *config.FluxConfig
 	suncalc *config.SensorState
 	season  *config.Season
-	clouds  *config.SensorState
+	weather *config.SensorState
 }
 
 func (s *instance) updateSeasonFromName(season string) {
@@ -82,7 +83,7 @@ func Process(f *instance, client *pubsub.Context) {
 	currentx = float64(int64(currentx*100.0)) / 100.0
 
 	clouds := config.Weather{Clouds: config.MinMax{Min: 0.0, Max: 0.001}, CTPct: 0.0, BriPct: 0.0}
-	cloudFac := f.clouds.GetFloatAttr("clouds", 0.0)
+	cloudFac := f.weather.GetFloatAttr("clouds", 0.0)
 	for _, w := range f.config.Weather {
 		if cloudFac >= w.Clouds.Min && cloudFac < w.Clouds.Max {
 			clouds = w
@@ -129,21 +130,23 @@ func Process(f *instance, client *pubsub.Context) {
 	//  - Sensor.Light.DarkOrLight = string(Dark)
 
 	for _, ltype := range f.config.Lighttype {
+		sensor := config.NewSensorState("light." + ltype.Name)
+
 		lct := ltype.CT.LinearInterpolated(CT)
-		sensorCT, err := config.FloatAttrAsJSON("sensor.light."+ltype.Name, "CT", lct)
-		if err == nil {
-			publishSensor("state/light/"+ltype.Name+"/", sensorCT, client)
-		}
+		sensor.AddFloatAttr("CT", lct)
+
 		lbri := ltype.BRI.LinearInterpolated(BRI)
-		sensorBRI, err := config.FloatAttrAsJSON("sensor.light."+ltype.Name, "BRI", lbri)
+		sensor.AddFloatAttr("BRI", lbri)
+
+		jsonstr, err := sensor.ToJSON()
 		if err == nil {
-			publishSensor("state/light/"+ltype.Name+"/", sensorBRI, client)
+			publishSensor(fmt.Sprintf("state/sensor/%s/", ltype.Name), jsonstr, client)
 		}
 	}
 
-	sensorDOL, err := config.StringAttrAsJSON("sensor.light.darkorlight", "DarkOrLight", string(current.Darkorlight))
+	sensorDOL, err := config.StringAttrAsJSON("darkorlight", "DarkOrLight", string(current.Darkorlight))
 	if err == nil {
-		publishSensor("state/sensor/light/", sensorDOL, client)
+		publishSensor("state/sensor/darkorlight/", sensorDOL, client)
 	}
 }
 
@@ -160,8 +163,8 @@ func main() {
 
 	for {
 		client := pubsub.New(config.EmitterSecrets["host"])
-		register := []string{"config/flux/", "state/sensor/clouds/", "state/sensor/sun/", "state/sensor/season/", "state/light/hue/", "state/light/yee/"}
-		subscribe := []string{"config/flux/", "state/sensor/clouds/", "state/sensor/sun/", "state/sensor/season/"}
+		register := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/", "state/light/hue/", "state/light/yee/"}
+		subscribe := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/"}
 		err := client.Connect("flux", register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
@@ -175,8 +178,8 @@ func main() {
 						if flux.config == nil {
 							flux.config, err = config.FluxConfigFromJSON(string(msg.Payload()))
 						}
-					} else if topic == "state/sensor/clouds/" {
-						flux.clouds, err = config.SensorStateFromJSON(string(msg.Payload()))
+					} else if topic == "state/sensor/weather/" {
+						flux.weather, err = config.SensorStateFromJSON(string(msg.Payload()))
 					} else if topic == "state/sensor/sun/" {
 						flux.suncalc, err = config.SensorStateFromJSON(string(msg.Payload()))
 					} else if topic == "state/sensor/season/" {

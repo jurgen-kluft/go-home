@@ -460,7 +460,6 @@ func main() {
 
 				case <-time.After(time.Minute * 1):
 					suncalc.Process(client)
-
 				}
 			}
 		}

@@ -44,8 +44,8 @@ func main() {
 
 	for {
 		client := pubsub.New(config.EmitterSecrets["host"])
-		register := []string{"config/yee/", "state/light/yee/"}
-		subscribe := []string{"config/yee/", "state/light/yee/"}
+		register := []string{"config/yee/", "state/sensor/yee/", "state/light/yee/"}
+		subscribe := []string{"config/yee/", "state/light/yee/", "state/light/yee/"}
 		err := client.Connect("yee", register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")

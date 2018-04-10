@@ -61,9 +61,9 @@ func (c Csensor) print() {
 }
 
 type Crule struct {
-	Key    string `json:"key"`
-	State  string `json:"state"`
-	IfThen IfThen `json:"if"`
+	Key    string   `json:"key"`
+	State  string   `json:"state"`
+	IfThen []IfThen `json:"if"`
 }
 
 type IfThen struct {
@@ -74,6 +74,8 @@ type IfThen struct {
 func (c Crule) print() {
 	fmt.Printf("rule.key = %s\n", c.Key)
 	fmt.Printf("rule.state = %s\n", c.State)
-	fmt.Printf("rule.if.key = %s\n", c.IfThen.Key)
-	fmt.Printf("rule.if.state = %s\n", c.IfThen.State)
+	fmt.Println("If:")
+	for _, rule := range c.IfThen {
+		fmt.Printf("    if key='%s' has state:'%s'\n", rule.Key, rule.State)
+	}
 }

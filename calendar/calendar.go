@@ -1,4 +1,4 @@
-package calendar
+package main
 
 import (
 	"fmt"
@@ -179,23 +179,35 @@ func weekOrWeekEndStartEnd(now time.Time) (weekend bool, westart, weend, wdstart
 func (c *Calendar) applyRulesToSensorStates() {
 	for _, p := range c.config.Rules {
 		var sensor *config.SensorState
-		var ifthen *config.SensorState
+		var ifsensor *config.SensorState
 		var exists bool
 		sensor, exists = c.sensorStates[p.Key]
 		if exists && sensor.StringAttrs != nil {
-			ifthen, exists = c.sensorStates[p.IfThen.Key]
-			if exists && ifthen.StringAttrs != nil {
-				ifthenValue := (*ifthen.StringAttrs)[0].Value
-				if ifthenValue == p.IfThen.State {
-					(*sensor.StringAttrs)[0].Value = p.State
+			for _, ifthen := range p.IfThen {
+				ifsensor, exists = c.sensorStates[ifthen.Key]
+				if exists && ifsensor.StringAttrs != nil {
+					ifthenValue := (*ifsensor.StringAttrs)[0].Value
+					if ifthenValue == ifthen.State {
+						(*sensor.StringAttrs)[0].Value = p.State
+					}
+				} else if exists && ifsensor.BoolAttrs != nil {
+					ifthenValue := (*ifsensor.BoolAttrs)[0].Value
+					if ifthenValue && ("true" == ifthen.State) {
+						(*sensor.StringAttrs)[0].Value = p.State
+					} else if !ifthenValue && ("false" == ifthen.State) {
+						(*sensor.StringAttrs)[0].Value = p.State
+					}
+				} else {
+					c.log.LogError("calendar", fmt.Sprintf("Logical error when applying rules to sensor states (%s)", p.Key+", "+p.State))
 				}
 			}
 		}
 	}
 }
 
-func publishSensorState(sensorjson string, client *pubsub.Context) {
-	client.Publish("state/sensor/calendar/", string(sensorjson))
+func publishSensorState(name string, sensorjson string, client *pubsub.Context) {
+	fmt.Println(sensorjson)
+	client.Publish(fmt.Sprintf("state/sensor/%s/", name), string(sensorjson))
 }
 
 // Process will update 'events' from the calendar
@@ -205,7 +217,7 @@ func (c *Calendar) Process(client *pubsub.Context) {
 
 	if now.Unix() >= c.update.Unix() {
 		// Download again after 15 minutes
-		c.update = time.Unix(now.Unix()+15*60, 0)
+		c.update = time.Unix(now.Unix()+1*60, 0)
 
 		// Download calendars
 		// fmt.Println("CALENDAR: LOAD")
@@ -217,22 +229,36 @@ func (c *Calendar) Process(client *pubsub.Context) {
 	}
 
 	// Other general states
-	weekend, _, _, _, _ := weekOrWeekEndStartEnd(now)
-	sensorjson, err := config.StringAttrAsJSON("sensor.calendar.weekend", "weekend", fmt.Sprintf("%v", weekend))
-	publishSensorState(sensorjson, client)
+	weekendsensor, exists := c.sensorStates["weekend"]
+	if exists {
+		if weekendsensor.BoolAttrs != nil {
+			weekend, _, _, _, _ := weekOrWeekEndStartEnd(now)
+			(*weekendsensor.BoolAttrs)[0].Value = weekend
+			sensorjson, err := weekendsensor.ToJSON()
+			if err == nil {
+				publishSensorState("weekend", sensorjson, client)
+			} else {
+				c.log.LogError("calendar", err.Error())
+			}
+		}
+	}
 
 	// Update sensors and apply configured rules to sensors
 	err = c.updateSensorStates(now)
-	if err != nil {
+	if err == nil {
 		c.applyRulesToSensorStates()
 
 		// Publish sensor states
 		for _, ss := range c.sensorStates {
 			jsonstr, err := ss.ToJSON()
 			if err == nil {
-				publishSensorState(jsonstr, client)
+				publishSensorState(ss.Name, jsonstr, client)
+			} else {
+				c.log.LogError("calendar", err.Error())
 			}
 		}
+	} else {
+		c.log.LogError("calendar", err.Error())
 	}
 }
 
@@ -263,6 +289,7 @@ func main() {
 						calendar, err = New(jsonmsg, logger)
 						if err != nil {
 							calendar = nil
+							logger.LogError("calendar", err.Error())
 						}
 					} else if topic == "client/disconnected/" {
 						logger.LogInfo("emitter", "disconnected")

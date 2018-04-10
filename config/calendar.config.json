@@ -15,108 +15,108 @@
   ],
   "sensors": [
     {
-      "name": "sensor.geo.latitude",
+      "name": "geo.latitude",
       "type": "float",
       "state": "31.2304"
     },
     {
-      "name": "sensor.geo.longitude",
+      "name": "geo.longitude",
       "state": "121.4737",
       "type": "float"
     },
     {
-      "name": "sensor.calendar.jennifer",
+      "name": "jennifer",
       "state": "free",
       "type": "string"
     },
     {
-      "name": "sensor.calendar.sophia",
+      "name": "sophia",
       "state": "free",
       "type": "string"
     },
     {
-      "name": "sensor.calendar.parents",
+      "name": "parents",
       "state": "free",
       "type": "string"
     },
     {
-      "name": "sensor.calendar.alarm",
+      "name": "alarm",
       "state": "off",
       "type": "string"
     },
     {
-      "name": "sensor.calendar.season",
+      "name": "season",
       "state": "winter",
       "type": "string"
     },
     {
-      "name": "sensor.calendar.tod",
+      "name": "timeofday",
       "state": "morning",
       "type": "string"
     },
     {
-      "name": "sensor.calendar.weekend",
+      "name": "weekend",
       "state": "false",
       "type": "bool"
     }
   ],
   "rules": [
     {
-      "key": "sensor.calendar.jennifer",
+      "key": "jennifer",
       "state": "free",
       "if": [
         {
-          "key": "sensor.calendar.weekend",
+          "key": "weekend",
           "state": "true"
         }
       ]
     },
     {
-      "key": "sensor.calendar.jennifer",
+      "key": "jennifer",
       "state": "school",
       "if": [
         {
-          "key": "sensor.calendar.weekend",
+          "key": "weekend",
           "state": "false"
         }
       ]
     },
     {
-      "key": "sensor.calendar.sophia",
+      "key": "sophia",
       "state": "free",
       "if": [
         {
-          "key": "sensor.calendar.weekend",
+          "key": "weekend",
           "state": "true"
         }
       ]
     },
     {
-      "key": "sensor.calendar.sophia",
+      "key": "sophia",
       "state": "school",
       "if": [
         {
-          "key": "sensor.calendar.weekend",
+          "key": "weekend",
           "state": "false"
         }
       ]
     },
     {
-      "key": "sensor.calendar.parents",
+      "key": "parents",
       "state": "free",
       "if": [
         {
-          "key": "sensor.calendar.weekend",
+          "key": "weekend",
           "state": "true"
         }
       ]
     },
     {
-      "key": "sensor.calendar.parents",
+      "key": "parents",
       "state": "work",
       "if": [
         {
-          "key": "sensor.calendar.weekend",
+          "key": "weekend",
           "state": "false"
         }
       ]

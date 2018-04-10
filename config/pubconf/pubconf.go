@@ -23,12 +23,12 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "file",
-			Value: "aqi.config.json",
+			Value: "calendar.config.json",
 			Usage: "The JSON configuration file to read and publish",
 		},
 		cli.StringFlag{
 			Name:  "channel",
-			Value: "config/aqi/",
+			Value: "config/calendar/",
 			Usage: "The channel to publish to",
 		},
 	}
