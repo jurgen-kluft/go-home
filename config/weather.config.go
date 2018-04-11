@@ -6,7 +6,7 @@ import (
 )
 
 func WeatherConfigFromJSON(jsonstr string) (*WeatherConfig, error) {
-	var r *WeatherConfig
+	r := &WeatherConfig{}
 	err := json.Unmarshal([]byte(jsonstr), r)
 	return r, err
 }

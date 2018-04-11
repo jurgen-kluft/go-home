@@ -151,7 +151,7 @@ func atHour(date time.Time, h int, m int) time.Time {
 	return now
 }
 
-func (c *instance) Process(client *pubsub.Context) time.Duration {
+func (c *instance) Process(client *pubsub.Context) {
 	now := time.Now()
 
 	state := config.NewSensorState("weather")
@@ -168,7 +168,7 @@ func (c *instance) Process(client *pubsub.Context) time.Duration {
 			from := now
 			until := hoursLater(from, 3.0)
 
-			state.AddTimeWndAttr("rain", from, until)
+			state.AddTimeWndAttr("forecast", from, until)
 			state.AddFloatAttr("rain", forecast.Currently.PrecipProbability)
 			state.AddFloatAttr("clouds", forecast.Currently.CloudCover)
 			state.AddFloatAttr("wind", forecast.Currently.WindSpeed)
@@ -176,18 +176,13 @@ func (c *instance) Process(client *pubsub.Context) time.Duration {
 
 			//			c.addHourly(atHour(now, 6, 0), atHour(now, 20, 0), forecast.Hourly, state)
 		}
+		jsonstr, err := state.ToJSON()
+		if err == nil {
+			fmt.Println(jsonstr)
+			client.Publish("state/sensor/weather/", jsonstr)
+		}
 	}
 
-	jsonstr, err := state.ToJSON()
-	if err == nil {
-		client.Publish("state/sensor/weather/", jsonstr)
-	}
-
-	wait := time.Duration(c.update.Unix()-time.Now().Unix()) * time.Second
-	if wait < 0 {
-		wait = 0
-	}
-	return wait
 }
 
 func main() {
