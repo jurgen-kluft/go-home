@@ -178,23 +178,29 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/flux/" {
-						if flux.config == nil {
-							flux.config, err = config.FluxConfigFromJSON(string(msg.Payload()))
+						logger.LogInfo("flux", "received configuration")
+						flux.config, err = config.FluxConfigFromJSON(string(msg.Payload()))
+						if err != nil {
+							logger.LogError("flux", err.Error())
 						}
 					} else if topic == "state/sensor/weather/" {
 						flux.weather, err = config.SensorStateFromJSON(string(msg.Payload()))
+						if err != nil {
+							logger.LogError("flux", err.Error())
+						}
 					} else if topic == "state/sensor/sun/" {
 						flux.suncalc, err = config.SensorStateFromJSON(string(msg.Payload()))
+						if err != nil {
+							logger.LogError("flux", err.Error())
+						}
 					} else if topic == "state/sensor/season/" {
 						flux.updateSeasonFromName(string(msg.Payload()))
 					} else if topic == "client/disconnected/" {
 						logger.LogInfo("emitter", "disconnected")
 						connected = false
 					}
-
 				case <-time.After(time.Second * 10):
 					Process(flux, client)
-
 				}
 			}
 		}

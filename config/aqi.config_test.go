@@ -16,7 +16,7 @@ func TestCorrectJsonAqiConfig(t *testing.T) {
 	if cr.City != "@1437" {
 		t.Error("Json config unmarshall results in wrong city value")
 	}
-	if cr.Token != "this is a correct token" {
+	if cr.Token.String != "this is a correct token" {
 		t.Error("Json config unmarshall results in wrong token value")
 	}
 	if cr.URL != "https://api.waqi.info/feed/${CITY}/?token=${TOKEN}" {
@@ -26,7 +26,7 @@ func TestCorrectJsonAqiConfig(t *testing.T) {
 
 var testCorrectJSONAqiConfig = `
 {
-    "token": "this is a correct token",
+    "token": "8AiNYmJTWzzcIm0g-e0ZUhwGjYBxogDV_PyGFIDPjBzE1fSdPm6U",
     "city": "@1437",
     "url": "https://api.waqi.info/feed/${CITY}/?token=${TOKEN}"
 }

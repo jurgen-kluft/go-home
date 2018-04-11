@@ -39,8 +39,8 @@ func (c *CalendarConfig) Print() {
 }
 
 type Ccal struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
+	Name string      `json:"name"`
+	URL  CryptString `json:"url"`
 }
 
 func (c Ccal) print() {

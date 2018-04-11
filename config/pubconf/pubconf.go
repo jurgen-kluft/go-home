@@ -23,12 +23,12 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "file",
-			Value: "calendar.config.json",
+			Value: "suncalc.config.json",
 			Usage: "The JSON configuration file to read and publish",
 		},
 		cli.StringFlag{
 			Name:  "channel",
-			Value: "config/calendar/",
+			Value: "config/suncalc/",
 			Usage: "The channel to publish to",
 		},
 	}

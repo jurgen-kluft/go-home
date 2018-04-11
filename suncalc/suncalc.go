@@ -1,8 +1,9 @@
-package suncalc
+package main
 
 // sun calculations are based on http://aa.quae.nl/en/reken/zonpositie.html formulas
 
 import (
+	"fmt"
 	"math"
 	"time"
 
@@ -154,7 +155,7 @@ type Cmoment struct {
 }
 
 // GetMoments returns the current day of Cmoment items (see comment on Cmoment)
-func (s *Instance) getMoments(date time.Time, lat float64, lng float64) (result []Cmoment) {
+func (s *instance) getMoments(date time.Time, lat float64, lng float64) (result []Cmoment) {
 	lw := rad * -lng
 	phi := rad * lat
 
@@ -386,26 +387,21 @@ func getMoonTimes(date time.Time, lat float64, lng float64, inUTC bool) (moonris
 	return
 }
 
-type Instance struct {
+type instance struct {
 	config *config.SuncalcConfig
 }
 
-func New(jsonstr string) (*Instance, error) {
-	s := &Instance{}
-
+func construct(jsonstr string) (*instance, error) {
+	var s *instance
 	config, err := config.SuncalcConfigFromJSON(jsonstr)
 	if err == nil {
+		s = &instance{}
 		s.config = config
 	}
 	return s, err
 }
 
-func (s *Instance) Process(client *pubsub.Context) {
-	if s.config == nil {
-		// We do not have received a configuration yet
-		return
-	}
-
+func (s *instance) process(client *pubsub.Context) {
 	now := time.Now()
 	now = time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, time.Local)
 
@@ -424,12 +420,13 @@ func (s *Instance) Process(client *pubsub.Context) {
 
 	jsonstr, err := sunstate.ToJSON()
 	if err == nil {
+		fmt.Println(jsonstr)
 		client.Publish("state/sensor/sun/", jsonstr)
 	}
 }
 
 func main() {
-	suncalc := &Instance{}
+	var suncalc *instance
 
 	logger := logpkg.New("suncalc")
 	logger.AddEntry("emitter")
@@ -449,9 +446,10 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/suncalc/" {
-						if suncalc.config == nil {
-							logger.LogInfo("suncalc", "received configuration")
-							suncalc.config, err = config.SuncalcConfigFromJSON(string(msg.Payload()))
+						logger.LogInfo("suncalc", "received configuration")
+						suncalc, err = construct(string(msg.Payload()))
+						if err != nil {
+							logger.LogError("suncalc", err.Error())
 						}
 					} else if topic == "client/disconnected/" {
 						logger.LogInfo("emitter", "disconnected")
@@ -459,7 +457,9 @@ func main() {
 					}
 
 				case <-time.After(time.Minute * 1):
-					suncalc.Process(client)
+					if suncalc != nil {
+						suncalc.process(client)
+					}
 				}
 			}
 		}

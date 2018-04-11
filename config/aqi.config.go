@@ -15,11 +15,11 @@ func (r *AqiConfig) ToJSON() ([]byte, error) {
 }
 
 type AqiConfig struct {
-	Token    string     `json:"token"`
-	City     string     `json:"city"`
-	URL      string     `json:"url"`
-	Interval int        `json:"interval"`
-	Levels   []AqiLevel `json:"levels"`
+	Token    CryptString `json:"token"`
+	City     string      `json:"city"`
+	URL      string      `json:"url"`
+	Interval int         `json:"interval"`
+	Levels   []AqiLevel  `json:"levels"`
 }
 
 type AqiLevel struct {

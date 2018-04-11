@@ -19,10 +19,9 @@ Setup the following on my Mac Mini:
 
 Still need to test the following processes:
 
-* shout
 * flux
 * hue
-* suncalc
+* shout
 * weather
 * wemo
 
@@ -33,5 +32,6 @@ The following have been tested:
 * calendar
 * presence
 * samsung.tv
+* suncalc
 * xiaomi
 * yee

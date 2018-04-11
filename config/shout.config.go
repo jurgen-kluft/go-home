@@ -5,7 +5,7 @@ import (
 )
 
 type ShoutConfig struct {
-	Key string `json:"key"`
+	Key CryptString `json:"key"`
 }
 
 func ShoutConfigFromJSON(jsonstr string) (*ShoutConfig, error) {

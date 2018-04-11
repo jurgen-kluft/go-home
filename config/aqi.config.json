@@ -1,5 +1,5 @@
 {
-  "token": "94aba5be0d555d3f44507dc8554b979bf3430a80",
+  "token": "GgDClphPWc9lJr168ixJ1zjrGP0cPaPFRurvBhMT8OpY7VcBTBL-SsN2PlBN8hh_TGzGwaWrqog=",
   "city": "@1437",
   "url": "https://api.waqi.info/feed/${CITY}/?token=${TOKEN}",
   "interval": 300,
