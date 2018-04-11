@@ -28,7 +28,7 @@ func New(config *config.WeatherConfig) *instance {
 	c := &instance{}
 	c.config = config
 	c.darkargs = map[string]string{}
-	c.darksky = darksky.NewClient(c.config.Key)
+	c.darksky = darksky.NewClient(c.config.Key.String)
 	c.darkargs = map[string]string{}
 	c.darkargs["units"] = "si"
 	c.latitude = c.config.Location.Latitude

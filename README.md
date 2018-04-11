@@ -6,46 +6,43 @@ Devices:
 - Philips HUE
 - Yeelight
 - Xiaomi Aqara
+- Wemo
+- Samsung TV
+- Sony Bravia TV
 
 Modules:
 - Netgear for attached devices
 - Flux type lighting computation
-- Bayesian probability on presence (convert from C# to Go)
+- Bayesian probability on presence
 - Weather attributes from Darksky
-- AQI
+- AQI, air quality index
 - Suncalc
 - Calendar (reading Apple icloud public calendar(s))
-- Slack
-- Wemo
+- Shout messaging using Slack
 
 Note:
   There is a HUE emulator (Java, NodeJS), this could be used to have Alexa control virtual devices like 
   the Xiaomi Gateway light, our DualWiredWallSwitch, Power Plug etc..
 
 Note:
-  Promotheus for tracking metrics and state of all processes.
-
-Note:
-  Log (info, warning, error) module that sends messages to a Log-Actor which in turn can save it on disk, write to console or whatnot.
+  InfluxDB for tracking metrics and usage of all processes.
 
 App Structure:
 - Since every process is just running it's own logic want we need is kindof pub/sub server where every process
   can register itself to specific events that it is interested in.
-  - Mist Server (Pub/Sub server where you can subscribe to tag(s))
   - Emitter.io Server (Pub/Sub server where you can subscribe to channel(s))
 
 - Following sub-processes:
-  - Log
   - Presence
   - Flux
   - AQI
   - Suncalc
-  - TimeOfDay
   - Weather (Darksky)
   - Calendar
-  - Slack
+  - Shout
   - Wemo
-  - Lighting (Hue and Yee)
+  - Hue
+  - Yee
   - Xiaomi aqara
   - Sony Bravia Remote
   - Samsung TV Remote

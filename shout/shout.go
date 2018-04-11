@@ -22,7 +22,7 @@ func New(jsonstr string) (*Instance, error) {
 	config, err := config.ShoutConfigFromJSON(jsonstr)
 	if err == nil {
 		shout.config = config
-		shout.client = slack.New(config.Key)
+		shout.client = slack.New(config.Key.String)
 	}
 	return shout, err
 }

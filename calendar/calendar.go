@@ -52,10 +52,10 @@ func New(jsonstr string, log *logpkg.Logger) (*Calendar, error) {
 	}
 
 	for _, cal := range c.config.Calendars {
-		if strings.HasPrefix(cal.URL, "http") {
-			c.cals = append(c.cals, icalendar.NewURLCalendar(cal.URL))
-		} else if strings.HasPrefix(cal.URL, "file") {
-			c.cals = append(c.cals, icalendar.NewFileCalendar(cal.URL))
+		if strings.HasPrefix(cal.URL.String, "http") {
+			c.cals = append(c.cals, icalendar.NewURLCalendar(cal.URL.String))
+		} else if strings.HasPrefix(cal.URL.String, "file") {
+			c.cals = append(c.cals, icalendar.NewFileCalendar(cal.URL.String))
 		} else {
 			log.LogError("calendar", fmt.Sprintf("Unknown calendar source '%s'", cal.URL))
 		}
