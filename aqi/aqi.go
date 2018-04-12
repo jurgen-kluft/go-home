@@ -9,24 +9,29 @@ import (
 
 	"github.com/jurgen-kluft/go-home/config"
 	logpkg "github.com/jurgen-kluft/go-home/logging"
+	"github.com/jurgen-kluft/go-home/metrics"
 	"github.com/jurgen-kluft/go-home/pubsub"
 )
 
 type instance struct {
-	config *config.AqiConfig
-	update time.Time
+	config  *config.AqiConfig
+	update  time.Time
+	metrics *metrics.Metrics
 }
 
 func construct() (c *instance) {
 	c = &instance{}
 	c.update = time.Now()
+	c.metrics, _ = metrics.New()
+
+	c.metrics.Register("aqi", map[string]string{"aqi": "quality"}, map[string]interface{}{"pm2.5": 50.0})
 	return c
 }
 
 func (c *instance) getResponse() (AQI float64, err error) {
 	url := c.config.URL
 	url = strings.Replace(url, "${CITY}", c.config.City, 1)
-	url = strings.Replace(url, "${TOKEN}", c.config.Token, 1)
+	url = strings.Replace(url, "${TOKEN}", c.config.Token.String, 1)
 	if strings.HasPrefix(url, "http") {
 		var resp *http.Response
 		//fmt.Printf("HTTP Get, '%s'\n", url)
@@ -81,6 +86,13 @@ func (c *instance) Poll() (aqiStateJSON string, err error) {
 	aqiStateJSON = ""
 	aqi, err := c.getResponse()
 	if err == nil {
+
+		// Metrics
+		c.metrics.Begin("aqi")
+		c.metrics.Set("aqi", "pm2.5", aqi)
+		c.metrics.Send("aqi")
+
+		// MQTT: As a sensor
 		sensor := config.NewSensorState("sensor.weather.aqi")
 		sensor.AddFloatAttr("aqi", aqi)
 		level := c.getAiqTagAndDescr(aqi)

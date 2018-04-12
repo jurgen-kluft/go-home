@@ -272,7 +272,7 @@ func main() {
 
 	for {
 		client := pubsub.New(config.EmitterSecrets["host"])
-		register := []string{"config/calendar/", "state/sensor/calendar/"}
+		register := []string{"config/calendar/"}
 		subscribe := []string{"config/calendar/"}
 		err := client.Connect("calendar", register, subscribe)
 		if err == nil {
@@ -290,6 +290,13 @@ func main() {
 						if err != nil {
 							calendar = nil
 							logger.LogError("calendar", err.Error())
+						} else {
+							// Register emitter channel for every sensor
+							for _, ss := range calendar.sensorStates {
+								if err = client.Register(fmt.Sprintf("state/sensor/%s/", ss.Name)); err != nil {
+									logger.LogError("emitter", err.Error())
+								}
+							}
 						}
 					} else if topic == "client/disconnected/" {
 						logger.LogInfo("emitter", "disconnected")
@@ -301,7 +308,6 @@ func main() {
 						calendar.Process(client)
 					}
 					break
-
 				}
 			}
 		}

@@ -103,32 +103,26 @@ func (ctx *Context) Connect(username string, register, subscribe []string) error
 }
 
 func (ctx *Context) Register(channel string) error {
-	_, exists := ctx.ChannelKeys[channel]
-	if !exists {
-		keygenRequest := emitter.NewKeyGenRequest()
-		keygenRequest.Key = config.EmitterSecrets["secret"]
-		keygenRequest.Channel = channel
-		keygenRequest.Type = "rwslp"
-		keygenToken := ctx.Client.GenerateKey(keygenRequest)
-		if !keygenToken.WaitTimeout(5 * time.Second) {
-			return fmt.Errorf("Emitter.GenerateKey did not succeed for channel %s due to a timeout", channel)
-		}
 
-		for {
-			select {
-			case request := <-ctx.KeyRequest:
-				if request {
-					return nil
-				}
-				return fmt.Errorf("Emitter.Register did not succeed for channel %s due to a fail", channel)
-
-			case <-time.After(5 * time.Second):
-				return fmt.Errorf("Emitter.Register did not succeed for channel %s due to a timeout", channel)
-
-			}
-		}
+	keygenRequest := emitter.NewKeyGenRequest()
+	keygenRequest.Key = config.EmitterSecrets["secret"]
+	keygenRequest.Channel = channel
+	keygenRequest.Type = "rwslp"
+	keygenToken := ctx.Client.GenerateKey(keygenRequest)
+	if !keygenToken.WaitTimeout(5 * time.Second) {
+		return fmt.Errorf("Emitter.GenerateKey did not succeed for channel %s due to a timeout", channel)
 	}
-	return nil
+
+	var err error
+	select {
+	case request := <-ctx.KeyRequest:
+		if !request {
+			err = fmt.Errorf("Emitter.Register did not succeed for channel %s due to a fail", channel)
+		}
+	case <-time.After(5 * time.Second):
+		err = fmt.Errorf("Emitter.Register did not succeed for channel %s due to a timeout", channel)
+	}
+	return err
 }
 
 func (ctx *Context) Subscribe(channel string) error {

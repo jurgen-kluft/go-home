@@ -7,3 +7,10 @@ var EmitterSecrets = map[string]string{
 	"license": "6YUwQVizikSOTIMfKtAvrcW5hwFBLFL2AAAAAAAAAAI",
 	"secret":  "BQQ1M7WIVGhWzjEilfV5ENHwYekj3T2z",
 }
+
+var InfluxSecrets = map[string]string{
+	"host":     "http://localhost:8086",
+	"username": "influxdb",
+	"password": "password",
+	"database": "gohome",
+}

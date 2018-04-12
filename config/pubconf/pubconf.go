@@ -23,12 +23,12 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "file",
-			Value: "weather.config.json",
+			Value: "flux.config.json",
 			Usage: "The JSON configuration file to read and publish",
 		},
 		cli.StringFlag{
 			Name:  "channel",
-			Value: "config/weather/",
+			Value: "config/flux/",
 			Usage: "The channel to publish to",
 		},
 	}

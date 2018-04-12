@@ -12,17 +12,16 @@ Setup the following on my Mac Mini:
 * Emitter.IO [DONE]
 * Influx DB
 * Influx Telegraf (configured as StatsD server)
-* Influx Grafana
+* OR Prometheus
+* Grafana
 
 
 ## Test
 
 Still need to test the following processes:
 
-* flux
 * hue
 * shout
-* weather
 * wemo
 
 The following have been tested:
@@ -30,8 +29,10 @@ The following have been tested:
 * aqi
 * bravia.tv
 * calendar
+* flux
 * presence
 * samsung.tv
 * suncalc
+* weather
 * xiaomi
 * yee
