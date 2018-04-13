@@ -6,6 +6,7 @@ import (
 
 	"github.com/jurgen-kluft/go-home/config"
 	logpkg "github.com/jurgen-kluft/go-home/logging"
+	"github.com/jurgen-kluft/go-home/metrics"
 	"github.com/jurgen-kluft/go-home/pubsub"
 )
 
@@ -28,14 +29,23 @@ func computeTimeSpanX(start, end, t time.Time) float64 {
 	return x
 }
 
-type instance struct {
+type Flux struct {
 	config  *config.FluxConfig
+	metrics *metrics.Metrics
 	suncalc *config.SensorState
 	season  *config.Season
 	weather *config.SensorState
 }
 
-func (s *instance) updateSeasonFromName(season string) {
+func New() *Flux {
+	flux := &Flux{}
+	flux.metrics, _ = metrics.New()
+	flux.metrics.Register("hue", map[string]string{"CT": "Color Temperature", "BRI": "Brightness"}, map[string]interface{}{"CT": 200.0, "BRI": 200.0})
+	flux.metrics.Register("yee", map[string]string{"CT": "Color Temperature", "BRI": "Brightness"}, map[string]interface{}{"CT": 200.0, "BRI": 200.0})
+	return flux
+}
+
+func (s *Flux) updateSeasonFromName(season string) {
 	for _, e := range s.config.Seasons {
 		if e.Name == season {
 			s.season = &config.Season{}
@@ -44,14 +54,14 @@ func (s *instance) updateSeasonFromName(season string) {
 	}
 }
 
-func (s *instance) updateLighttimes() {
+func (s *Flux) updateLighttimes() {
 }
 
 // Process will update 'string'states and 'float'states
 // States are both input and output, for example as input
 // there are Season/Weather states like 'Season':'Winter'
 // and 'Clouds':0.5
-func Process(f *instance, client *pubsub.Context) {
+func (f *Flux) Process(client *pubsub.Context) {
 	if f.config == nil || f.suncalc == nil || f.season == nil {
 		return
 	}
@@ -155,11 +165,17 @@ func Process(f *instance, client *pubsub.Context) {
 	for _, ltype := range f.config.Lighttype {
 		sensor := config.NewSensorState("light." + ltype.Name)
 
+		f.metrics.Begin(ltype.Name)
+
 		lct := ltype.CT.LinearInterpolated(CT)
 		sensor.AddFloatAttr("CT", lct)
+		f.metrics.Set(ltype.Name, "CT", lct)
 
 		lbri := ltype.BRI.LinearInterpolated(BRI)
 		sensor.AddFloatAttr("BRI", lbri)
+		f.metrics.Set(ltype.Name, "BRI", lbri)
+
+		f.metrics.Send(ltype.Name)
 
 		jsonstr, err := sensor.ToJSON()
 		if err == nil {
@@ -179,7 +195,7 @@ func publishSensor(channel string, sensorjson string, client *pubsub.Context) {
 }
 
 func main() {
-	flux := &instance{}
+	flux := New()
 
 	logger := logpkg.New("flux")
 	logger.AddEntry("emitter")
@@ -233,7 +249,7 @@ func main() {
 						connected = false
 					}
 				case <-time.After(time.Second * 10):
-					Process(flux, client)
+					flux.Process(client)
 				}
 			}
 		}
