@@ -1,7 +1,6 @@
-package shout
+package main
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
@@ -28,21 +27,16 @@ func New(jsonstr string) (*Instance, error) {
 }
 
 // postMessage posts a message to a channel
-func (s *Instance) postMessage(jsonmsg string) {
+func (s *Instance) postMessage(jsonmsg string) (err error) {
 	m, err := config.ShoutMsgFromJSON(jsonmsg)
 	if err == nil {
 		params := slack.PostMessageParameters{}
-		params.Username = m.Username
-		attachment := slack.Attachment{
-			Pretext: m.Pretext,
-			Text:    m.Prebody,
-		}
-		params.Attachments = []slack.Attachment{attachment}
-		_, timestamp, err := s.client.PostMessage(m.Channel, m.Message, params)
-		if err != nil {
-			fmt.Printf("Error '%s' at %s\n", err, timestamp)
-		}
+		params.Username = "g0-h0m3"
+		params.User = "g0-h0m3"
+		params.AsUser = true
+		_, _, err = s.client.PostMessage(m.Channel, m.Message, params)
 	}
+	return err
 }
 
 func main() {
@@ -70,6 +64,9 @@ func main() {
 						if topic == "config/shout/" {
 							logger.LogInfo("shout", "received configuration")
 							shout, err = New(string(msg.Payload()))
+							if err != nil {
+								logger.LogError("shout", err.Error())
+							}
 						} else if topic == "client/disconnected/" {
 							logger.LogInfo("emitter", "disconnected")
 							connected = false
@@ -77,7 +74,10 @@ func main() {
 							// Is this a message to send over slack ?
 							if shout != nil {
 								logger.LogInfo("shout", "message")
-								shout.postMessage(string(msg.Payload()))
+								err = shout.postMessage(string(msg.Payload()))
+								if err != nil {
+									logger.LogError("shout", err.Error())
+								}
 							}
 						}
 						break

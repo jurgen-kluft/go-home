@@ -72,8 +72,9 @@ func main() {
 			if err != nil {
 				panic("Error: " + err.Error())
 			}
+
 			// Wait for 10 seconds before retrying
-			time.Sleep(10 * time.Second)
+			time.Sleep(5 * time.Second)
 		}
 
 		return nil

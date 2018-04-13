@@ -1,8 +1,7 @@
 {
     "name": "Philips HUE",
-	"host": "10.0.0.77",
-	"port": 80,
-	"key": "*********",
+	"host": "10.0.0.72",
+	"key": "4bWTg3R8JKwNDhMwZ8d6G4O9symsSi4iASzIJNgQ",
 	"lights": 
 	[
 		{

@@ -20,9 +20,8 @@ Setup the following on my Mac Mini:
 
 Still need to test the following processes:
 
-* hue
-* shout
-* wemo
+* hue   [Basics are tested, can connect to bridge, can retrieve list of lights]
+* wemo  [READY]
 
 The following have been tested:
 
@@ -32,6 +31,7 @@ The following have been tested:
 * flux
 * presence
 * samsung.tv
+* shout 
 * suncalc
 * weather
 * xiaomi

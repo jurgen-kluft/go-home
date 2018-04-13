@@ -16,15 +16,22 @@ type instance struct {
 	key     string
 	devices map[string]*Switch
 	config  *config.WemoConfig
+	log     *logpkg.Logger
 }
 
-func main() {
+func New() *instance {
 	thewemo := &instance{}
 	thewemo.devices = map[string]*Switch{}
 
-	logger := logpkg.New("wemo")
-	logger.AddEntry("emitter")
-	logger.AddEntry("wemo")
+	thewemo.log = logpkg.New("wemo")
+	thewemo.log.AddEntry("emitter")
+	thewemo.log.AddEntry("wemo")
+
+	return thewemo
+}
+
+func main() {
+	thewemo := New()
 
 	for {
 		client := pubsub.New(config.EmitterSecrets["host"])
@@ -32,7 +39,7 @@ func main() {
 		subscribe := []string{"config/wemo/", "sensor/device/wemo/"}
 		err := client.Connect("wemo", register, subscribe)
 		if err == nil {
-			logger.LogInfo("emitter", "connected")
+			thewemo.log.LogInfo("emitter", "connected")
 
 			connected := true
 			for connected {
@@ -40,7 +47,7 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/wemo/" {
-						logger.LogInfo("wemo", "received configuration")
+						thewemo.log.LogInfo("wemo", "received configuration")
 						thewemo.config, err = config.WemoConfigFromJSON(string(msg.Payload()))
 						thewemo.devices = map[string]*Switch{}
 						for _, d := range thewemo.config.Devices {
@@ -49,7 +56,7 @@ func main() {
 					} else if topic == "sensor/device/wemo/" {
 						sensor, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
-							logger.LogInfo("wemo", "received configuration")
+							thewemo.log.LogInfo("wemo", "received configuration")
 							devicename := sensor.GetValueAttr("name", "")
 							if devicename != "" {
 								device, exists := thewemo.devices[devicename]
@@ -65,10 +72,10 @@ func main() {
 								}
 							}
 						} else {
-							logger.LogError("wemo", "received bad configuration")
+							thewemo.log.LogError("wemo", "received bad configuration")
 						}
 					} else if topic == "client/disconnected/" {
-						logger.LogInfo("emitter", "disconnected")
+						thewemo.log.LogInfo("emitter", "disconnected")
 						connected = false
 					}
 
@@ -79,7 +86,7 @@ func main() {
 		}
 
 		if err != nil {
-			logger.LogError("wemo", err.Error())
+			thewemo.log.LogError("wemo", err.Error())
 		}
 
 		time.Sleep(5 * time.Second)

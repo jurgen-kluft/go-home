@@ -10,69 +10,87 @@ import (
 	"github.com/stefanwichmann/go.hue"
 )
 
-type instance struct {
+// HueLighting holds all necessary information to control the HUE bridge and lights
+type HueLighting struct {
 	key    string
 	config *config.HueConfig
+	bridge *hue.Bridge
 	lights map[string]*hue.Light
+	log    *logpkg.Logger
 }
 
-func main() {
-	huelighting := &instance{}
+// New creates a new instance of huelighting instance
+func New() *HueLighting {
+	huelighting := &HueLighting{}
+	huelighting.lights = map[string]*hue.Light{}
+	return huelighting
+}
 
-	bridgeIP := "10.0.0.72"
-	bridgeKey := "4bWTg3R8JKwNDhMwZ8d6G4O9symsSi4iASzIJNgQ"
+func (h *HueLighting) initializeBridgeConnection() (err error) {
+	bridgeIP := h.config.Host
+	bridgeKey := h.config.Key
 
-	logger := logpkg.New("hue")
-	logger.AddEntry("emitter")
-	logger.AddEntry("hue")
-
-	for {
-		untilBridgeFound := false
-		for untilBridgeFound {
-			bridges, _ := hue.DiscoverBridges(false)
-			if len(bridges) > 0 {
+	if bridgeIP == "" || bridgeKey == "" {
+		bridgeFound := false
+		for !bridgeFound {
+			bridges, err := hue.DiscoverBridges(false)
+			if err == nil && len(bridges) > 0 {
 				bridge := bridges[0] // Use the first bridge found
 
-				waitUntilHueBridgeKeyPress := true
-				for waitUntilHueBridgeKeyPress {
+				hueBridgeKeyPressRetry := 60
+				for hueBridgeKeyPressRetry > 0 {
 					err := bridge.CreateUser("go-home")
 					if err != nil {
-						logger.LogError("hue", fmt.Sprintf("HUE bridge connection failed: %v", err))
+						h.log.LogError("hue", fmt.Sprintf("HUE bridge connection failed: %v", err))
 						time.Sleep(5 * time.Second)
+						hueBridgeKeyPressRetry--
 					} else {
 						bridgeIP = bridge.IpAddr
 						bridgeKey = bridge.Username
-						waitUntilHueBridgeKeyPress = false
+						bridgeFound = true
 						break
 					}
 				}
-				logger.LogInfo("hue", fmt.Sprintf("HUE bridge connection succeeded => %+v", bridge))
-				untilBridgeFound = false
-			} else {
-				logger.LogInfo("hue", "HUE bridge scanning ... (retry every 5 seconds)")
+
+				if err == nil && bridgeFound {
+					h.log.LogInfo("hue", fmt.Sprintf("HUE bridge connection succeeded => %+v", bridge))
+				}
+			}
+
+			if err != nil {
+				h.log.LogInfo("hue", "HUE bridge scanning ... (retry every 5 seconds)")
 				time.Sleep(5 * time.Second)
 			}
 		}
-
-		bridge := hue.NewBridge(bridgeIP, bridgeKey)
-		lights, err := bridge.GetAllLights()
-		if err == nil {
-			for _, light := range lights {
-				huelighting.lights[light.Name] = light
-			}
-			break
-		}
-
-		logger.LogError("hue", fmt.Sprintf("HUE bridge does not have any lights: %v", err))
 	}
+
+	h.bridge = hue.NewBridge(bridgeIP, bridgeKey)
+
+	var lights []*hue.Light
+	lights, err = h.bridge.GetAllLights()
+	if err == nil {
+		for _, light := range lights {
+			h.lights[light.Name] = light
+		}
+	}
+
+	return err
+}
+
+func main() {
+	huelighting := New()
+
+	huelighting.log = logpkg.New("hue")
+	huelighting.log.AddEntry("emitter")
+	huelighting.log.AddEntry("hue")
 
 	for {
 		client := pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/hue/", "state/sensor/hue/", "state/light/hue/"}
-		subscribe := []string{"config/hue/", "state/sensor/hue", "state/light/hue/"}
+		subscribe := []string{"config/hue/", "state/light/hue/", "sensor/light/hue/"}
 		err := client.Connect("hue", register, subscribe)
 		if err == nil {
-			fmt.Println("Connected to emitter")
+			huelighting.log.LogInfo("emitter", "connected")
 
 			connected := true
 			for connected {
@@ -80,28 +98,43 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/hue/" {
-						huelighting.config, err = config.HueConfigFromJSON(string(msg.Payload()))
+						config, err := config.HueConfigFromJSON(string(msg.Payload()))
+						if err == nil {
+							huelighting.log.LogInfo("hue", "received configuration")
+							huelighting.config = config
+							err = huelighting.initializeBridgeConnection()
+							if err != nil {
+								huelighting.log.LogError("hue", err.Error())
+							}
+						} else {
+							huelighting.log.LogError("hue", err.Error())
+						}
 					} else if topic == "sensor/light/hue/" {
 						//huesensor, _ := config.SensorStateFromJSON(string(msg.Payload()))
 					} else if topic == "client/disconnected/" {
+						huelighting.log.LogInfo("emitter", "disconnected")
 						connected = false
 					} else if topic == "state/light/hue/" {
-						huesensor, err := config.SensorStateFromJSON(string(msg.Payload()))
-						if err == nil {
-							logger.LogInfo("hue", "received state")
-						}
-						lightname := huesensor.GetValueAttr("name", "")
-						if lightname != "" {
-							light, exists := huelighting.lights[lightname]
-							if exists {
-								huesensor.ExecValueAttr("power", func(power string) {
-									if power == "on" {
-										light.On()
-									} else if power == "off" {
-										light.Off()
-									}
-								})
+						if huelighting.config != nil {
+							huesensor, err := config.SensorStateFromJSON(string(msg.Payload()))
+							if err == nil {
+								huelighting.log.LogInfo("hue", "received state")
 							}
+							lightname := huesensor.GetValueAttr("name", "")
+							if lightname != "" {
+								light, exists := huelighting.lights[lightname]
+								if exists {
+									huesensor.ExecValueAttr("power", func(power string) {
+										if power == "on" {
+											light.On()
+										} else if power == "off" {
+											light.Off()
+										}
+									})
+								}
+							}
+						} else {
+							huelighting.log.LogError("hue", fmt.Sprintf("error, receiving message on channel %s but we haven't received a configuration", topic))
 						}
 					}
 
@@ -112,9 +145,9 @@ func main() {
 		}
 
 		if err != nil {
-			fmt.Println("Error: " + err.Error())
-			time.Sleep(5 * time.Second)
+			huelighting.log.LogError("hue", err.Error())
 		}
 
+		time.Sleep(5 * time.Second)
 	}
 }

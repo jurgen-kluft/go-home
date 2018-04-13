@@ -7,7 +7,6 @@ import (
 type HueConfig struct {
 	Name   string `json:"name"`
 	Host   string `json:"host"`
-	Port   int    `json:"port"`
 	Key    string `json:"key"`
 	Lights []struct {
 		Name string `json:"name"`
