@@ -17,11 +17,13 @@ func (r *CaqiResponse) marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
+// CaqiResponse is the response we get from the HTTP request
 type CaqiResponse struct {
 	Status string `json:"status"`
 	Data   Data   `json:"data"`
 }
 
+// Data is the actual interesting AQI data
 type Data struct {
 	Aqi          int64         `json:"aqi"`
 	Idx          int64         `json:"idx"`
@@ -32,17 +34,20 @@ type Data struct {
 	Time         Time          `json:"time"`
 }
 
+// Attribution shows where the AQI data is actually coming from
 type Attribution struct {
 	Name string `json:"name"`
 	URL  string `json:"url"`
 }
 
+// The City we have requested the AQI of
 type City struct {
 	Name string    `json:"name"`
 	URL  string    `json:"url"`
 	Geo  []float64 `json:"geo"`
 }
 
+// Iaqi is the detailed AQI information
 type Iaqi struct {
 	Co   Var `json:"co"`
 	D    Var `json:"d"`
@@ -58,10 +63,12 @@ type Iaqi struct {
 	Wd   Var `json:"wd"`
 }
 
+// Var is a float64 value
 type Var struct {
 	V float64 `json:"v"`
 }
 
+// Time holds the time information of the AQI data
 type Time struct {
 	S  string `json:"s"`
 	Tz string `json:"tz"`

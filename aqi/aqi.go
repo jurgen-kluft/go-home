@@ -34,11 +34,9 @@ func (c *instance) getResponse() (AQI float64, err error) {
 	url = strings.Replace(url, "${TOKEN}", c.config.Token.String, 1)
 	if strings.HasPrefix(url, "http") {
 		var resp *http.Response
-		//fmt.Printf("HTTP Get, '%s'\n", url)
 		resp, err = http.Get(url)
 		if err != nil {
-			AQI = 99.0
-			resp.Body.Close()
+			AQI = 80.0
 		} else {
 			var body []byte
 			body, err = ioutil.ReadAll(resp.Body)
@@ -48,6 +46,7 @@ func (c *instance) getResponse() (AQI float64, err error) {
 			if err != nil {
 				fmt.Print(string(body))
 			}
+			resp.Body.Close()
 		}
 	} else if strings.HasPrefix(url, "print") {
 		fmt.Printf("HTTP Get, '%s'\n", url)

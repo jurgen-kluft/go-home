@@ -7,18 +7,18 @@ import (
 
 func TestCorrectJsonResponse(t *testing.T) {
 	buf := new(bytes.Buffer)
-	buf.WriteString(testCorrectJsonResponse)
+	buf.WriteString(testCorrectJSONResponse)
 
 	cr, err := unmarshalCaqiResponse(buf.Bytes())
 	if err != nil {
-		t.Error("Cannot unmarshall correct json text (%s)", err)
+		t.Errorf("Cannot unmarshall correct json text (%s)", err.Error())
 	}
 	if cr.Data.Aqi != 169 {
 		t.Error("Json unmarshall results in wrong Aqi value")
 	}
 }
 
-var testCorrectJsonResponse = `
+var testCorrectJSONResponse = `
 {
 	"status":"ok",
 	"data": {
