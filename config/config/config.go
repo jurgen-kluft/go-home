@@ -12,41 +12,41 @@ import (
 )
 
 // Configs holds all the config objects that we can have
-type Context struct {
+type context struct {
 	log     *logpkg.Logger
 	pubsub  *pubsub.Context
-	configs *Configs
-	watcher *ConfigFileWatcher
+	configs *configs
+	watcher *configFileWatcher
 }
 
-func NewContext() *Context {
-	ctx := &Context{}
+func newContext() *context {
+	ctx := &context{}
 	ctx.log = logpkg.New("configs")
 	ctx.log.AddEntry("emitter")
 	ctx.log.AddEntry("configs")
 	ctx.pubsub = pubsub.New(config.EmitterSecrets["host"])
-	ctx.watcher = NewConfigFileWatcher()
+	ctx.watcher = newConfigFileWatcher()
 	return ctx
 }
 
-type Configs struct {
-	Configurations map[string]*Configuration `json:"configurations"`
+type configs struct {
+	Configurations map[string]*configuration `json:"configurations"`
 }
 
-type Configuration struct {
+type configuration struct {
 	Name           string `json:"name"`
 	ConfigFilename string `json:"filename"`
 	ChannelName    string `json:"channel"`
 	ReflectType    reflect.Type
 }
 
-func ConfigFromJSON(jsonstr string) (*Configs, error) {
-	c := &Configs{}
+func configFromJSON(jsonstr string) (*configs, error) {
+	c := &configs{}
 	err := json.Unmarshal([]byte(jsonstr), c)
 	return c, err
 }
 
-func (c *Context) InitializeReflectTypes() {
+func (c *context) initializeReflectTypes() {
 	for name, configuration := range c.configs.Configurations {
 		switch name {
 		case "aqi":
@@ -81,24 +81,46 @@ func (c *Context) InitializeReflectTypes() {
 	}
 }
 
-func (c *Context) InitializeConfigFileWatcher() {
+func (c *context) initializeConfigFileWatcher() {
 	for name, configuration := range c.configs.Configurations {
-		c.watcher.WatchConfigFile(configuration.ConfigFilename, name)
+		c.watcher.watchConfigFile(configuration.ConfigFilename, name)
 	}
 }
 
-func (c *Context) UpdateConfigFileWatcher() {
-	events := c.watcher.Update()
+func (c *context) updateConfigFileWatcher() {
+	events := c.watcher.update()
 	for _, event := range events {
 		_, exists := c.configs.Configurations[event.User]
 		if exists {
-			c.SendConfigOnChannel(event.User)
+			c.sendConfigOnChannel(event.User)
 		}
 	}
 }
 
+func (c *context) checkAllConfigurationFiles() (err error) {
+	for _, configuration := range c.configs.Configurations {
+		var data []byte
+		data, err = ioutil.ReadFile(configuration.ConfigFilename)
+		if err != nil {
+			c.log.LogError("config", err.Error())
+		}
+
+		v := reflect.New(configuration.ReflectType).Elem().Interface().(config.Config)
+		v, err = v.FromJSON(string(data))
+		if err == nil {
+			c.log.LogError("config", err.Error())
+		}
+
+		_, err := v.ToJSON()
+		if err != nil {
+			c.log.LogError("config", err.Error())
+		}
+	}
+	return
+}
+
 // SendConfigOnChannel will load the JSON based config file and publish it onto pubsub
-func (c *Context) SendConfigOnChannel(configtype string) (err error) {
+func (c *context) sendConfigOnChannel(configtype string) (err error) {
 	configuration, exists := c.configs.Configurations[configtype]
 	if exists {
 		var data []byte
@@ -119,7 +141,7 @@ func (c *Context) SendConfigOnChannel(configtype string) (err error) {
 }
 
 func main() {
-	ctx := &Context{}
+	ctx := &context{}
 
 	for {
 		connected := true
@@ -138,12 +160,13 @@ func main() {
 							ctx.log.LogInfo("emitter", "disconnected")
 							connected = false
 						} else if topic == "config/config/" {
-							config, err := ConfigFromJSON(string(msg.Payload()))
+							config, err := configFromJSON(string(msg.Payload()))
 							if err == nil {
 								ctx.log.LogInfo("configs", "received configuration")
 								ctx.configs = config
-								ctx.InitializeReflectTypes()
-								ctx.InitializeConfigFileWatcher()
+								ctx.checkAllConfigurationFiles()
+								ctx.initializeReflectTypes()
+								ctx.initializeConfigFileWatcher()
 							} else {
 								ctx.log.LogError("configs", err.Error())
 							}
@@ -152,7 +175,7 @@ func main() {
 					case <-time.After(time.Second * 10):
 
 						// Any config files updated ?
-						ctx.UpdateConfigFileWatcher()
+						ctx.updateConfigFileWatcher()
 						break
 					}
 				}

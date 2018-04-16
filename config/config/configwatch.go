@@ -19,50 +19,49 @@ const (
 	INVALID         // Any type of error not represented above.
 )
 
-type ConfigFileWatcher struct {
-	ConfigFiles map[string]*ConfigFileWatchItem
+type configFileWatcher struct {
+	configFiles map[string]*configFileWatchItem
 }
 
-func NewConfigFileWatcher() *ConfigFileWatcher {
-	watcher := &ConfigFileWatcher{}
-	watcher.ConfigFiles = map[string]*ConfigFileWatchItem{}
+func newConfigFileWatcher() *configFileWatcher {
+	watcher := &configFileWatcher{}
+	watcher.configFiles = map[string]*configFileWatchItem{}
 	return watcher
 }
 
-func (c *ConfigFileWatcher) WatchConfigFile(path string, user string) {
-	wi := new(ConfigFileWatchItem)
-	wi.Path = path
-	wi.User = user
-	wi.LastEvent = NONE
+func (c *configFileWatcher) watchConfigFile(path string, user string) {
+	wi := new(configFileWatchItem)
+	wi.path = path
+	wi.user = user
+	wi.lastEvent = NONE
 
 	fi, err := os.Stat(path)
 	if err == nil {
-		wi.StatInfo = fi
+		wi.statInfo = fi
 	} else if os.IsNotExist(err) {
-		wi.LastEvent = NOEXIST
+		wi.lastEvent = NOEXIST
 	} else if os.IsPermission(err) {
-		wi.LastEvent = NOPERM
+		wi.lastEvent = NOPERM
 	} else {
-		wi.LastEvent = INVALID
+		wi.lastEvent = INVALID
 	}
 
-	c.ConfigFiles[path] = wi
+	c.configFiles[path] = wi
 
 	return
 }
 
-type ConfigFileEvent struct {
+type configFileEvent struct {
 	Path  string
 	User  string
 	Event int
 }
 
-func (w *ConfigFileWatcher) Update() []ConfigFileEvent {
-	events := []ConfigFileEvent{}
-
-	for fname, fitem := range w.ConfigFiles {
-		if fitem.Update() {
-			event := ConfigFileEvent{Path: fname, User: fitem.User, Event: fitem.LastEvent}
+func (c *configFileWatcher) update() []configFileEvent {
+	events := []configFileEvent{}
+	for fname, fitem := range c.configFiles {
+		if fitem.update() {
+			event := configFileEvent{Path: fname, User: fitem.user, Event: fitem.lastEvent}
 			events = append(events, event)
 		}
 	}
@@ -70,55 +69,54 @@ func (w *ConfigFileWatcher) Update() []ConfigFileEvent {
 	return events
 }
 
-type ConfigFileWatchItem struct {
-	Path      string
-	User      string
-	StatInfo  os.FileInfo
-	LastEvent int
+type configFileWatchItem struct {
+	path      string
+	user      string
+	statInfo  os.FileInfo
+	lastEvent int
 }
 
-func (wi *ConfigFileWatchItem) Update() bool {
-	fi, err := os.Stat(wi.Path)
+func (wi *configFileWatchItem) update() bool {
+	fi, err := os.Stat(wi.path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			if wi.LastEvent == NOEXIST {
+			if wi.lastEvent == NOEXIST {
 				return false
-			} else if wi.LastEvent == DELETED {
-				wi.LastEvent = NOEXIST
+			} else if wi.lastEvent == DELETED {
+				wi.lastEvent = NOEXIST
 				return false
 			} else {
-				wi.LastEvent = DELETED
+				wi.lastEvent = DELETED
 				return true
 			}
 		} else if os.IsPermission(err) {
-			if wi.LastEvent == NOPERM {
+			if wi.lastEvent == NOPERM {
 				return false
-			} else {
-				wi.LastEvent = NOPERM
-				return true
 			}
+			wi.lastEvent = NOPERM
+			return true
 		} else {
-			wi.LastEvent = INVALID
+			wi.lastEvent = INVALID
 			return false
 		}
 	}
 
-	if wi.LastEvent == NOEXIST {
-		wi.LastEvent = CREATED
-		wi.StatInfo = fi
+	if wi.lastEvent == NOEXIST {
+		wi.lastEvent = CREATED
+		wi.statInfo = fi
 		return true
-	} else if fi.ModTime().After(wi.StatInfo.ModTime()) {
-		wi.StatInfo = fi
-		switch wi.LastEvent {
+	} else if fi.ModTime().After(wi.statInfo.ModTime()) {
+		wi.statInfo = fi
+		switch wi.lastEvent {
 		case NONE, CREATED, NOPERM, INVALID:
-			wi.LastEvent = MODIFIED
+			wi.lastEvent = MODIFIED
 		case DELETED, NOEXIST:
-			wi.LastEvent = CREATED
+			wi.lastEvent = CREATED
 		}
 		return true
-	} else if fi.Mode() != wi.StatInfo.Mode() {
-		wi.LastEvent = PERM
-		wi.StatInfo = fi
+	} else if fi.Mode() != wi.statInfo.Mode() {
+		wi.lastEvent = PERM
+		wi.statInfo = fi
 		return true
 	}
 	return false
