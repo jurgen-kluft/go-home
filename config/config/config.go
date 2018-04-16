@@ -16,6 +16,17 @@ type Context struct {
 	log     *logpkg.Logger
 	pubsub  *pubsub.Context
 	configs *Configs
+	watcher *ConfigFileWatcher
+}
+
+func NewContext() *Context {
+	ctx := &Context{}
+	ctx.log = logpkg.New("configs")
+	ctx.log.AddEntry("emitter")
+	ctx.log.AddEntry("configs")
+	ctx.pubsub = pubsub.New(config.EmitterSecrets["host"])
+	ctx.watcher = NewConfigFileWatcher()
+	return ctx
 }
 
 type Configs struct {
@@ -70,8 +81,24 @@ func (c *Context) InitializeReflectTypes() {
 	}
 }
 
+func (c *Context) InitializeConfigFileWatcher() {
+	for name, configuration := range c.configs.Configurations {
+		c.watcher.WatchConfigFile(configuration.ConfigFilename, name)
+	}
+}
+
+func (c *Context) UpdateConfigFileWatcher() {
+	events := c.watcher.Update()
+	for _, event := range events {
+		_, exists := c.configs.Configurations[event.User]
+		if exists {
+			c.SendConfigOnChannel(event.User)
+		}
+	}
+}
+
 // SendConfigOnChannel will load the JSON based config file and publish it onto pubsub
-func (c *Context) SendConfigOnChannel(configtype string, client *pubsub.Context) (err error) {
+func (c *Context) SendConfigOnChannel(configtype string) (err error) {
 	configuration, exists := c.configs.Configurations[configtype]
 	if exists {
 		var data []byte
@@ -84,7 +111,7 @@ func (c *Context) SendConfigOnChannel(configtype string, client *pubsub.Context)
 		if err == nil {
 			jsonstr, err := v.ToJSON()
 			if err == nil {
-				err = client.Publish(configuration.ChannelName, jsonstr)
+				err = c.pubsub.Publish(configuration.ChannelName, jsonstr)
 			}
 		}
 	}
@@ -94,23 +121,18 @@ func (c *Context) SendConfigOnChannel(configtype string, client *pubsub.Context)
 func main() {
 	ctx := &Context{}
 
-	ctx.log = logpkg.New("configs")
-	ctx.log.AddEntry("emitter")
-	ctx.log.AddEntry("configs")
-
 	for {
 		connected := true
 		for connected {
-			client := pubsub.New(config.EmitterSecrets["host"])
 			register := []string{"config/config/"}
 			subscribe := []string{"config/config/"}
-			err := client.Connect("configs", register, subscribe)
+			err := ctx.pubsub.Connect("configs", register, subscribe)
 			if err == nil {
 				ctx.log.LogInfo("emitter", "connected")
 
 				for connected {
 					select {
-					case msg := <-client.InMsgs:
+					case msg := <-ctx.pubsub.InMsgs:
 						topic := msg.Topic()
 						if topic == "client/disconnected/" {
 							ctx.log.LogInfo("emitter", "disconnected")
@@ -121,6 +143,7 @@ func main() {
 								ctx.log.LogInfo("configs", "received configuration")
 								ctx.configs = config
 								ctx.InitializeReflectTypes()
+								ctx.InitializeConfigFileWatcher()
 							} else {
 								ctx.log.LogError("configs", err.Error())
 							}
@@ -129,7 +152,7 @@ func main() {
 					case <-time.After(time.Second * 10):
 
 						// Any config files updated ?
-
+						ctx.UpdateConfigFileWatcher()
 						break
 					}
 				}

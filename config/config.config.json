@@ -1,0 +1,75 @@
+{
+ 
+  "configurations": [
+    {
+      "name": "aqi",
+      "filename": "aqi.config.json",
+      "channel": "config/aqi/"
+    },
+    {
+      "name": "automation",
+      "filename": "automation.config.json",
+      "channel": "config/automation/"
+    },
+    {
+      "name": "bravia.tv",
+      "filename": "bravia.tv.config.json",
+      "channel": "config/bravia.tv/"
+    },
+    {
+      "name": "calendar",
+      "filename": "calendar.config.json",
+      "channel": "config/calendar/"
+    },
+    {
+      "name": "flux",
+      "filename": "flux.config.json",
+      "channel": "config/flux/"
+    },
+    {
+      "name": "hue",
+      "filename": "hue.config.json",
+      "channel": "config/hue/"
+    },
+    {
+      "name": "presence",
+      "filename": "presence.config.json",
+      "channel": "config/presence/"
+    },
+    {
+      "name": "samsung.tv",
+      "filename": "samsung.tv.config.json",
+      "channel": "config/samsung.tv/"
+    },
+    {
+      "name": "shout",
+      "filename": "shout.config.json",
+      "channel": "config/shout/"
+    },
+    {
+      "name": "suncalc",
+      "filename": "suncalc.config.json",
+      "channel": "config/suncalc/"
+    },
+    {
+      "name": "weather",
+      "filename": "weather.config.json",
+      "channel": "config/weather/"
+    },
+    {
+      "name": "wemo",
+      "filename": "wemo.config.json",
+      "channel": "config/wemo/"
+    },
+    {
+      "name": "xiaomi",
+      "filename": "xiaomi.config.json",
+      "channel": "config/xiaomi/"
+    },
+    {
+      "name": "yee",
+      "filename": "yee.config.json",
+      "channel": "config/yee/"
+   }
+  ]
+}

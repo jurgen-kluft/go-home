@@ -2,27 +2,19 @@
 
 Automated home using Go (krazygo.org, Go only OS for Raspberry PI)
 
-Devices:
+Devices/Hardware:
+- Netgear R6900
 - Philips HUE
-- Yeelight
+- Xiaomi Yee
 - Xiaomi Aqara
-- Wemo
+- Wemo switch
 - Samsung TV
 - Sony Bravia TV
 
-Modules:
-- Netgear for attached devices
-- Flux type lighting computation
-- Bayesian probability on presence
-- Weather attributes from Darksky
-- AQI, air quality index
-- Suncalc
-- Calendar (reading Apple icloud public calendar(s))
-- Shout messaging using Slack
-
 Note:
-  There is a HUE emulator (Java, NodeJS), this could be used to have Alexa control virtual devices like 
+  There is a HUE emulator in Go, this could be used to have Alexa control virtual devices like 
   the Xiaomi Gateway light, our DualWiredWallSwitch, Power Plug etc..
+  Github: https://github.com/pborges/huemulator
 
 Note:
   InfluxDB for tracking metrics and usage of all processes.
@@ -33,17 +25,17 @@ App Structure:
   - Emitter.io Server (Pub/Sub server where you can subscribe to channel(s))
 
 - Following sub-processes:
-  - Presence
-  - Flux
-  - AQI
-  - Suncalc
-  - Weather (Darksky)
-  - Calendar
-  - Shout
-  - Wemo
-  - Hue
-  - Yee
-  - Xiaomi aqara
-  - Sony Bravia Remote
-  - Samsung TV Remote
+  - Presence            (Connects to Netgear Router to obtain list of devices present on the network)
+  - Flux                (Calculates Color-Temperature and Brightness per day for Hue and Yee lights)
+  - AQI                 (Air Quality Index)
+  - Suncalc             (Computes sun-rise, sun-set etc..)
+  - Weather             (Darksky)
+  - Calendar            ()
+  - Shout               (Has Slack as the back-end to send messages)
+  - Wemo                (Wemo devices)
+  - Hue                 (Philips HUE lighting, turn on/off, change CT and BRI)
+  - Yee                 (Xiaomi Yee lighting, turn on/off, change CT and BRI)
+  - Xiaomi aqara        (Xiaomi Gateway connection, getting information from motion sensors and controlling switches and plugs)
+  - Sony Bravia Remote  (Turn on/off Sony Bravia TV(s))
+  - Samsung TV Remote   (Turn on/off Samsung TV(s))
   - Automation; reacting to all events and executing automation rules
