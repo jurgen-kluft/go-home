@@ -1,0 +1,9 @@
+{
+  "devices": [
+	  {
+      "name": "Bedroom Samsung-TV",
+      "ip": "10.0.0.76:55000", 
+      "id": "Remote"
+    }
+  ]
+}

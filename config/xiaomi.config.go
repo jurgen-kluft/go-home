@@ -27,10 +27,7 @@ func XiaomiConfigFromJSON(jsonstr string) (*XiaomiConfig, error) {
 	return config, err
 }
 
-func (m *XiaomiConfig) ToJSON() string {
-	data, err := json.Marshal(m)
-	if err == nil {
-		return string(data)
-	}
-	return ""
+func (m *XiaomiConfig) ToJSON() (data []byte, err error) {
+	data, err = json.Marshal(m)
+	return
 }

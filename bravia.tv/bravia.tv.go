@@ -14,54 +14,39 @@ import (
 	"github.com/jurgen-kluft/go-home/pubsub"
 )
 
-type tv struct {
-	name string
-	host string
-	mac  string
-	key  string
-	tv   *gobravia.BraviaTV
-}
-
 type instance struct {
-	tvs map[string]*tv
+	config *config.BraviaTVConfig
+	tvs    map[string]*gobravia.BraviaTV
 }
 
 // New ...
 func New() *instance {
 	x := &instance{}
-	x.tvs = map[string]*tv{}
+	x.tvs = map[string]*gobravia.BraviaTV{}
 	return x
 }
 
 func (x *instance) AddTV(host string, mac string, name string) {
-	tv := &tv{}
-	tv.name = name
-	tv.host = host
-	tv.mac = mac
-
-	tv.tv = gobravia.GetBravia(tv.host, "0000", tv.mac)
-	tv.tv.GetCommands()
-
+	tv := gobravia.GetBravia(host, "0000", mac)
+	tv.GetCommands()
 	x.tvs[name] = tv
 }
 
 func (x *instance) poweron(name string) {
 	tv, exists := x.tvs[name]
 	if exists {
-		tv.tv.Poweron(tv.host)
+		tv.Poweron("10.0.0.255")
 	}
 }
 func (x *instance) poweroff(name string) {
 	tv, exists := x.tvs[name]
 	if exists {
-		tv.tv.SendAlias("poweroff")
+		tv.SendAlias("poweroff")
 	}
 }
 
 func main() {
-	sony := New()
-	sony.AddTV("10.0.0.77", "C4:3A:BE:95:0C:1E", "Livingroom TV")
-	sony.poweroff("Livingroom TV")
+	bravia := New()
 
 	logger := logpkg.New("bravia.tv")
 	logger.AddEntry("emitter")
@@ -69,8 +54,8 @@ func main() {
 
 	for {
 		client := pubsub.New(config.EmitterSecrets["host"])
-		register := []string{"config/tv/sony/", "state/tv/sony/"}
-		subscribe := []string{"config/tv/sony/", "state/tv/sony/"}
+		register := []string{"config/bravia.tv/", "state/bravia.tv/"}
+		subscribe := []string{"config/bravia.tv/", "state/bravia.tv/"}
 		err := client.Connect("bravia.tv", register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
@@ -80,18 +65,18 @@ func main() {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
-					if topic == "config/tv/sony/" {
-						//huelighting.config, err = config.HueConfigFromJSON(string(msg.Payload()))
+					if topic == "config/bravia.tv/" {
+						bravia.config, err = config.BraviaTVConfigFromJSON(string(msg.Payload()))
 						logger.LogInfo("bravia.tv", "received configuration")
-					} else if topic == "state/tv/sony/" {
+					} else if topic == "state/bravia.tv/" {
 						logger.LogInfo("bravia.tv", "received state")
 						state, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
 							power := state.GetValueAttr("power", "idle")
 							if power == "off" {
-								sony.poweroff(state.Name)
+								bravia.poweroff(state.Name)
 							} else if power == "on" {
-								sony.poweron(state.Name)
+								bravia.poweron(state.Name)
 							}
 						}
 					} else if topic == "client/disconnected/" {

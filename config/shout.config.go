@@ -14,12 +14,9 @@ func ShoutConfigFromJSON(jsonstr string) (*ShoutConfig, error) {
 	return config, err
 }
 
-func (m *ShoutConfig) ToJSON() string {
-	data, err := json.Marshal(m)
-	if err == nil {
-		return string(data)
-	}
-	return ""
+func (m *ShoutConfig) ToJSON() (data []byte, err error) {
+	data, err = json.Marshal(m)
+	return
 }
 
 type ShoutMsg struct {

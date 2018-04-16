@@ -22,10 +22,7 @@ func HueConfigFromJSON(jsonstr string) (*HueConfig, error) {
 	return config, err
 }
 
-func (m *HueConfig) ToJSON() string {
-	data, err := json.Marshal(m)
-	if err == nil {
-		return string(data)
-	}
-	return ""
+func (m *HueConfig) ToJSON() (data []byte, err error) {
+	data, err = json.Marshal(m)
+	return
 }

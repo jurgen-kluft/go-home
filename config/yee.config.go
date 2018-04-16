@@ -19,10 +19,7 @@ func YeeConfigFromJSON(jsonstr string) (*YeeConfig, error) {
 	return config, err
 }
 
-func (m *YeeConfig) ToJSON() string {
-	data, err := json.Marshal(m)
-	if err == nil {
-		return string(data)
-	}
-	return ""
+func (m *YeeConfig) ToJSON() (data []byte, err error) {
+	data, err = json.Marshal(m)
+	return
 }

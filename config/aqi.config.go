@@ -9,9 +9,18 @@ func AqiConfigFromJSON(jsonstr string) (*AqiConfig, error) {
 	return r, err
 }
 
+func (r *AqiConfig) FromJSON(jsonstr string) (Config, error) {
+	err := json.Unmarshal([]byte(jsonstr), r)
+	return r, err
+}
+
 // ToJSON converts a AqiConfig to a JSON string
-func (r *AqiConfig) ToJSON() ([]byte, error) {
-	return json.Marshal(r)
+func (r *AqiConfig) ToJSON() (string, error) {
+	data, err := json.Marshal(r)
+	if err == nil {
+		return string(data), nil
+	}
+	return "", err
 }
 
 type AqiConfig struct {

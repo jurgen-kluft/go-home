@@ -11,8 +11,6 @@ Setup the following on my Mac Mini:
 
 * Emitter.IO [DONE]
 * Influx DB
-* Influx Telegraf (configured as StatsD server)
-* OR Prometheus
 * Grafana
 
 

@@ -14,7 +14,13 @@ import (
 // URL: https://panasonic.net/es/solution-works/jiyugaoka/
 
 func inTimeSpan(start, end, t time.Time) bool {
-	return t.After(start) && t.Before(end)
+	sh, sm, sc := start.Clock()
+	sx := float64(sh*60*60) + float64(sm*60) + float64(sc)
+	eh, em, ec := end.Clock()
+	ex := float64(eh*60*60) + float64(em*60) + float64(ec) + 1.0
+	th, tm, tc := t.Clock()
+	tx := float64(th*60*60) + float64(tm*60) + float64(tc)
+	return tx >= sx && tx < ex
 }
 
 // Return the factor 0.0 - 1.0 that indicates where we are in between start - end
@@ -22,19 +28,50 @@ func computeTimeSpanX(start, end, t time.Time) float64 {
 	sh, sm, sc := start.Clock()
 	sx := float64(sh*60*60) + float64(sm*60) + float64(sc)
 	eh, em, ec := end.Clock()
-	ex := float64(eh*60*60) + float64(em*60) + float64(ec)
+	ex := float64(eh*60*60) + float64(em*60) + float64(ec) + 1.0
 	th, tm, tc := t.Clock()
 	tx := float64(th*60*60) + float64(tm*60) + float64(tc)
 	x := (tx - sx) / (ex - sx)
 	return x
 }
 
+type MovingAverage struct {
+	history []float64
+	index   int
+}
+
+func NewFilter(sizeOfHistory int) *MovingAverage {
+	filter := &MovingAverage{history: make([]float64, sizeOfHistory), index: -1}
+	return filter
+}
+
+func (m *MovingAverage) Sample(sample float64) float64 {
+	if m.index == -1 {
+		for i := range m.history {
+			m.history[i] = sample
+		}
+		m.index = 0
+	}
+
+	m.history[m.index] = sample
+	m.index = (m.index + 1) % len(m.history)
+
+	sum := 0.0
+	for _, s := range m.history {
+		sum += s
+	}
+	return sum / float64(len(m.history))
+}
+
 type Flux struct {
-	config  *config.FluxConfig
-	metrics *metrics.Metrics
-	suncalc *config.SensorState
-	season  *config.Season
-	weather *config.SensorState
+	config     *config.FluxConfig
+	metrics    *metrics.Metrics
+	suncalc    *config.SensorState
+	seasonName string
+	season     *config.Season
+	weather    *config.SensorState
+	averageCT  *MovingAverage
+	averageBRI *MovingAverage
 }
 
 func New() *Flux {
@@ -42,6 +79,9 @@ func New() *Flux {
 	flux.metrics, _ = metrics.New()
 	flux.metrics.Register("hue", map[string]string{"CT": "Color Temperature", "BRI": "Brightness"}, map[string]interface{}{"CT": 200.0, "BRI": 200.0})
 	flux.metrics.Register("yee", map[string]string{"CT": "Color Temperature", "BRI": "Brightness"}, map[string]interface{}{"CT": 200.0, "BRI": 200.0})
+	flux.seasonName = "spring"
+	flux.averageCT = NewFilter(12)
+	flux.averageBRI = NewFilter(12)
 	return flux
 }
 
@@ -54,19 +94,19 @@ func (s *Flux) updateSeasonFromName(season string) {
 	}
 }
 
-func (s *Flux) updateLighttimes() {
-}
-
 // Process will update 'string'states and 'float'states
 // States are both input and output, for example as input
 // there are Season/Weather states like 'Season':'Winter'
 // and 'Clouds':0.5
 func (f *Flux) Process(client *pubsub.Context) {
-	if f.config == nil || f.suncalc == nil || f.season == nil {
+	if f.config == nil || f.suncalc == nil {
 		return
 	}
 
 	now := time.Now()
+
+	// Update our season
+	f.updateSeasonFromName(f.seasonName)
 
 	// First build our sun moments map
 	sunmoments := map[string]time.Time{}
@@ -139,6 +179,7 @@ func (f *Flux) Process(client *pubsub.Context) {
 		}
 	}
 	CT = f.season.CT.LinearInterpolated(CT)
+	CT = f.averageCT.Sample(CT)
 
 	// Full cloud cover will increase brightness by 10% of (Max - Current)
 	// BRI = 0 -> Very dim light
@@ -154,6 +195,7 @@ func (f *Flux) Process(client *pubsub.Context) {
 		}
 	}
 	BRI = f.season.BRI.LinearInterpolated(BRI)
+	BRI = f.averageBRI.Sample(BRI)
 
 	// Publishing the following sensors:
 	//  - Sensor.Light.HUE, Name = CT, Value = float64(100.0)
@@ -239,8 +281,7 @@ func main() {
 						seasonSensorState, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
 							logger.LogInfo("flux", "received season state")
-							season := seasonSensorState.GetValueAttr("season", "winter")
-							flux.updateSeasonFromName(season)
+							flux.seasonName = seasonSensorState.GetValueAttr("season", "winter")
 						} else {
 							logger.LogError("flux", err.Error())
 						}

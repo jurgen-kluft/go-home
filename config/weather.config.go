@@ -11,8 +11,9 @@ func WeatherConfigFromJSON(jsonstr string) (*WeatherConfig, error) {
 	return r, err
 }
 
-func (r *WeatherConfig) FromJSON() ([]byte, error) {
-	return json.Marshal(r)
+func (r *WeatherConfig) ToJSON() (data []byte, err error) {
+	data, err = json.Marshal(r)
+	return
 }
 
 type WeatherConfig struct {

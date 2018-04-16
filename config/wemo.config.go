@@ -19,10 +19,7 @@ func WemoConfigFromJSON(jsonstr string) (*WemoConfig, error) {
 	return config, err
 }
 
-func (m *WemoConfig) ToJSON() string {
-	data, err := json.Marshal(m)
-	if err == nil {
-		return string(data)
-	}
-	return ""
+func (m *WemoConfig) ToJSON() (data []byte, err error) {
+	data, err = json.Marshal(m)
+	return
 }
