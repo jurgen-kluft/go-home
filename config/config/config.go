@@ -24,7 +24,7 @@ func newContext() *context {
 	ctx.log = logpkg.New("configs")
 	ctx.log.AddEntry("emitter")
 	ctx.log.AddEntry("configs")
-	ctx.pubsub = pubsub.New(config.EmitterSecrets["host"])
+	ctx.pubsub = pubsub.New("configs", config.EmitterSecrets["host"])
 	ctx.watcher = newConfigFileWatcher()
 	return ctx
 }
@@ -141,7 +141,7 @@ func (c *context) sendConfigOnChannel(configtype string) (err error) {
 }
 
 func main() {
-	ctx := &context{}
+	ctx := newContext()
 
 	for {
 		connected := true

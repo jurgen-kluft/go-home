@@ -8,6 +8,7 @@ package main
 // - time-based logic (morning 6:20 turn on bedroom lights)
 
 import (
+	"strings"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
@@ -23,33 +24,46 @@ func main() {
 	logger.AddEntry("automation")
 
 	for {
-		connected := true
-		for connected {
-			client := pubsub.New(config.EmitterSecrets["host"])
-			register := []string{"config/automation/", "state/#/"}
-			subscribe := []string{"config/automation/", "state/#/"}
-			err := client.Connect("automation", register, subscribe)
-			if err == nil {
-				logger.LogInfo("emitter", "connected")
-				for connected {
-					select {
-					case msg := <-client.InMsgs:
-						topic := msg.Topic()
-						if topic == "automation/config/" {
-						} else if topic == "client/disconnected/" {
-							connected = false
-							logger.LogInfo("emitter", "disconnected")
+		// The state channels we are interested in
+		stateChannels := []string{"state/xiaomi/", "state/presence/", "state/hue/", "state/yee/", "state/xiaomi/", "state/bravia.tv/", "state/samsung.tv/",
+			"state/sensor/sophia", "state/sensor/jennifer", "state/sensor/parents",
+		}
+
+		client := pubsub.New(config.EmitterSecrets["host"])
+		register := []string{"config/automation/"}
+		register = append(register, stateChannels...)
+		subscribe := []string{"config/automation/"}
+		subscribe = append(subscribe, stateChannels...)
+		err := client.Connect("automation", register, subscribe)
+
+		if err == nil {
+			logger.LogInfo("emitter", "connected")
+			connected := true
+			for connected {
+				select {
+				case msg := <-client.InMsgs:
+					topic := msg.Topic()
+					if topic == "config/automation/" {
+					} else if topic == "client/disconnected/" {
+						connected = false
+						logger.LogInfo("emitter", "disconnected")
+					} else if strings.HasPrefix(topic, "state/") {
+						state, err := config.SensorStateFromJSON(string(msg.Payload()))
+						if err == nil {
+							auto.HandleEvent(state)
+						} else {
+							logger.LogError("automation", err.Error())
 						}
-					case <-time.After(time.Second * 30):
-						auto.HandleTime(time.Now())
 					}
+				case <-time.After(time.Second * 30):
+					auto.HandleTime(time.Now())
 				}
 			}
-			if err != nil {
-				logger.LogError("automation", err.Error())
-			}
-			time.Sleep(1 * time.Second)
 		}
+		if err != nil {
+			logger.LogError("automation", err.Error())
+		}
+
 		// Wait for 5 seconds before retrying
 		time.Sleep(5 * time.Second)
 	}
@@ -61,11 +75,23 @@ type Automation struct {
 	timeofday           string
 	lastmotion          time.Time
 	lastmotionFrontDoor time.Time
+	timedActions        map[string]TimedAction
 }
 
 func New() *Automation {
 	auto := &Automation{}
+	auto.sensors = map[string]string{}
+	auto.presence = map[string]bool{}
 	return auto
+}
+
+func (a *Automation) UpdateTimedActions(now time.Time) {
+	for name, ta := range a.timedActions {
+		if ta.Tick(now) == true {
+			ta.Action(a)
+			delete(a.timedActions, name)
+		}
+	}
 }
 
 func (a *Automation) FamilyIsHome() bool {
@@ -107,105 +133,138 @@ func (a *Automation) TurnOffTV(name string) {
 
 }
 
-func (a *Automation) HandleEvent(domain string, product string, name string, valuetype string, value string) {
-	if domain == "sensor" && product == "calendar" && name == "tod" {
+func (a *Automation) HandleEvent(state *config.SensorState) {
+	name := state.Name
+	what := state.GetValueAttr("type", "")
+	if name == "timeofday" {
+		value := state.GetValueAttr("timeofday", "")
 		a.HandleTimeOfDay(value)
+	} else if what == "switch" {
+		a.HandleSwitch(name, state)
+	} else if what == "sensor" {
+		a.HandleSensor(name, state)
+	} else if what == "presence" {
+		a.HandlePresence(name, state)
 	}
 }
 
 func (a *Automation) HandleTimeOfDay(to string) {
-	a.timeofday = to
-	switch to {
-	case "morning":
-		a.TurnOffLight("Kitchen")
-		a.TurnOffLight("Living Room")
-	case "lunch":
-		if a.FamilyIsHome() {
+	if to != a.timeofday {
+		a.timeofday = to
+		switch to {
+		case "morning":
+			a.TurnOffLight("Kitchen")
+			a.TurnOffLight("Living Room")
+		case "lunch":
+			if a.FamilyIsHome() {
+				a.TurnOnLight("Kitchen")
+			}
+		case "afternoon":
+			a.TurnOffLight("Kitchen")
+		case "evening":
 			a.TurnOnLight("Kitchen")
-		}
-	case "bedtime":
-		if a.FamilyIsHome() {
-			if a.IsSensor("sensor.calendar.jennifer", "school") {
-				a.TurnOnLight("Jennifer")
+			a.TurnOnLight("Living Room")
+		case "bedtime":
+			if a.FamilyIsHome() {
+				if a.IsSensor("jennifer", "school") {
+					a.TurnOnLight("Jennifer")
+				}
+				if a.IsSensor("sophia", "school") {
+					a.TurnOnLight("Sophia")
+				}
 			}
-			if a.IsSensor("sensor.calendar.sophia", "school") {
-				a.TurnOnLight("Sophia")
+		case "sleeptime":
+			if a.FamilyIsHome() {
+				a.TurnOnLight("Bedroom")
+
+				if a.IsSensor("jennifer", "school") {
+					a.TurnOffLight("Jennifer")
+				}
+				if a.IsSensor("sophia", "school") {
+					a.TurnOffLight("Sophia")
+				}
 			}
+		case "night":
+			if a.IsSensor("jennifer", "school") {
+				a.TurnOffLight("Bedroom")
+				a.TurnOffLight("Bedroom")
+				a.TurnOffLight("Bedroom")
+			}
+			a.TurnOffLight("Kitchen")
+			a.TurnOffLight("Living Room")
+			a.TurnOffLight("Jennifer")
+			a.TurnOffLight("Sophia")
+			a.TurnOffLight("Front door hall light")
 		}
-	case "sleeptime":
-		if a.FamilyIsHome() {
-			a.TurnOnLight("Bedroom")
-		}
-	case "night":
-		if a.IsSensor("sensor.calendar.jennifer", "school") {
-			a.TurnOffLight("Bedroom")
-		}
-		a.TurnOffLight("Kitchen")
-		a.TurnOffLight("Living Room")
-		a.TurnOffLight("Jennifer")
-		a.TurnOffLight("Sophia")
-		a.TurnOffLight("Front door hall light")
 	}
 }
 
-func (a *Automation) HandleSensor(product string, name string, valuetype string, value string) {
-	if product == "xiaomi" && name == "motion_sensor_158d0001a9113b" {
+func (a *Automation) HandleSensor(name string, state *config.SensorState) {
+	if name == "motion_sensor_kitchen" || name == "motion_sensor_livingroom" {
+		value := state.GetValueAttr("motion", "")
 		if value == "on" {
 			a.lastmotion = time.Now() // Update the time we last detected motion
-			a.lastmotionFrontDoor = time.Now()
-
+			if name == "motion_sensor_kitchen" {
+				a.lastmotionFrontDoor = time.Now()
+			}
 			if a.timeofday == "breakfast" {
 				a.TurnOnLight("Kitchen")
 				a.TurnOnLight("Living Room")
 			}
-		} else {
+		} else if value == "off" {
 			if time.Now().Sub(a.lastmotionFrontDoor) > time.Minute*5 {
 				a.TurnOffLight("Front door hall light")
 			}
 		}
 	}
-	if product == "xiaomi" && name == "magnet_158d0001a9113b" {
+	if name == "magnet_sensor_frontdoor" {
+		value := state.GetValueAttr("state", "")
 		if value == "open" {
 			a.TurnOnLight("Front door hall light")
+			a.lastmotionFrontDoor = time.Now()
 		}
 	}
 }
 
-func (a *Automation) HandleState(product string, name string, valuetype string, value string) {
-	if product == "xiaomi" && name == "switch_158d00015db32c" {
+func (a *Automation) HandleSwitch(name string, state *config.SensorState) {
+	if name == "Bedroom Switch" {
+		value := state.GetValueAttr("click", "")
 		if value == "double click" {
 			a.ToggleLight("Bedroom")
 		}
 		if value == "single click" {
-			a.ToggleSwitch("wall_switch_left_158d00016da5f5")
+			a.TurnOffSwitch("Bedroom ceiling light")
+			a.TurnOffSwitch("Bedroom chandelier")
 		}
 		if value == "press release" {
-			a.ToggleSwitch("plug_158d00017ca3f2")
+			a.ToggleSwitch("Bedroom power plug")
 		}
-	} else if product == "xiaomi" && name == "switch_158d00018dc863" {
+	} else if name == "Sophia Switch" {
+		value := state.GetValueAttr("click", "")
 		if value == "single click" {
 			a.ToggleLight("Sophia")
 		}
 	}
 }
 
-func (a *Automation) HandlePresence(name string, value string) {
-	if value == "away" {
-		delete(a.presence, name)
-		leaving := (len(a.presence) == 0)
-		if leaving {
-			a.HandlePresenceLeaving()
+func (a *Automation) HandlePresence(name string, state *config.SensorState) {
+	if state.StringAttrs != nil {
+		anyone_home := (len(a.presence) == 0)
+		for _, attr := range *state.StringAttrs {
+			name := attr.Name
+			value := attr.Value
+			if value == "away" {
+				delete(a.presence, name)
+			} else {
+				a.presence[name] = true
+			}
 		}
-	} else {
-		arriving := (len(a.presence) == 0)
-		a.presence[name] = true
-		if arriving {
+		if anyone_home && len(a.presence) == 0 {
+			a.HandlePresenceLeaving()
+		} else if !anyone_home && len(a.presence) != 0 {
 			a.HandlePresenceArriving()
 		}
 	}
-}
-func (a *Automation) HandleSwitch(name string, value string) {
-
 }
 
 func (a *Automation) HandlePresenceLeaving() {
@@ -261,4 +320,22 @@ func (a *Automation) HandleTime(now time.Time) {
 		}
 	}
 
+	a.UpdateTimedActions(now)
+}
+
+type TimedAction interface {
+	Tick(time.Time) bool
+	Action(*Automation)
+}
+
+type TurnOffLightTimedAction struct {
+	When        time.Time
+	NameOfLight string
+}
+
+func (ta *TurnOffLightTimedAction) Tick(now time.Time) bool {
+	return now.After(ta.When)
+}
+func (ta *TurnOffLightTimedAction) Action(auto *Automation) {
+	auto.TurnOnLight(ta.NameOfLight)
 }

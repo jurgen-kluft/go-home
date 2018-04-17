@@ -1,0 +1,30 @@
+{
+	"name": "Xiaomi Gateway",
+	"ip": "",
+	"mac": "34:CE:00:89:00:37",
+	"key": "kHCzYTl4XwlrGr2LTKqtc0zEM2DOQU9oSX6WFzi7jEA=",
+	"motions": [
+		{
+			"name": "",
+			"id": ""
+		}
+	],
+	"plugs": [
+		{
+			"name": "",
+			"id": ""
+		}
+	],
+	"switches": [
+		{
+			"name": "",
+			"id": ""
+		}
+	],
+	"magnets": [
+		{
+			"name": "",
+			"id": ""
+		}
+	]
+}

@@ -74,7 +74,7 @@ func (c *instance) shouldPoll(now time.Time, force bool) bool {
 
 func (c *instance) computeNextPoll(now time.Time, err error) {
 	if err != nil {
-		c.update = now.Add(time.Minute * 1)
+		c.update = now.Add(time.Second * time.Duration(c.config.Interval))
 	} else {
 		c.update = now.Add(time.Duration(c.config.Interval) * time.Second)
 	}

@@ -177,16 +177,16 @@ func (p *Presence) Presence(currentTime time.Time) bool {
 }
 
 func (p *Presence) publish(now time.Time, client *pubsub.Context) {
-	sensor := config.NewSensorState("state.sensor.presence")
+	sensor := config.NewSensorState("state.presence")
 	sensor.Time = now
 	for _, m := range p.members {
-		fmt.Printf("member: %s, presence: %v\n", m.name, m.current.State.String())
+		//fmt.Printf("member: %s, presence: %v\n", m.name, m.current.State.String())
 		sensor.AddStringAttr(m.name, m.current.State.String())
 	}
 	jsonstr, err := sensor.ToJSON()
 	if err == nil {
-		client.Publish("state/sensor/presence/", jsonstr)
-		fmt.Println(jsonstr)
+		client.Publish("state/presence/", jsonstr)
+		//fmt.Println(jsonstr)
 	} else {
 		fmt.Println(err)
 	}
@@ -204,7 +204,7 @@ func main() {
 		connected := true
 		for connected {
 			client := pubsub.New(config.EmitterSecrets["host"])
-			register := []string{"config/presence/", "state/sensor/presence/"}
+			register := []string{"config/presence/", "state/presence/"}
 			subscribe := []string{"config/presence/"}
 			err := client.Connect("presence", register, subscribe)
 			if err == nil {

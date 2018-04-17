@@ -24,22 +24,73 @@ import (
 // - WiredDualWallSwitch(es)
 // - Electric Power Plug(s)
 
-type instance struct {
-	key    string
+type xiaomi struct {
 	config *config.XiaomiConfig
 	aqara  *migateway.AqaraManager
 }
 
-func main() {
-	xiaomi := &instance{}
-
-	aqara, err := migateway.NewAqaraManager(nil)
-	if err != nil {
-		panic(err)
+func (x *xiaomi) GetNameOfMotionSensor(ID string) string {
+	for _, dev := range x.config.Motions {
+		if dev.ID == ID {
+			return dev.Name
+		}
 	}
+	return ID
+}
+func (x *xiaomi) GetNameOfMagnetSensor(ID string) string {
+	for _, dev := range x.config.Magnets {
+		if dev.ID == ID {
+			return dev.Name
+		}
+	}
+	return ID
+}
+func (x *xiaomi) GetNameOfPlug(ID string) string {
+	for _, dev := range x.config.Plugs {
+		if dev.ID == ID {
+			return dev.Name
+		}
+	}
+	return ID
+}
+func (x *xiaomi) GetPlugByName(name string) *migateway.Plug {
+	for _, dev := range x.config.Plugs {
+		if dev.Name == name {
+			for ID, plug := range x.aqara.Plugs {
+				if dev.ID == ID {
+					return plug
+				}
+			}
+		}
+	}
+	return nil
+}
 
-	xiaomi.aqara = aqara
-	xiaomi.aqara.SetAESKey(xiaomi.key)
+func (x *xiaomi) GetNameOfSwitch(ID string) string {
+	for _, dev := range x.config.Switches {
+		if dev.ID == ID {
+			return dev.Name
+		}
+	}
+	return ID
+}
+
+func (x *xiaomi) GetDualWiredWallSwitchByName(name string) *migateway.DualWiredWallSwitch {
+	for _, device := range x.config.Switches {
+		if device.Name == name {
+			for ID, hwdev := range x.aqara.DualWiredSwitches {
+				if device.ID == ID {
+					return hwdev
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func main() {
+	xiaomi := &xiaomi{}
+	xiaomi.aqara = migateway.NewAqaraManager()
 
 	logger := log.New("xiaomi")
 	logger.AddEntry("emitter")
@@ -47,7 +98,7 @@ func main() {
 
 	for {
 		client := pubsub.New(config.EmitterSecrets["host"])
-		register := []string{"config/xiaomi/", "state/xiaomi/", "state/xiaomi/gateway/", "state/xiaomi/magnet/", "state/xiaomi/motion/", "state/xiaomi/plug/", "state/xiaomi/switch/", "state/xiaomi/dualwiredwallswitch/"}
+		register := []string{"config/xiaomi/", "state/xiaomi/"}
 		subscribe := []string{"config/xiaomi/", "state/xiaomi/"}
 		err := client.Connect("xiaomi", register, subscribe)
 		if err == nil {
@@ -60,16 +111,50 @@ func main() {
 					if topic == "config/xiaomi/" {
 						logger.LogInfo("xiaomi", "received configuration")
 						xiaomi.config, err = config.XiaomiConfigFromJSON(string(msg.Payload()))
+						if err == nil {
+							err = xiaomi.aqara.Start(nil)
+							if err == nil {
+								xiaomi.aqara.SetAESKey(xiaomi.config.Key.String)
+							} else {
+								logger.LogError("xiaomi", err.Error())
+							}
+						} else {
+							logger.LogError("xiaomi", err.Error())
+						}
 					} else if topic == "state/xiaomi/" {
 						logger.LogInfo("xiaomi", "received state")
 						state, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
-							// TODO: Figure out what state to change on which device
-							// Gateway color
-							// Dualwiredwallswitch Channel 0/1 On/Off
-							// Plug On/Off
-							if state.Name == "" {
-
+							if state.Name == "gateway" {
+								if state.GetValueAttr("light", "none") == "on" {
+									xiaomi.aqara.GateWay.TurnOn()
+								} else if state.GetValueAttr("light", "none") == "off" {
+									xiaomi.aqara.GateWay.TurnOff()
+								}
+							}
+							plug := xiaomi.GetPlugByName(state.Name)
+							if plug != nil {
+								if state.GetValueAttr("power", "none") == "on" {
+									plug.TurnOn()
+								} else if state.GetValueAttr("power", "none") == "off" {
+									plug.TurnOff()
+								} else if state.GetValueAttr("power", "none") == "toggle" {
+									plug.Toggle()
+								}
+							} else {
+								dwwswitch := xiaomi.GetDualWiredWallSwitchByName(state.Name)
+								if dwwswitch != nil {
+									if state.GetValueAttr("switch0", "none") == "on" {
+										dwwswitch.TurnOnChannel0()
+									} else if state.GetValueAttr("switch0", "none") == "off" {
+										dwwswitch.TurnOffChannel0()
+									}
+									if state.GetValueAttr("switch1", "none") == "on" {
+										dwwswitch.TurnOnChannel1()
+									} else if state.GetValueAttr("switch1", "none") == "off" {
+										dwwswitch.TurnOffChannel1()
+									}
+								}
 							}
 						}
 					} else if topic == "client/disconnected/" {
@@ -92,7 +177,7 @@ func main() {
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
 							fmt.Println(jsonstr)
-							client.Publish("state/xiaomi/gateway/", jsonstr)
+							client.Publish("state/xiaomi/", jsonstr)
 						}
 
 					case *migateway.MagnetStateChange:
@@ -104,7 +189,7 @@ func main() {
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
 							fmt.Println(jsonstr)
-							client.Publish("state/xiaomi/magnet/", jsonstr)
+							client.Publish("state/xiaomi/", jsonstr)
 						}
 
 					case *migateway.MotionStateChange:
@@ -119,7 +204,7 @@ func main() {
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
 							fmt.Println(jsonstr)
-							client.Publish("state/xiaomi/motion/", jsonstr)
+							client.Publish("state/xiaomi/", jsonstr)
 						}
 
 					case *migateway.PlugStateChange:
@@ -134,7 +219,7 @@ func main() {
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
 							fmt.Println(jsonstr)
-							client.Publish("state/xiaomi/plug/", jsonstr)
+							client.Publish("state/xiaomi/", jsonstr)
 						}
 
 					case *migateway.SwitchStateChange:
@@ -146,7 +231,7 @@ func main() {
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
 							fmt.Println(jsonstr)
-							client.Publish("state/xiaomi/switch/", jsonstr)
+							client.Publish("state/xiaomi/", jsonstr)
 						}
 
 					case *migateway.DualWiredWallSwitchStateChange:
@@ -158,18 +243,10 @@ func main() {
 						jsonstr, err := sensor.ToJSON()
 						if err == nil {
 							fmt.Println(jsonstr)
-							client.Publish("state/xiaomi/dualwiredwallswitch/", jsonstr)
+							client.Publish("state/xiaomi/", jsonstr)
 						}
 
 					}
-
-				// so that we do not have to poll anything and just push it on a emitter channel.
-				// SensorState
-				// {
-				//   "name": "xiaomi.motion/switch/plug."A98C84E"
-				//   "time": "Tue Apr 15 18:00:15 2014"
-				//   ...
-				// }
 
 				case <-time.After(time.Second * 10):
 
@@ -184,8 +261,4 @@ func main() {
 
 		time.Sleep(5 * time.Second)
 	}
-}
-
-func (p *instance) handle(object string) {
-
 }
