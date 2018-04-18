@@ -205,7 +205,6 @@ func main() {
 
 	updateIntervalSec := time.Second * time.Duration(10)
 	for {
-
 		client := pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/presence/", "state/presence/"}
 		subscribe := []string{"config/presence/"}
@@ -233,11 +232,13 @@ func main() {
 				case <-time.After(updateIntervalSec):
 					if presence != nil {
 						now := time.Now()
-						if presence.presence(now) {
+						err := presence.presence(now)
+						if err == nil {
 							presence.publish(now, client)
+						} else {
+							logger.LogError("presence", err.Error())
 						}
 					}
-
 				}
 			}
 		}
