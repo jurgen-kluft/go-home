@@ -13,21 +13,24 @@ import (
 
 // hue holds all necessary information to control the HUE bridge and lights
 type huecontext struct {
-	key    string
-	config *config.HueConfig
-	lights *huelights.Lights
-	groups *huegroups.Groups
-	group  huegroups.Group
-	light  map[string]huelights.Light
-	log    *logpkg.Logger
-	CT     float64
-	BRI    float64
+	key        string
+	config     *config.HueConfig
+	lights     *huelights.Lights
+	groups     *huegroups.Groups
+	group      huegroups.Group
+	light      map[string]huelights.Light
+	log        *logpkg.Logger
+	CT         float64
+	BRI        float64
+	lightState huelights.State
 }
 
 // New creates a new instance of hue instance
 func New() *huecontext {
 	hue := &huecontext{}
 	hue.light = map[string]huelights.Light{}
+	hue.lightState.CT = new(uint16)
+	hue.lightState.Bri = new(uint8)
 	return hue
 }
 
@@ -70,10 +73,9 @@ func (hue *huecontext) initialize() (err error) {
 }
 
 func (hue *huecontext) flux() {
-	state := huelights.State{}
-	state.CT = uint16(hue.CT)
-	state.Bri = uint8(hue.BRI)
-	hue.groups.SetGroupState(hue.group.ID, state)
+	*hue.lightState.CT = uint16(hue.CT)
+	*hue.lightState.Bri = uint8(hue.BRI)
+	hue.groups.SetGroupState(hue.group.ID, hue.lightState)
 }
 
 func main() {
@@ -131,15 +133,16 @@ func main() {
 									if exists {
 										huesensor.ExecValueAttr("power", func(power string) {
 											if power == "on" {
-												state := huelights.State{}
-												state.On = true
-												state.CT = uint16(hue.CT)
-												state.Bri = uint8(hue.BRI)
-												hue.lights.SetLightState(light.ID, state)
+												hue.lightState.On = new(bool)
+												*hue.lightState.On = true
+												*hue.lightState.CT = uint16(hue.CT)
+												*hue.lightState.Bri = uint8(hue.BRI)
+												hue.lights.SetLightState(light.ID, hue.lightState)
+												hue.lightState.On = nil
 											} else if power == "off" {
-												state := huelights.State{}
-												state.On = false
-												hue.lights.SetLightState(light.ID, state)
+												*hue.lightState.On = false
+												hue.lights.SetLightState(light.ID, hue.lightState)
+												hue.lightState.On = nil
 											}
 										})
 									}

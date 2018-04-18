@@ -1,12 +1,9 @@
 {
-	"channel": "state/sensor/hue/",
-	"sensorstate": {
-		"name": "Living Room",
-		"stringattrs": [
-			{
-				"name": "power",
-				"value": "off"
-			}
-		]
-	}
+	"name": "Living Room",
+	"stringattrs": [
+		{
+			"name": "power",
+			"value": "off"
+		}
+	]
 }

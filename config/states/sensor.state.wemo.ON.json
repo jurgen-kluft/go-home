@@ -1,12 +1,9 @@
 {
-	"channel": "state/sensor/wemo/",
-	"sensorstate": {
-		"name": "Switch",
-		"stringattrs": [
-			{
-				"name": "power",
-				"value": "on"
-			}
-		]
-	}
+	"name": "Switch",
+	"stringattrs": [
+		{
+			"name": "power",
+			"value": "on"
+		}
+	]
 }
