@@ -6,10 +6,10 @@ import (
 
 	"github.com/jurgen-kluft/go-home/config"
 	logpkg "github.com/jurgen-kluft/go-home/logging"
+	"github.com/jurgen-kluft/go-home/metrics"
 	"github.com/jurgen-kluft/go-home/pubsub"
 )
 
-// HOME    is a state that happens when   NOT_AWAY > X seconds
 // AWAY    is a state that happens when   NOT_SEEN > N seconds
 
 type state uint8
@@ -17,8 +17,6 @@ type state uint8
 const (
 	home state = iota
 	away
-	leaving
-	arriving
 )
 
 func (s state) String() string {
@@ -27,10 +25,6 @@ func (s state) String() string {
 		return "home"
 	case away:
 		return "away"
-	case leaving:
-		return "leaving"
-	case arriving:
-		return "arriving"
 	default:
 		return "unknown"
 	}
@@ -85,21 +79,6 @@ func (m *Member) updateState(current time.Time) {
 	m.current.State = away
 }
 
-func getNameOfState(state state) string {
-	switch {
-	case state == home:
-		return "HOME"
-	case state == away:
-		return "AWAY"
-	case state == leaving:
-		return "LEAVING"
-	case state == arriving:
-		return "ARRIVING"
-	default:
-		return "HOME"
-	}
-}
-
 // Presence contains multiple device tracking states
 type Presence struct {
 	config            *config.PresenceConfig
@@ -108,42 +87,60 @@ type Presence struct {
 	macToPresence     map[string]bool
 	members           []*Member
 	updateIntervalSec int
+	metrics           *metrics.Metrics
 }
 
 // New will return an instance of presence.Home
-func New(configjson string) *Presence {
+func New(configjson string) (presence *Presence, err error) {
 	config, err := config.PresenceConfigFromJSON(configjson)
 	if err != nil {
-		return nil
+		return
 	}
-	presence := &Presence{}
+
+	var metric *metrics.Metrics
+	metric, err = metrics.New()
+	if err != nil {
+		return nil, err
+	}
+
+	presence = &Presence{}
 	presence.config = config
 	presence.provider = newProvider(presence.config.Name, presence.config.Host, presence.config.User, presence.config.Password)
 	presence.macToIndex = map[string]int{}
 	presence.macToPresence = map[string]bool{}
 
+	presence.metrics = metric
+	metricTags := map[string]string{}
+	metricTags["presence"] = "router"
+
+	metricFields := map[string]interface{}{}
+
 	updateHist := presence.config.UpdateHistory
+	presence.members = []*Member{}
 	for i, device := range presence.config.Devices {
 		member := &Member{name: device.Name}
 		member.last = Detect{Time: time.Now(), State: away}
-		member.current = Detect{Time: time.Now(), State: home}
+		member.current = Detect{Time: time.Now(), State: away}
 		member.index = 0
 		member.detect = make([]Detect, updateHist, updateHist)
-		for i := range member.detect {
-			member.detect[i] = Detect{Time: time.Now(), State: away}
+		for j := range member.detect {
+			member.detect[j] = Detect{Time: time.Now(), State: away}
 		}
 		presence.macToIndex[device.Mac] = i
 		presence.macToPresence[device.Mac] = false
 		presence.members = append(presence.members, member)
+
+		metricFields[member.name] = float64(away)
 	}
+
+	presence.metrics.Register("presence", metricTags, metricFields)
 
 	presence.updateIntervalSec = presence.config.UpdateIntervalSec
 
-	return presence
+	return
 }
 
-// Presence  ...
-func (p *Presence) Presence(currentTime time.Time) bool {
+func (p *Presence) presence(currentTime time.Time) error {
 	// First reset the presence of every entry in the 'macToPresence' map
 	for k := range p.macToPresence {
 		p.macToPresence[k] = false
@@ -158,22 +155,29 @@ func (p *Presence) Presence(currentTime time.Time) bool {
 		// For any member registered at the Router mark them as 'home'
 		for mac, presence := range p.macToPresence {
 			mi, exists := p.macToIndex[mac]
-			if exists && presence {
+			if exists {
 				m := p.members[mi]
-				m.detect[m.index] = Detect{Time: currentTime, State: home}
+				if presence {
+					m.detect[m.index] = Detect{Time: currentTime, State: home}
+				}
 			}
 		}
-
-		// Update final presence state for all members
-		for _, m := range p.members {
-			m.index = (m.index + 1) % len(m.detect)
-			m.updateState(currentTime)
-		}
-
-		return true
 	}
-	fmt.Println(result)
-	return false
+
+	// Update final presence state for all members
+	for _, m := range p.members {
+		m.index = (m.index + 1) % len(m.detect)
+		m.updateState(currentTime)
+	}
+
+	// Report metrics
+	p.metrics.Begin("presence")
+	for _, m := range p.members {
+		p.metrics.Set("presence", m.name, float64(m.current.State))
+	}
+	p.metrics.Send("presence")
+
+	return result
 }
 
 func (p *Presence) publish(now time.Time, client *pubsub.Context) {
@@ -199,50 +203,50 @@ func main() {
 	logger.AddEntry("emitter")
 	logger.AddEntry("presence")
 
-	updateIntervalSec := time.Second * 10
+	updateIntervalSec := time.Second * time.Duration(10)
 	for {
-		connected := true
-		for connected {
-			client := pubsub.New(config.EmitterSecrets["host"])
-			register := []string{"config/presence/", "state/presence/"}
-			subscribe := []string{"config/presence/"}
-			err := client.Connect("presence", register, subscribe)
-			if err == nil {
-				logger.LogInfo("emitter", "connected")
-				for connected {
-					select {
-					case msg := <-client.InMsgs:
-						topic := msg.Topic()
-						if topic == "config/presence/" {
-							logger.LogInfo("presence", "received configuration")
-							presence = New(string(msg.Payload()))
+
+		client := pubsub.New(config.EmitterSecrets["host"])
+		register := []string{"config/presence/", "state/presence/"}
+		subscribe := []string{"config/presence/"}
+		err := client.Connect("presence", register, subscribe)
+		if err == nil {
+			logger.LogInfo("emitter", "connected")
+			connected := true
+			for connected {
+				select {
+				case msg := <-client.InMsgs:
+					topic := msg.Topic()
+					if topic == "config/presence/" {
+						logger.LogInfo("presence", "received configuration")
+						presence, err := New(string(msg.Payload()))
+						if err == nil {
 							updateIntervalSec = time.Second * time.Duration(presence.config.UpdateIntervalSec)
-						} else if topic == "client/disconnected/" {
-							logger.LogInfo("emitter", "disconnected")
-							connected = false
+						} else {
+							logger.LogError("presence", err.Error())
 						}
-
-					case <-time.After(updateIntervalSec):
-						if presence != nil {
-							now := time.Now()
-							if presence.Presence(now) {
-								presence.publish(now, client)
-							}
-						}
-
+					} else if topic == "client/disconnected/" {
+						logger.LogInfo("emitter", "disconnected")
+						connected = false
 					}
-				}
-			} else {
-				// Not able to connect to emitter broker
-				connected = false
-			}
 
-			if err != nil {
-				logger.LogError("presence", err.Error())
+				case <-time.After(updateIntervalSec):
+					if presence != nil {
+						now := time.Now()
+						if presence.presence(now) {
+							presence.publish(now, client)
+						}
+					}
+
+				}
 			}
 		}
 
-		fmt.Println("Waiting 10 seconds before re-connecting to pubsub...")
-		time.Sleep(10 * time.Second)
+		if err != nil {
+			logger.LogError("presence", err.Error())
+		}
+
+		fmt.Println("Waiting 5 seconds before re-connecting to pubsub...")
+		time.Sleep(5 * time.Second)
 	}
 }

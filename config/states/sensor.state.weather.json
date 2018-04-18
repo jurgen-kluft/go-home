@@ -1,0 +1,12 @@
+{
+	"channel": "state/sensor/weather/",
+	"sensorstate": {
+		"name": "weather",
+		"floatattrs": [
+			{
+				"name": "clouds",
+				"value": 0.1
+			}
+		]
+	}
+}

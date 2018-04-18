@@ -115,8 +115,8 @@ func main() {
 						huesensor, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
 							hue.log.LogInfo("hue", "received flux")
-							hue.CT = huesensor.GetFloatAttr("CT", 400.0)
-							hue.BRI = huesensor.GetFloatAttr("BRI", 200.0)
+							hue.CT = huesensor.GetFloatAttr("CT", 325.0)
+							hue.BRI = huesensor.GetFloatAttr("BRI", 128.0)
 						} else {
 							hue.log.LogError("hue", err.Error())
 						}

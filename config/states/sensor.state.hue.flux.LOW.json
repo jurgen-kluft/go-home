@@ -1,0 +1,16 @@
+{
+	"channel": "state/sensor/hue/",
+	"sensorstate": {
+		"name": "flux",
+		"floatattrs": [
+			{
+				"name": "CT",
+				"value": 155.0
+			},
+			{
+				"name": "BRI",
+				"value": 1.0
+			}
+		]
+	}
+}

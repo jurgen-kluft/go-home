@@ -35,8 +35,8 @@ func main() {
 
 	for {
 		client := pubsub.New(config.EmitterSecrets["host"])
-		register := []string{"config/wemo/", "sensor/device/wemo/"}
-		subscribe := []string{"config/wemo/", "sensor/device/wemo/"}
+		register := []string{"config/wemo/", "sensor/state/wemo/"}
+		subscribe := []string{"config/wemo/", "sensor/state/wemo/"}
 		err := client.Connect("wemo", register, subscribe)
 		if err == nil {
 			thewemo.log.LogInfo("emitter", "connected")
@@ -53,7 +53,7 @@ func main() {
 						for _, d := range thewemo.config.Devices {
 							thewemo.devices[d.Name] = NewSwitch(d.Name, d.IP+":"+d.Port)
 						}
-					} else if topic == "sensor/device/wemo/" {
+					} else if topic == "sensor/state/wemo/" {
 						sensor, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
 							thewemo.log.LogInfo("wemo", "received configuration")
@@ -78,9 +78,6 @@ func main() {
 						thewemo.log.LogInfo("emitter", "disconnected")
 						connected = false
 					}
-
-				case <-time.After(time.Second * 10):
-
 				}
 			}
 		}
