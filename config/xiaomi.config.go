@@ -4,27 +4,39 @@ import (
 	"encoding/json"
 )
 
+const (
+	KitchenMotionSensor          = "Kitchen Motion"
+	LivingroomMotionSensor       = "Livingroom Motion"
+	BedroomMotionSensor          = "Bedroom Motion"
+	BedroomPowerPlug             = "Bedroom Plug"
+	BedroomCeilingLightSwitch    = "Bedroom Ceiling Light-Switch"
+	BedroomChandelierLightSwitch = "Bedroom Chandelier Light-Switch"
+	BedroomSwitch                = "Bedroom Switch"
+	SophiaRoomSwitch             = "Sophia Switch"
+	FrontdoorMagnetSensor        = "Front Door Magnet"
+)
+
 type XiaomiConfig struct {
-	Name    string      `json:"name"`
-	IP      string      `json:"ip"`
-	MAC     string      `json:"mac"`
-	Key     CryptString `json:"key"`
-	Motions []struct {
+	Name   string      `json:"name"`
+	IP     string      `json:"ip"`
+	MAC    string      `json:"mac"`
+	Key    CryptString `json:"key"`
+	Motion []struct {
 		Name string `json:"name"`
 		ID   string `json:"id"`
-	} `json:"motions"`
-	Plugs []struct {
+	} `json:"motion"`
+	Plug []struct {
 		Name string `json:"name"`
 		ID   string `json:"id"`
-	} `json:"plugs"`
-	Switches []struct {
+	} `json:"plug"`
+	Switch []struct {
 		Name string `json:"name"`
 		ID   string `json:"id"`
-	} `json:"switches"`
-	Magnets []struct {
+	} `json:"switch"`
+	Magnet []struct {
 		Name string `json:"name"`
 		ID   string `json:"id"`
-	} `json:"magnets"`
+	} `json:"magnet"`
 }
 
 func XiaomiConfigFromJSON(jsonstr string) (*XiaomiConfig, error) {

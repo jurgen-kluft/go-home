@@ -3,28 +3,40 @@
 	"ip": "",
 	"mac": "34:CE:00:89:00:37",
 	"key": "kHCzYTl4XwlrGr2LTKqtc0zEM2DOQU9oSX6WFzi7jEA=",
-	"motions": [
+	"motion": [
 		{
-			"name": "",
-			"id": ""
+			"id": "",
+			"name": "Kitchen Motion"
+		},
+		{
+			"id": "",
+			"name": "Livingroom Motion"
+		},
+		{
+			"id": "",
+			"name": "Bedroom Motion"
 		}
 	],
-	"plugs": [
+	"plug": [
 		{
-			"name": "",
-			"id": ""
+			"id": "",
+			"name": "Bedroom Plug"
 		}
 	],
-	"switches": [
+	"switch": [
 		{
-			"name": "",
-			"id": ""
+			"id": "",
+			"name": "Bedroom Switch"
+		},
+		{
+			"id": "",
+			"name": "Sophia Switch"
 		}
 	],
-	"magnets": [
+	"magnet": [
 		{
-			"name": "",
-			"id": ""
+			"id": "",
+			"name": "Front Door Magnet"
 		}
 	]
 }

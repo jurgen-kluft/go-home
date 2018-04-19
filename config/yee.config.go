@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 )
 
+const (
+	FrontdoorHallLight = "Frontdoor hall light"
+)
+
 type YeeConfig struct {
 	Name   string `json:"name"`
 	Lights []struct {
