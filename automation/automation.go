@@ -29,19 +29,19 @@ func main() {
 			"state/sensor/sophia", "state/sensor/jennifer", "state/sensor/parents",
 		}
 
-		client := pubsub.New(config.EmitterSecrets["host"])
+		auto.pubsub = pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/automation/"}
 		register = append(register, stateChannels...)
 		subscribe := []string{"config/automation/"}
 		subscribe = append(subscribe, stateChannels...)
-		err := client.Connect("automation", register, subscribe)
+		err := auto.pubsub.Connect("automation", register, subscribe)
 
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
 			connected := true
 			for connected {
 				select {
-				case msg := <-client.InMsgs:
+				case msg := <-auto.pubsub.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/automation/" {
 					} else if topic == "client/disconnected/" {
@@ -70,6 +70,7 @@ func main() {
 }
 
 type Automation struct {
+	pubsub              *pubsub.Context
 	sensors             map[string]string
 	presence            map[string]bool
 	timeofday           string
@@ -114,8 +115,12 @@ func (a *Automation) IsSensor(name string, value string) bool {
 	return e && (v == value)
 }
 
-func (a *Automation) TurnOnLight(name string) {
-
+func (a *Automation) TurnOnLight(name string) error {
+	state := config.NewSensorState(name)
+	state.AddStringAttr("power", "on")
+	jsonstr, err := state.ToJSON()
+	a.pubsub.Publish("state/light/hue/", jsonstr)
+	return err
 }
 func (a *Automation) TurnOffLight(name string) {
 

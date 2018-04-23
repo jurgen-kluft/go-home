@@ -10,20 +10,23 @@ type XiaomiConfig struct {
 	MAC     string      `json:"mac"`
 	Key     CryptString `json:"key"`
 	Motions []struct {
-		Name string `json:"name"`
-		ID   string `json:"id"`
+		Name  string `json:"name"`
+		ID    string `json:"id"`
+		BType string `json:"battery_type"`
 	} `json:"motions"`
 	Plugs []struct {
 		Name string `json:"name"`
 		ID   string `json:"id"`
 	} `json:"plugs"`
 	Switches []struct {
-		Name string `json:"name"`
-		ID   string `json:"id"`
+		Name  string `json:"name"`
+		ID    string `json:"id"`
+		BType string `json:"battery_type"`
 	} `json:"switches"`
 	Magnets []struct {
-		Name string `json:"name"`
-		ID   string `json:"id"`
+		Name  string `json:"name"`
+		ID    string `json:"id"`
+		BType string `json:"battery_type"`
 	} `json:"magnets"`
 }
 

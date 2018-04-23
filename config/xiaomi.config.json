@@ -6,7 +6,8 @@
 	"motions": [
 		{
 			"name": "",
-			"id": ""
+			"id": "",
+			"battery_type": "cr2450"
 		}
 	],
 	"plugs": [
@@ -18,13 +19,15 @@
 	"switches": [
 		{
 			"name": "",
-			"id": ""
+			"id": "",
+			"battery_type": "cr2032"
 		}
 	],
 	"magnets": [
 		{
 			"name": "",
-			"id": ""
+			"id": "",
+			"battery_type": "cr1632"
 		}
 	]
 }
