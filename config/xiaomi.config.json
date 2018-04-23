@@ -3,30 +3,44 @@
 	"ip": "",
 	"mac": "34:CE:00:89:00:37",
 	"key": "kHCzYTl4XwlrGr2LTKqtc0zEM2DOQU9oSX6WFzi7jEA=",
-	"motions": [
+	"motion": [
 		{
-			"name": "",
 			"id": "",
+			"name": "Kitchen Motion",
+			"battery_type": "cr2450"
+		},
+		{
+			"id": "",
+			"name": "Livingroom Motion",
+			"battery_type": "cr2450"
+		},
+		{
+			"id": "",
+			"name": "Bedroom Motion",
 			"battery_type": "cr2450"
 		}
 	],
-	"plugs": [
+	"plug": [
 		{
-			"name": "",
-			"id": ""
+			"id": "",
+			"name": "Bedroom Plug"
 		}
 	],
-	"switches": [
+	"switch": [
 		{
-			"name": "",
 			"id": "",
+			"name": "Bedroom Switch"
+		},
+		{
+			"id": "",
+			"name": "Sophia Switch",
 			"battery_type": "cr2032"
 		}
 	],
-	"magnets": [
+	"magnet": [
 		{
-			"name": "",
 			"id": "",
+			"name": "Front Door Magnet",
 			"battery_type": "cr1632"
 		}
 	]

@@ -30,7 +30,7 @@ type xiaomi struct {
 }
 
 func (x *xiaomi) GetNameOfMotionSensor(ID string) string {
-	for _, dev := range x.config.Motions {
+	for _, dev := range x.config.Motion {
 		if dev.ID == ID {
 			return dev.Name
 		}
@@ -38,7 +38,7 @@ func (x *xiaomi) GetNameOfMotionSensor(ID string) string {
 	return ID
 }
 func (x *xiaomi) GetNameOfMagnetSensor(ID string) string {
-	for _, dev := range x.config.Magnets {
+	for _, dev := range x.config.Magnet {
 		if dev.ID == ID {
 			return dev.Name
 		}
@@ -46,7 +46,7 @@ func (x *xiaomi) GetNameOfMagnetSensor(ID string) string {
 	return ID
 }
 func (x *xiaomi) GetNameOfPlug(ID string) string {
-	for _, dev := range x.config.Plugs {
+	for _, dev := range x.config.Plug {
 		if dev.ID == ID {
 			return dev.Name
 		}
@@ -54,7 +54,7 @@ func (x *xiaomi) GetNameOfPlug(ID string) string {
 	return ID
 }
 func (x *xiaomi) GetPlugByName(name string) *migateway.Plug {
-	for _, dev := range x.config.Plugs {
+	for _, dev := range x.config.Plug {
 		if dev.Name == name {
 			for ID, plug := range x.aqara.Plugs {
 				if dev.ID == ID {
@@ -67,7 +67,7 @@ func (x *xiaomi) GetPlugByName(name string) *migateway.Plug {
 }
 
 func (x *xiaomi) GetNameOfSwitch(ID string) string {
-	for _, dev := range x.config.Switches {
+	for _, dev := range x.config.Switch {
 		if dev.ID == ID {
 			return dev.Name
 		}
@@ -76,7 +76,7 @@ func (x *xiaomi) GetNameOfSwitch(ID string) string {
 }
 
 func (x *xiaomi) GetDualWiredWallSwitchByName(name string) *migateway.DualWiredWallSwitch {
-	for _, device := range x.config.Switches {
+	for _, device := range x.config.Switch {
 		if device.Name == name {
 			for ID, hwdev := range x.aqara.DualWiredSwitches {
 				if device.ID == ID {
@@ -170,7 +170,7 @@ func main() {
 					switch msg.(type) {
 					case *migateway.GatewayStateChange:
 						state := msg.(*migateway.GatewayStateChange)
-						name := "xiaomi.gateway." + state.ID
+						name := "gateway"
 						sensor := config.NewSensorState(name)
 						sensor.AddFloatAttr("illumination", state.To.Illumination)
 						sensor.AddIntAttr("rgb", int64(state.To.RGB))
@@ -182,7 +182,7 @@ func main() {
 
 					case *migateway.MagnetStateChange:
 						state := msg.(*migateway.MagnetStateChange)
-						name := "xiaomi.magnet." + state.ID
+						name := xiaomi.GetNameOfMagnetSensor(state.ID)
 						sensor := config.NewSensorState(name)
 						sensor.AddBoolAttr("open", state.To.Opened)
 						sensor.AddFloatAttr("battery", float64(state.To.Battery))
@@ -193,10 +193,8 @@ func main() {
 						}
 
 					case *migateway.MotionStateChange:
-						fmt.Println("STATE motion change message received")
-
 						state := msg.(*migateway.MotionStateChange)
-						name := "xiaomi.motion." + state.ID
+						name := xiaomi.GetNameOfMotionSensor(state.ID)
 						sensor := config.NewSensorState(name)
 						sensor.AddTimeWndAttr("lastmotion", state.To.LastMotion, time.Now())
 						sensor.AddBoolAttr("motion", state.To.HasMotion)
@@ -209,7 +207,7 @@ func main() {
 
 					case *migateway.PlugStateChange:
 						state := msg.(*migateway.PlugStateChange)
-						name := "xiaomi.plug." + state.ID
+						name := xiaomi.GetNameOfPlug(state.ID)
 						sensor := config.NewSensorState(name)
 						sensor.AddBoolAttr("inuse", state.To.InUse)
 						sensor.AddBoolAttr("ison", state.To.IsOn)
@@ -224,7 +222,7 @@ func main() {
 
 					case *migateway.SwitchStateChange:
 						state := msg.(*migateway.SwitchStateChange)
-						name := "xiaomi.switch." + state.ID
+						name := xiaomi.GetNameOfSwitch(state.ID)
 						sensor := config.NewSensorState(name)
 						sensor.AddStringAttr("click", state.To.Click.String())
 						sensor.AddFloatAttr("battery", float64(state.To.Battery))
@@ -236,7 +234,7 @@ func main() {
 
 					case *migateway.DualWiredWallSwitchStateChange:
 						state := msg.(*migateway.DualWiredWallSwitchStateChange)
-						name := "xiaomi.dualwiredwallswitch." + state.ID
+						name := xiaomi.GetNameOfSwitch(state.ID)
 						sensor := config.NewSensorState(name)
 						sensor.AddBoolAttr("channel0", state.To.Channel0On)
 						sensor.AddBoolAttr("channel1", state.To.Channel1On)

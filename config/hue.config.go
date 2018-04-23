@@ -4,6 +4,14 @@ import (
 	"encoding/json"
 )
 
+const (
+	BedroomLights      = "Bedroom"
+	LivingroomLights   = "Living Room"
+	KitchenLights      = "Kitchen"
+	SophiaRoomLights   = "Sophia"
+	JenniferRoomLights = "Jennifer"
+)
+
 type HueConfig struct {
 	Name   string `json:"name"`
 	Host   string `json:"host"`

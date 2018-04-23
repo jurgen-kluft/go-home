@@ -47,22 +47,19 @@ func newProvider(name string, host string, username string, password string) pro
 	return nil
 }
 
+// Detect holds a single router detection of a member
 type Detect struct {
 	Time  time.Time
 	State state
 }
 
+// Member holds the name and detection history with a last and current state
 type Member struct {
 	name    string
 	last    Detect
 	current Detect
 	index   int
 	detect  []Detect
-}
-
-type PresenceState struct {
-	time    time.Time
-	members []Member
 }
 
 // Update will set the current presence state based on historical information
