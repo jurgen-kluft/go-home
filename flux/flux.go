@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
@@ -80,8 +81,8 @@ func New() *Flux {
 	flux.metrics.Register("hue", map[string]string{"CT": "Color Temperature", "BRI": "Brightness"}, map[string]interface{}{"CT": 200.0, "BRI": 200.0})
 	flux.metrics.Register("yee", map[string]string{"CT": "Color Temperature", "BRI": "Brightness"}, map[string]interface{}{"CT": 200.0, "BRI": 200.0})
 	flux.seasonName = "spring"
-	flux.averageCT = NewFilter(12)
-	flux.averageBRI = NewFilter(12)
+	flux.averageCT = NewFilter(30)
+	flux.averageBRI = NewFilter(30)
 	return flux
 }
 
@@ -110,7 +111,7 @@ func (f *Flux) Process(client *pubsub.Context) {
 
 	// First build our sun moments map
 	sunmoments := map[string]time.Time{}
-	for _, tss := range *f.suncalc.TimeWndAttrs {
+	for _, tss := range f.suncalc.TimeWndAttrs {
 		sunmoments[tss.Name+".begin"] = tss.Begin
 		sunmoments[tss.Name+".end"] = tss.End
 	}
@@ -210,11 +211,11 @@ func (f *Flux) Process(client *pubsub.Context) {
 		f.metrics.Begin(ltype.Name)
 
 		lct := ltype.CT.LinearInterpolated(CT)
-		sensor.AddFloatAttr("CT", lct)
+		sensor.AddFloatAttr("CT", math.Floor(lct))
 		f.metrics.Set(ltype.Name, "CT", lct)
 
 		lbri := ltype.BRI.LinearInterpolated(BRI)
-		sensor.AddFloatAttr("BRI", lbri)
+		sensor.AddFloatAttr("BRI", math.Floor(lbri))
 		f.metrics.Set(ltype.Name, "BRI", lbri)
 
 		f.metrics.Send(ltype.Name)

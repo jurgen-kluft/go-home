@@ -2,6 +2,10 @@ package config
 
 import "encoding/json"
 
+const (
+	LivingroomBraviaTV = "Livingroom Sony Bravia-TV"
+)
+
 // BraviaTVConfigFromJSON parser the incoming JSON string and returns an Config instance for Bravia.TV
 func BraviaTVConfigFromJSON(jsonstr string) (*BraviaTVConfig, error) {
 	r := &BraviaTVConfig{}

@@ -35,16 +35,16 @@ func (c *instance) getResponse() (AQI float64, err error) {
 	if strings.HasPrefix(url, "http") {
 		var resp *http.Response
 		resp, err = http.Get(url)
-		if err != nil {
-			AQI = 80.0
-		} else {
+		AQI = 80.0
+		if err == nil {
 			var body []byte
 			body, err = ioutil.ReadAll(resp.Body)
-			var caqi CaqiResponse
-			caqi, err = unmarshalCaqiResponse(body)
-			AQI = float64(caqi.Data.Aqi)
-			if err != nil {
-				fmt.Print(string(body))
+			if err == nil {
+				var caqi CaqiResponse
+				caqi, err = unmarshalCaqiResponse(body)
+				if err == nil {
+					AQI = float64(caqi.Data.Aqi)
+				}
 			}
 			resp.Body.Close()
 		}

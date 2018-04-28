@@ -1,3 +1,50 @@
 {
-
+    "device_control_json_cache": {
+        "Living Room": {
+            "channel": "state/light/hue/",
+            "on": "{\"name\": \"Living Room\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Living Room\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+        },
+        "Kitchen": {
+            "channel": "state/light/hue/",
+            "on": "{\"name\": \"Kitchen\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Kitchen\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+        },
+        "Bedroom": {
+            "channel": "state/light/hue/",
+            "on": "{\"name\": \"Bedroom\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Bedroom\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+        },
+        "Sophia": {
+            "channel": "state/light/hue/",
+            "on": "{\"name\": \"Sophia\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Sophia\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+        },
+        "Jennifer": {
+            "channel": "state/light/hue/",
+            "on": "{\"name\": \"Jennifer\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Jennifer\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+        },
+        "Frontdoor hall light": {
+            "channel": "state/light/yee/",
+            "on": "{\"name\": \"Jennifer\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Jennifer\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+        },
+        "Bedroom Plug": {
+            "channel": "state/xiaomi/",
+            "on": "{\"name\": \"Bedroom Plug\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Bedroom Plug\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}",
+            "toggle": "{\"name\": \"Bedroom Plug\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"toggle\"}]}"
+        },
+        "Bedroom Samsung-TV": {
+            "channel": "state/samsung.tv/",
+            "on": "{\"name\": \"Bedroom Samsung-TV\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Bedroom Samsung-TV\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+        },
+        "Livingroom Sony Bravia-TV": {
+            "channel": "state/bravia.tv/",
+            "on": "{\"name\": \"Livingroom Sony Bravia-TV\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Livingroom Sony Bravia-TV\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+        }
+    }
 }

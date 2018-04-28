@@ -2,6 +2,10 @@ package config
 
 import "encoding/json"
 
+const (
+	BedroomSamsungTV = "Bedroom Samsung-TV"
+)
+
 // SamsungTVConfigFromJSON parser the incoming JSON string and returns an Config instance for Samsung.TV
 func SamsungTVConfigFromJSON(jsonstr string) (*SamsungTVConfig, error) {
 	r := &SamsungTVConfig{}
