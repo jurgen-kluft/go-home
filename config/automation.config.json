@@ -1,4 +1,25 @@
 {
+    "subscribing_channels": [
+        "state/presence/", 
+        "state/sensor/timeofday/", 
+        "state/sensor/sophia/", 
+        "state/sensor/jennifer/", 
+        "state/sensor/parents/",
+        "state/xiaomi/"
+    ],
+    "register_channels": [
+        "state/presence/", 
+        "state/sensor/timeofday/", 
+        "state/sensor/sophia/", 
+        "state/sensor/jennifer/", 
+        "state/sensor/parents/",
+        "shout/message/",
+        "state/xiaomi/", 
+        "state/light/hue/", 
+        "state/light/yee/", 
+        "state/bravia.tv/", 
+        "state/samsung.tv/"
+    ],
     "device_control_json_cache": {
         "Living Room": {
             "channel": "state/light/hue/",
@@ -27,8 +48,8 @@
         },
         "Frontdoor hall light": {
             "channel": "state/light/yee/",
-            "on": "{\"name\": \"Jennifer\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
-            "off": "{\"name\": \"Jennifer\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+            "on": "{\"name\": \"Frontdoor hall light\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Frontdoor hall light\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
         "Bedroom Plug": {
             "channel": "state/xiaomi/",

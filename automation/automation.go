@@ -20,22 +20,14 @@ import (
 func main() {
 	auto := New()
 
-	logger := logpkg.New("automation")
+	module := "automation"
+	logger := logpkg.New(module)
 	logger.AddEntry("emitter")
-	logger.AddEntry("automation")
+	logger.AddEntry(module)
 
 	for {
-		// The state channels we are interested in
-		stateChannels := []string{"state/xiaomi/", "state/presence/", "state/hue/", "state/yee/", "state/xiaomi/", "state/bravia.tv/", "state/samsung.tv/",
-			"state/sensor/timeofday", "state/sensor/sophia", "state/sensor/jennifer", "state/sensor/parents",
-		}
-
 		auto.pubsub = pubsub.New(config.EmitterSecrets["host"])
-		register := []string{"config/automation/", "shout/message/"}
-		register = append(register, stateChannels...)
-		subscribe := []string{"config/automation/"}
-		subscribe = append(subscribe, stateChannels...)
-		err := auto.pubsub.Connect("automation", register, subscribe)
+		err := auto.pubsub.Connect(module, []string{}, []string{"config/automation/"})
 
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
@@ -45,6 +37,25 @@ func main() {
 				case msg := <-auto.pubsub.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/automation/" {
+						// Register used channels and subscribe to channels we are interested in
+						config, err := config.AutomationConfigFromJSON(string(msg.Payload()))
+						if err == nil {
+							auto.config = config
+							// Register used channels
+							for _, ss := range auto.config.ChannelsToRegister {
+								if err = auto.pubsub.Register(ss); err != nil {
+									logger.LogError(module, err.Error())
+								}
+							}
+							// Subscribe channels
+							for _, ss := range auto.config.SubChannels {
+								if err = auto.pubsub.Subscribe(ss); err != nil {
+									logger.LogError(module, err.Error())
+								}
+							}
+						} else {
+							logger.LogError(module, err.Error())
+						}
 					} else if topic == "client/disconnected/" {
 						connected = false
 						logger.LogInfo("emitter", "disconnected")
@@ -53,18 +64,19 @@ func main() {
 						if err == nil {
 							auto.HandleEvent(topic, state)
 						} else {
-							logger.LogError("automation", err.Error())
+							logger.LogError(module, err.Error())
 						}
 					}
-				case <-time.After(time.Second * 30):
-					auto.now = time.Now()
-					auto.HandleTime()
-					auto.UpdateTimedActions()
+				case <-time.After(time.Second * 5):
+					if auto.config != nil {
+						auto.now = time.Now()
+						auto.UpdateTimedActions()
+					}
 				}
 			}
 		}
 		if err != nil {
-			logger.LogError("automation", err.Error())
+			logger.LogError(module, err.Error())
 		}
 
 		// Wait for 5 seconds before retrying
@@ -102,7 +114,7 @@ func (a *Automation) UpdateTimedActions() {
 }
 
 func (a *Automation) FamilyIsHome() bool {
-	// This can be a lot more complex:
+	// This can be a lot more sophisticated:
 
 	// Motion sensors will mark if people are home and this will be reset when the front-door openened.
 	// When presence shows no devices on the network but there is still motion detected we still should
@@ -111,8 +123,9 @@ func (a *Automation) FamilyIsHome() bool {
 	for _, pres := range a.presence {
 		familyIsHome = familyIsHome || pres
 	}
+
 	if !familyIsHome {
-		if time.Now().Sub(a.lastseenMotionInHouse) > (time.Minute * 5) {
+		if time.Now().Sub(a.lastseenMotionInHouse) > (time.Minute * 10) {
 			return false
 		}
 		return true
@@ -152,11 +165,18 @@ func (a *Automation) ToggleDevice(name string) error {
 }
 
 func (a *Automation) HandleEvent(channel string, state *config.SensorState) {
-	var sensortype string
-	var sensorname string
-	n, _ := fmt.Sscanf(channel, "state/%s/%s/", &sensortype, &sensorname)
-	if n == 2 && sensortype == "sensor" {
-		a.sensors[sensorname] = state.GetValueAttr("value", "")
+	sensortype := ""
+	sensorname := ""
+	parts := strings.Split(channel, "/")
+	if len(parts) >= 2 {
+		sensortype = parts[1]
+		if len(parts) == 3 {
+			sensorname = parts[2]
+		}
+	}
+
+	if sensorname != "" && sensortype == "sensor" {
+		a.sensors[sensorname] = state.GetValueAttr(sensorname, "")
 		if sensorname == "timeofday" {
 			a.HandleTimeOfDay(a.sensors[sensorname])
 		}
@@ -212,9 +232,9 @@ func (a *Automation) HandleTimeOfDay(to string) {
 		a.timeofday = to
 		switch to {
 		case "breakfast":
-			jenniferHasSchool := a.SensorHasValue("sensor.calendar.jennifer", "school")
-			sophiaHasSchool := a.SensorHasValue("sensor.calendar.sophia", "school")
-			parentsHaveToWork := a.SensorHasValue("sensor.calendar.parents", "work")
+			jenniferHasSchool := a.SensorHasValue("jennifer", "school")
+			sophiaHasSchool := a.SensorHasValue("sophia", "school")
+			parentsHaveToWork := a.SensorHasValue("parents", "work")
 			if jenniferHasSchool {
 				a.AddTimedAction("Waking up Parents for Jennifer", 6, 20, WakeUpParentsForJennifer)
 			} else if sophiaHasSchool {
@@ -306,7 +326,7 @@ func (a *Automation) HandleMotionSensor(name string, state *config.SensorState) 
 			a.lastseenMotionInHouse = now // Update the time we last detected motion
 			if name == config.KitchenMotionSensor {
 				a.lastseenMotionInKitchenArea = now
-				a.ActivateTurnOffDeviceTimedAction("Turnoff front door hall light", "Front door hall light", 400*time.Second)
+				a.ActivateTurnOffDeviceTimedAction("Turnoff front door hall light", "Front door hall light", 4*time.Minute)
 			}
 			if a.timeofday == "breakfast" {
 				a.TurnOnDevice(config.KitchenLights)
@@ -324,7 +344,6 @@ func (a *Automation) HandleMotionSensor(name string, state *config.SensorState) 
 				a.ActivateTurnOffDeviceTimedAction(config.KitchenLights, config.KitchenLights, 5*time.Minute)
 				a.ActivateTurnOffDeviceTimedAction(config.LivingroomLights, config.LivingroomLights, 5*time.Minute)
 			}
-
 		}
 	} else if name == config.BedroomMotionSensor {
 		value := state.GetValueAttr("motion", "")
@@ -334,14 +353,14 @@ func (a *Automation) HandleMotionSensor(name string, state *config.SensorState) 
 			a.lastseenMotionInBedroom = now
 
 			if a.timeofday == "evening" || a.timeofday == "bedtime" {
-				if lastseenDuration > (time.Duration(5) * time.Minute) {
+				if lastseenDuration > (time.Duration(15) * time.Minute) {
 					a.TurnOnDevice(config.BedroomLights)
 					a.TurnOnDevice(config.BedroomChandelierLightSwitch)
 				}
 			}
 		} else if value == "off" {
 			if a.timeofday != "night" && a.timeofday != "sleeptime" {
-				if lastseenDuration > (time.Duration(10) * time.Minute) {
+				if lastseenDuration > (time.Duration(30) * time.Minute) {
 					a.TurnOffDevice(config.BedroomLights)
 					a.TurnOffDevice(config.BedroomChandelierLightSwitch)
 					a.TurnOffDevice(config.BedroomCeilingLightSwitch)
@@ -349,18 +368,19 @@ func (a *Automation) HandleMotionSensor(name string, state *config.SensorState) 
 			}
 		}
 	}
-
 }
 
 func (a *Automation) HandleMagnetSensor(name string, state *config.SensorState) {
 	if name == config.FrontdoorMagnetSensor {
 		value := state.GetValueAttr("state", "")
 		if value == "open" {
+			a.sendNotification("Front door opened")
 			a.TurnOnDevice(config.FrontdoorHallLight)
-			a.ActivateTurnOffDeviceTimedAction("Turnoff front door hall light", "Front door hall light", 400*time.Second)
+			a.ActivateTurnOffDeviceTimedAction("Turnoff front door hall light", "Front door hall light", 10*time.Minute)
 			a.lastseenMotionInKitchenArea = time.Now()
 		} else if value == "close" {
-			a.ActivateTurnOffDeviceTimedAction("Turnoff front door hall light", "Front door hall light", 400*time.Second)
+			a.sendNotification("Front door closed")
+			a.ActivateTurnOffDeviceTimedAction("Turnoff front door hall light", "Front door hall light", 5*time.Minute)
 		}
 	}
 }
@@ -435,10 +455,6 @@ func (a *Automation) TurnOffEverything() {
 	a.TurnOffDevice(config.LivingroomBraviaTV)
 }
 
-func (a *Automation) HandleTime() {
-
-}
-
 type ActionDelegate func(ta *TimedAction, a *Automation)
 
 func TurnOffDeviceTimedAction(ta *TimedAction, a *Automation) {
@@ -451,14 +467,14 @@ type TimedAction struct {
 	Action ActionDelegate
 }
 
-func (a *Automation) ActivateTurnOffDeviceTimedAction(nameOfAction string, nameOfLight string, duration time.Duration) {
+func (a *Automation) ActivateTurnOffDeviceTimedAction(nameOfAction string, nameOfDevice string, duration time.Duration) {
 	ta, exists := a.timedActions[nameOfAction]
 	if !exists {
-		ta = &TimedAction{Name: nameOfLight, When: time.Now().Add(duration), Action: TurnOffDeviceTimedAction}
+		ta = &TimedAction{Name: nameOfDevice, When: time.Now().Add(duration), Action: TurnOffDeviceTimedAction}
 		a.timedActions[nameOfAction] = ta
 	} else {
-		turnOffLightAction := ta
-		turnOffLightAction.When = time.Now().Add(duration)
+		turnOffDeviceAction := ta
+		turnOffDeviceAction.When = time.Now().Add(duration)
 	}
 }
 
