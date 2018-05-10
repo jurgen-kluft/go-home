@@ -104,15 +104,6 @@ func New() *Automation {
 	return auto
 }
 
-func (a *Automation) UpdateTimedActions() {
-	for name, ta := range a.timedActions {
-		if ta.Tick(a.now) == true {
-			ta.Action(ta, a)
-			delete(a.timedActions, name)
-		}
-	}
-}
-
 func (a *Automation) FamilyIsHome() bool {
 	// This can be a lot more sophisticated:
 
@@ -194,39 +185,31 @@ func (a *Automation) HandleEvent(channel string, state *config.SensorState) {
 	}
 }
 
-func WakeUpParentsForJennifer(ta *TimedAction, a *Automation) {
+func wakeUpParentsForJennifer(ta *TimedAction, a *Automation) {
 	a.sendNotification("Waking up Parents for Jennifer")
 	a.TurnOnDevice(config.BedroomLights)
 }
-func WakeUpParentsForSophia(ta *TimedAction, a *Automation) {
+func wakeUpParentsForSophia(ta *TimedAction, a *Automation) {
 	a.sendNotification("Waking up Parents for Sophia")
 	a.TurnOnDevice(config.BedroomLights)
 }
-func WakeUpParentsForWork(ta *TimedAction, a *Automation) {
+func wakeUpParentsForWork(ta *TimedAction, a *Automation) {
 	a.sendNotification("Waking up Parents")
 	a.TurnOnDevice(config.BedroomLights)
 }
-func WakeUpJennifer(ta *TimedAction, a *Automation) {
+func wakeUpJennifer(ta *TimedAction, a *Automation) {
 	a.sendNotification("Waking up Jennifer")
 	a.TurnOnDevice(config.JenniferRoomLights)
 }
-func WakeUpSophia(ta *TimedAction, a *Automation) {
+func wakeUpSophia(ta *TimedAction, a *Automation) {
 	a.sendNotification("Waking up Sophia")
 	a.TurnOnDevice(config.SophiaRoomLights)
 }
-func TurnOnFrontdoorHallLight(ta *TimedAction, a *Automation) {
+func turnOnFrontdoorHallLight(ta *TimedAction, a *Automation) {
 	a.TurnOnDevice(config.FrontdoorHallLight)
 }
 
-func (a *Automation) AddTimedAction(name string, hour int, minute int, ad ActionDelegate) {
-	action, exists := a.timedActions[name]
-	if !exists {
-		when := time.Date(a.now.Year(), a.now.Month(), a.now.Day(), hour, minute, 0, 0, a.now.Location())
-		action = &TimedAction{Name: name, When: when, Action: ad}
-		a.timedActions[name] = action
-	}
-}
-
+// HandleTimeOfDay deals with time-of-day transitions
 func (a *Automation) HandleTimeOfDay(to string) {
 	if to != a.timeofday {
 		a.timeofday = to
@@ -236,18 +219,18 @@ func (a *Automation) HandleTimeOfDay(to string) {
 			sophiaHasSchool := a.SensorHasValue("sophia", "school")
 			parentsHaveToWork := a.SensorHasValue("parents", "work")
 			if jenniferHasSchool {
-				a.AddTimedAction("Waking up Parents for Jennifer", 6, 20, WakeUpParentsForJennifer)
+				a.SetRealTimeAction("Waking up Parents for Jennifer", 6, 20, wakeUpParentsForJennifer)
 			} else if sophiaHasSchool {
-				a.AddTimedAction("Waking up Parents for Sophia", 7, 0, WakeUpParentsForSophia)
+				a.SetRealTimeAction("Waking up Parents for Sophia", 7, 0, wakeUpParentsForSophia)
 			} else if parentsHaveToWork {
-				a.AddTimedAction("Waking up Parents", 7, 30, WakeUpParentsForWork)
+				a.SetRealTimeAction("Waking up Parents", 7, 30, wakeUpParentsForWork)
 			}
 			if jenniferHasSchool {
-				a.AddTimedAction("Waking up Jennifer", 6, 30, WakeUpJennifer)
-				a.AddTimedAction("Turn on Hall Light", 7, 11, TurnOnFrontdoorHallLight)
+				a.SetRealTimeAction("Waking up Jennifer", 6, 30, wakeUpJennifer)
+				a.SetRealTimeAction("Turn on Hall Light", 7, 11, turnOnFrontdoorHallLight)
 			}
 			if sophiaHasSchool {
-				a.AddTimedAction("Waking up Sophia", 7, 10, WakeUpSophia)
+				a.SetRealTimeAction("Waking up Sophia", 7, 10, wakeUpSophia)
 			}
 		case "morning":
 			a.sendNotification("Turning off lights since it is morning")
@@ -276,7 +259,6 @@ func (a *Automation) HandleTimeOfDay(to string) {
 		case "sleeptime":
 			if a.FamilyIsHome() {
 				a.TurnOnDevice(config.BedroomLights)
-
 				if a.SensorHasValue("jennifer", "school") {
 					a.TurnOffDevice(config.JenniferRoomLights)
 				}
@@ -297,27 +279,29 @@ func (a *Automation) HandleTimeOfDay(to string) {
 	}
 }
 
+// HandleSwitch deals with switches being pressed
 func (a *Automation) HandleSwitch(name string, state *config.SensorState) {
 	if name == config.BedroomSwitch {
 		value := state.GetValueAttr("click", "")
-		if value == "double click" {
+		if value == config.WirelessSwitchDoubleClick {
 			a.ToggleDevice(config.BedroomLights)
 		}
-		if value == "single click" {
+		if value == config.WirelessSwitchSingleClick {
 			a.TurnOffDevice(config.BedroomCeilingLightSwitch)
 			a.TurnOffDevice(config.BedroomChandelierLightSwitch)
 		}
-		if value == "press release" {
+		if value == config.WirelessSwitchPressRelease {
 			a.ToggleDevice(config.BedroomPowerPlug)
 		}
 	} else if name == config.SophiaRoomSwitch {
 		value := state.GetValueAttr("click", "")
-		if value == "single click" {
+		if value == config.WirelessSwitchSingleClick {
 			a.ToggleDevice(config.SophiaRoomLights)
 		}
 	}
 }
 
+// HandleMotionSensor deals with motion detected
 func (a *Automation) HandleMotionSensor(name string, state *config.SensorState) {
 	now := time.Now()
 	if name == config.KitchenMotionSensor || name == config.LivingroomMotionSensor {
@@ -326,7 +310,7 @@ func (a *Automation) HandleMotionSensor(name string, state *config.SensorState) 
 			a.lastseenMotionInHouse = now // Update the time we last detected motion
 			if name == config.KitchenMotionSensor {
 				a.lastseenMotionInKitchenArea = now
-				a.ActivateTurnOffDeviceTimedAction("Turnoff front door hall light", "Front door hall light", 4*time.Minute)
+				a.SetDelayTimeAction("Turnoff front door hall light", 4*time.Minute, func(ta *TimedAction, a *Automation) { a.TurnOffDevice("Front door hall light") })
 			}
 			if a.timeofday == "breakfast" {
 				a.TurnOnDevice(config.KitchenLights)
@@ -341,8 +325,8 @@ func (a *Automation) HandleMotionSensor(name string, state *config.SensorState) 
 				}
 				a.TurnOnDevice(config.KitchenLights)
 				a.TurnOnDevice(config.LivingroomLights)
-				a.ActivateTurnOffDeviceTimedAction(config.KitchenLights, config.KitchenLights, 5*time.Minute)
-				a.ActivateTurnOffDeviceTimedAction(config.LivingroomLights, config.LivingroomLights, 5*time.Minute)
+				a.SetDelayTimeAction(config.KitchenLights, 5*time.Minute, func(ta *TimedAction, a *Automation) { a.TurnOffDevice(config.KitchenLights) })
+				a.SetDelayTimeAction(config.KitchenLights, 5*time.Minute, func(ta *TimedAction, a *Automation) { a.TurnOffDevice(config.KitchenLights) })
 			}
 		}
 	} else if name == config.BedroomMotionSensor {
@@ -376,11 +360,12 @@ func (a *Automation) HandleMagnetSensor(name string, state *config.SensorState) 
 		if value == "open" {
 			a.sendNotification("Front door opened")
 			a.TurnOnDevice(config.FrontdoorHallLight)
-			a.ActivateTurnOffDeviceTimedAction("Turnoff front door hall light", "Front door hall light", 10*time.Minute)
+			a.SetDelayTimeAction("Turnoff front door hall light", 10*time.Minute, func(ta *TimedAction, a *Automation) { a.TurnOffDevice("Front door hall light") })
+
 			a.lastseenMotionInKitchenArea = time.Now()
 		} else if value == "close" {
 			a.sendNotification("Front door closed")
-			a.ActivateTurnOffDeviceTimedAction("Turnoff front door hall light", "Front door hall light", 5*time.Minute)
+			a.SetDelayTimeAction("Turnoff front door hall light", 5*time.Minute, func(ta *TimedAction, a *Automation) { a.TurnOffDevice("Front door hall light") })
 		}
 	}
 }
@@ -455,29 +440,48 @@ func (a *Automation) TurnOffEverything() {
 	a.TurnOffDevice(config.LivingroomBraviaTV)
 }
 
+// ActionDelegate is the action delegate
 type ActionDelegate func(ta *TimedAction, a *Automation)
 
-func TurnOffDeviceTimedAction(ta *TimedAction, a *Automation) {
-	a.TurnOnDevice(ta.Name)
-}
-
+// TimedAction holds the 'when' and 'action' necessary to trigger
 type TimedAction struct {
 	Name   string
 	When   time.Time
 	Action ActionDelegate
 }
 
-func (a *Automation) ActivateTurnOffDeviceTimedAction(nameOfAction string, nameOfDevice string, duration time.Duration) {
-	ta, exists := a.timedActions[nameOfAction]
+// SetRealTimeAction sets an action that will trigger at a specific time
+func (a *Automation) SetRealTimeAction(name string, hour int, minute int, ad ActionDelegate) {
+	action, exists := a.timedActions[name]
 	if !exists {
-		ta = &TimedAction{Name: nameOfDevice, When: time.Now().Add(duration), Action: TurnOffDeviceTimedAction}
-		a.timedActions[nameOfAction] = ta
-	} else {
-		turnOffDeviceAction := ta
-		turnOffDeviceAction.When = time.Now().Add(duration)
+		when := time.Date(a.now.Year(), a.now.Month(), a.now.Day(), hour, minute, 0, 0, a.now.Location())
+		action = &TimedAction{Name: name, When: when, Action: ad}
+		a.timedActions[name] = action
 	}
 }
 
+// SetDelayTimeAction sets an action that trigger after 'duration'
+func (a *Automation) SetDelayTimeAction(name string, duration time.Duration, actiondelegate ActionDelegate) {
+	action, exists := a.timedActions[name]
+	if !exists {
+		action = &TimedAction{Name: name, When: time.Now().Add(duration), Action: actiondelegate}
+		a.timedActions[name] = action
+	} else {
+		action.When = time.Now().Add(duration)
+	}
+}
+
+// Tick returns true when the action has ended, false otherwise
 func (ta *TimedAction) Tick(now time.Time) bool {
 	return now.After(ta.When)
+}
+
+// UpdateTimedActions will tick all actions and remove any that have ended
+func (a *Automation) UpdateTimedActions() {
+	for name, ta := range a.timedActions {
+		if ta.Tick(a.now) == true {
+			ta.Action(ta, a)
+			delete(a.timedActions, name)
+		}
+	}
 }

@@ -206,7 +206,7 @@ func (f *Flux) Process(client *pubsub.Context) {
 	//  - Sensor.Light.DarkOrLight = string(Dark)
 
 	for _, ltype := range f.config.Lighttype {
-		sensor := config.NewSensorState("light." + ltype.Name)
+		sensor := config.NewSensorState("all")
 
 		f.metrics.Begin(ltype.Name)
 
