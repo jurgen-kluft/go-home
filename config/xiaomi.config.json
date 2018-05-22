@@ -5,41 +5,50 @@
 	"key": "kHCzYTl4XwlrGr2LTKqtc0zEM2DOQU9oSX6WFzi7jEA=",
 	"motion": [
 		{
-			"id": "",
+			"id": "158d0001a9113b",
 			"name": "Kitchen Motion",
 			"battery_type": "cr2450"
 		},
 		{
-			"id": "",
+			"id": "158d0001e14e04",
 			"name": "Livingroom Motion",
 			"battery_type": "cr2450"
 		},
 		{
-			"id": "",
+			"id": "158d0001aa98bc",
 			"name": "Bedroom Motion",
 			"battery_type": "cr2450"
 		}
 	],
 	"plug": [
 		{
-			"id": "",
+			"id": "158d0001dc35fb",
 			"name": "Bedroom Plug"
 		}
 	],
 	"switch": [
 		{
-			"id": "",
-			"name": "Bedroom Switch"
+			"id": "158d00015db32c",
+			"name": "Bedroom Switch",
+			"battery_type": "cr2032"
 		},
 		{
-			"id": "",
+			"id": "158d00022448f2",
 			"name": "Sophia Switch",
 			"battery_type": "cr2032"
+		},
+		{
+			"id": "158d00016da5f5",
+			"name": "Bedroom Ceiling Light-Switch"
+		},
+		{
+			"id": "158d00016da5f5",
+			"name": "Bedroom Chandelier Light-Switch"
 		}
 	],
 	"magnet": [
 		{
-			"id": "",
+			"id": "158d0001214763",
 			"name": "Front Door Magnet",
 			"battery_type": "cr1632"
 		}

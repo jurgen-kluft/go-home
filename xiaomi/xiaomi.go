@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
@@ -165,7 +166,7 @@ func main() {
 				case msg := <-xiaomi.aqara.StateMessages:
 
 					// Push xiaomi gateway and device state changes onto pubsub channels
-					// cfmt.Printf("STATE message received %v (type: %s)\n", msg, reflect.TypeOf(msg))
+					fmt.Printf("STATE message received %v (type: %s)\n", msg, reflect.TypeOf(msg))
 
 					switch msg.(type) {
 					case *migateway.GatewayStateChange:
