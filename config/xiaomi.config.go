@@ -16,6 +16,13 @@ const (
 	FrontdoorMagnetSensor        = "Front Door Magnet"
 )
 
+const (
+	WirelessSwitchSingleClick = "single click"
+	WirelessSwitchDoubleClick = "double click"
+	WirelessSwitchLongPress   = "long press"
+	WirelessSwitchLongRelease = "long release"
+)
+
 type XiaomiConfig struct {
 	Name   string      `json:"name"`
 	IP     string      `json:"ip"`

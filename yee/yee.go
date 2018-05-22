@@ -35,9 +35,6 @@ func main() {
 	yeelighting := &instance{}
 	yeelighting.lamps = map[string]*yee.Yeelight{}
 
-	// yeelighting.lamps["Front door hall light"] = yee.New("10.0.0.113", "55443")
-	// yeelighting.poweroff("Front door hall light")
-
 	logger := logpkg.New("yee")
 	logger.AddEntry("emitter")
 	logger.AddEntry("yee")
@@ -45,7 +42,7 @@ func main() {
 	for {
 		client := pubsub.New(config.EmitterSecrets["host"])
 		register := []string{"config/yee/", "state/sensor/yee/", "state/light/yee/"}
-		subscribe := []string{"config/yee/", "state/light/yee/", "state/light/yee/"}
+		subscribe := []string{"config/yee/", "state/sensor/yee/", "state/light/yee/"}
 		err := client.Connect("yee", register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")

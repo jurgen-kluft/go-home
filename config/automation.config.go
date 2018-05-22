@@ -26,6 +26,8 @@ func (r *AutomationConfig) ToJSON() (string, error) {
 
 // AutomationConfig holds the configuration for automation
 type AutomationConfig struct {
+	SubChannels        []string                 `json:"subscribing_channels"`
+	ChannelsToRegister []string                 `json:"register_channels"`
 	DeviceControlCache map[string]DeviceControl `json:"device_control_json_cache"`
 }
 

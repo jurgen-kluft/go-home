@@ -40,13 +40,13 @@ func New(jsonstr string, log *logpkg.Logger) (*Calendar, error) {
 		c.sensors[ekey] = sn
 		sensor := &config.SensorState{Name: ekey, Time: time.Now()}
 		if sn.Type == "string" {
-			sensor.AddStringAttr(sn.Name, sn.State)
+			sensor.AddStringAttr(ekey, sn.State)
 		} else if sn.Type == "float" {
 			value, _ := strconv.ParseFloat(sn.State, 64)
-			sensor.AddFloatAttr(sn.Name, value)
+			sensor.AddFloatAttr(ekey, value)
 		} else if sn.Type == "bool" {
 			value, _ := strconv.ParseBool(sn.State)
-			sensor.AddBoolAttr(sn.Name, value)
+			sensor.AddBoolAttr(ekey, value)
 		}
 		c.sensorStates[ekey] = sensor
 	}
@@ -89,16 +89,16 @@ func (c *Calendar) updateSensorStates(when time.Time) error {
 				if exists {
 					sensor.Time = time.Now()
 					if sensor.StringAttrs != nil {
-						(*sensor.StringAttrs)[0].Value = dstate
+						sensor.StringAttrs[0].Value = dstate
 					} else if sensor.IntAttrs != nil {
 						value, _ := strconv.ParseInt(dstate, 10, 64)
-						(*sensor.IntAttrs)[0].Value = value
+						sensor.IntAttrs[0].Value = value
 					} else if sensor.FloatAttrs != nil {
 						value, _ := strconv.ParseFloat(dstate, 64)
-						(*sensor.FloatAttrs)[0].Value = value
+						sensor.FloatAttrs[0].Value = value
 					} else if sensor.BoolAttrs != nil {
 						value, _ := strconv.ParseBool(dstate)
-						(*sensor.BoolAttrs)[0].Value = value
+						sensor.BoolAttrs[0].Value = value
 					}
 				}
 			}
@@ -186,16 +186,16 @@ func (c *Calendar) applyRulesToSensorStates() {
 			for _, ifthen := range p.IfThen {
 				ifsensor, exists = c.sensorStates[ifthen.Key]
 				if exists && ifsensor.StringAttrs != nil {
-					ifthenValue := (*ifsensor.StringAttrs)[0].Value
+					ifthenValue := ifsensor.StringAttrs[0].Value
 					if ifthenValue == ifthen.State {
-						(*sensor.StringAttrs)[0].Value = p.State
+						sensor.StringAttrs[0].Value = p.State
 					}
 				} else if exists && ifsensor.BoolAttrs != nil {
-					ifthenValue := (*ifsensor.BoolAttrs)[0].Value
+					ifthenValue := ifsensor.BoolAttrs[0].Value
 					if ifthenValue && ("true" == ifthen.State) {
-						(*sensor.StringAttrs)[0].Value = p.State
+						sensor.StringAttrs[0].Value = p.State
 					} else if !ifthenValue && ("false" == ifthen.State) {
-						(*sensor.StringAttrs)[0].Value = p.State
+						sensor.StringAttrs[0].Value = p.State
 					}
 				} else {
 					c.log.LogError("calendar", fmt.Sprintf("Logical error when applying rules to sensor states (%s)", p.Key+", "+p.State))
@@ -233,7 +233,7 @@ func (c *Calendar) Process(client *pubsub.Context) {
 	if exists {
 		if weekendsensor.BoolAttrs != nil {
 			weekend, _, _, _, _ := weekOrWeekEndStartEnd(now)
-			(*weekendsensor.BoolAttrs)[0].Value = weekend
+			weekendsensor.BoolAttrs[0].Value = weekend
 			sensorjson, err := weekendsensor.ToJSON()
 			if err == nil {
 				publishSensorState("weekend", sensorjson, client)
