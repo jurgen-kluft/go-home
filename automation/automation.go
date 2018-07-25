@@ -84,45 +84,85 @@ func main() {
 	}
 }
 
+type HomePresence struct {
+	occupied        bool
+	detection       bool
+	detectionResult bool
+	detectionStamp  time.Time
+	detectionWindow time.Duration
+	presence        map[string]bool
+}
+
+func NewPresence() *HomePresence {
+	h := &HomePresence{}
+	h.occupied = true
+	h.detection = true
+	h.detectionResult = false
+	h.detectionStamp = time.Now()
+	h.detectionWindow = time.Minute * 15
+	h.presence = map[string]bool{}
+	return h
+}
+
+// reset() should be called when the front-door is opened->closed because this
+// can indicate people have left the house.
+func (h *HomePresence) reset() {
+	h.detection = true
+	h.detectionResult = false
+	h.detectionStamp = time.Now()
+}
+
+func (h *HomePresence) detect(now time.Time) {
+	if h.detection {
+		if now.Sub(h.detectionStamp) > h.detectionWindow {
+			h.occupied = h.detectionResult
+			h.detection = false
+		}
+	} else {
+		// After the detection window (door was closed + N minutes) we can look at the wifi-presence again.
+		if h.occupied == false {
+			for _, prsnc := range h.presence {
+				h.occupied = h.occupied || prsnc
+			}
+		}
+	}
+}
+
+// report() should be called when a causation is detected like a button press or light switch press
+func (h *HomePresence) report(now time.Time) {
+	if h.detection {
+		if now.Sub(h.detectionStamp) < h.detectionWindow {
+			h.detectionResult = true
+		}
+	} else {
+		// Any detected presence after the detection window means that people are home
+		// This kind of presence is a button, light switch or plug press
+		h.occupied = true
+	}
+}
+
 type Automation struct {
 	pubsub                      *pubsub.Context
 	config                      *config.AutomationConfig
 	sensors                     map[string]string
-	presence                    map[string]bool
 	timeofday                   string
 	now                         time.Time
 	lastseenMotionInHouse       time.Time
 	lastseenMotionInKitchenArea time.Time
 	lastseenMotionInBedroom     time.Time
 	timedActions                map[string]*TimedAction
+	presence                    *HomePresence
 }
 
 func New() *Automation {
 	auto := &Automation{}
 	auto.sensors = map[string]string{}
-	auto.presence = map[string]bool{}
+	auto.presence = NewPresence()
 	return auto
 }
 
 func (a *Automation) FamilyIsHome() bool {
-	// This can be a lot more sophisticated:
-
-	// Motion sensors will mark if people are home and this will be reset when the front-door openened.
-	// When presence shows no devices on the network but there is still motion detected we still should
-	// regard that family is at home.
-	familyIsHome := false
-	for _, pres := range a.presence {
-		familyIsHome = familyIsHome || pres
-	}
-
-	if !familyIsHome {
-		if time.Now().Sub(a.lastseenMotionInHouse) > (time.Minute * 10) {
-			return false
-		}
-		return true
-	}
-
-	return familyIsHome
+	return a.presence.occupied
 }
 
 func (a *Automation) SensorHasValue(name string, value string) bool {
@@ -284,18 +324,22 @@ func (a *Automation) HandleSwitch(name string, state *config.SensorState) {
 	if name == config.BedroomSwitch {
 		value := state.GetValueAttr("click", "")
 		if value == config.WirelessSwitchDoubleClick {
+			a.presence.report(a.now)
 			a.ToggleDevice(config.BedroomLights)
 		}
 		if value == config.WirelessSwitchSingleClick {
+			a.presence.report(a.now)
 			a.TurnOffDevice(config.BedroomCeilingLightSwitch)
 			a.TurnOffDevice(config.BedroomChandelierLightSwitch)
 		}
-		if value == config.WirelessSwitchPressRelease {
+		if value == config.WirelessSwitchLongPress {
+			a.presence.report(a.now)
 			a.ToggleDevice(config.BedroomPowerPlug)
 		}
 	} else if name == config.SophiaRoomSwitch {
 		value := state.GetValueAttr("click", "")
 		if value == config.WirelessSwitchSingleClick {
+			a.presence.report(a.now)
 			a.ToggleDevice(config.SophiaRoomLights)
 		}
 	}
@@ -307,6 +351,7 @@ func (a *Automation) HandleMotionSensor(name string, state *config.SensorState) 
 	if name == config.KitchenMotionSensor || name == config.LivingroomMotionSensor {
 		value := state.GetValueAttr("motion", "")
 		if value == "on" {
+			a.presence.report(now)
 			a.lastseenMotionInHouse = now // Update the time we last detected motion
 			if name == config.KitchenMotionSensor {
 				a.lastseenMotionInKitchenArea = now
@@ -333,6 +378,7 @@ func (a *Automation) HandleMotionSensor(name string, state *config.SensorState) 
 		value := state.GetValueAttr("motion", "")
 		lastseenDuration := now.Sub(a.lastseenMotionInBedroom)
 		if value == "on" {
+			a.presence.report(now)
 			a.lastseenMotionInHouse = now // Update the time we last detected motion
 			a.lastseenMotionInBedroom = now
 
@@ -366,6 +412,7 @@ func (a *Automation) HandleMagnetSensor(name string, state *config.SensorState) 
 		} else if value == "close" {
 			a.sendNotification("Front door closed")
 			a.SetDelayTimeAction("Turnoff front door hall light", 5*time.Minute, func(ta *TimedAction, a *Automation) { a.TurnOffDevice("Front door hall light") })
+			a.presence.reset()
 		}
 	}
 }
@@ -376,10 +423,10 @@ func (a *Automation) sendNotification(message string) {
 
 func (a *Automation) updatePresence(name string, presence bool) (current bool, previous bool) {
 	var exists bool
-	previous, exists = a.presence[name]
+	previous, exists = a.presence.presence[name]
 	if !exists {
 		previous = false
-		a.presence[name] = presence
+		a.presence.presence[name] = presence
 	}
 	return presence, previous
 }

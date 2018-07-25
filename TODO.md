@@ -13,7 +13,6 @@ Setup the following on my Mac Mini:
 * Influx DB
 * Grafana
 
-
 ## Test
 
 Still need to test the following processes:

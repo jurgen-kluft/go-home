@@ -8,6 +8,7 @@ An emitter client can subscribe to channels, so generally for all of our process
 subscribe to their config channel, state-request channel.
 
 ## Config Emitter Client
+
 Listen to presence messages, when a subscriber registers we can send him the configuration.
 Also when we detect that the configuration on disk has changed, we can hot-load it and send
 it to the associated channel.
