@@ -24,25 +24,25 @@ const (
 )
 
 type XiaomiConfig struct {
-	Name    string      `json:"name"`
-	IP      string      `json:"ip"`
-	MAC     string      `json:"mac"`
-	Key     CryptString `json:"key"`
-	Motions []struct {
+	Name   string      `json:"name"`
+	IP     string      `json:"ip"`
+	MAC    string      `json:"mac"`
+	Key    CryptString `json:"key"`
+	Motion []struct {
 		Name  string `json:"name"`
 		ID    string `json:"id"`
 		BType string `json:"battery_type"`
 	} `json:"motion"`
-	Plugs []struct {
+	Plug []struct {
 		Name string `json:"name"`
 		ID   string `json:"id"`
 	} `json:"plug"`
-	Switches []struct {
+	Switch []struct {
 		Name  string `json:"name"`
 		ID    string `json:"id"`
 		BType string `json:"battery_type"`
 	} `json:"switch"`
-	Magnets []struct {
+	Magnet []struct {
 		Name  string `json:"name"`
 		ID    string `json:"id"`
 		BType string `json:"battery_type"`
