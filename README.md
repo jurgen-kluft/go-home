@@ -3,6 +3,7 @@
 Automated home using Go (krazygo.org, Go only OS for Raspberry PI)
 
 Devices/Hardware:
+
 - Netgear R6900
 - Philips HUE
 - Xiaomi Yee
@@ -12,14 +13,15 @@ Devices/Hardware:
 - Sony Bravia TV
 
 Note:
-  There is a HUE emulator in Go, this could be used to have Alexa control virtual devices like 
+  There is a HUE emulator in Go, this could be used to have Alexa control virtual devices like
   the Xiaomi Gateway light, our DualWiredWallSwitch, Power Plug etc..
-  Github: https://github.com/pborges/huemulator
+  Github: <https://github.com/pborges/huemulator>
 
 Note:
   InfluxDB for tracking metrics and usage of all processes.
 
 App Structure:
+
 - Since every process is just running it's own logic want we need is kindof pub/sub server where every process
   can register itself to specific events that it is interested in.
   - Emitter.io Server (Pub/Sub server where you can subscribe to channel(s))

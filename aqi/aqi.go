@@ -112,7 +112,7 @@ func main() {
 	logger.AddEntry("aqi")
 
 	for {
-		client := pubsub.New(config.EmitterSecrets["host"])
+		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/aqi/", "state/sensor/aqi/"}
 		subscribe := []string{"config/aqi/"}
 		err := client.Connect("aqi", register, subscribe)

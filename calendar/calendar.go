@@ -271,7 +271,7 @@ func main() {
 	logger.AddEntry("calendar")
 
 	for {
-		client := pubsub.New(config.EmitterSecrets["host"])
+		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/calendar/"}
 		subscribe := []string{"config/calendar/"}
 		err := client.Connect("calendar", register, subscribe)

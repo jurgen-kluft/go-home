@@ -17,11 +17,6 @@ func main() {
 	app.Name = "Publish a config to emitter broker"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:  "host",
-			Value: config.EmitterSecrets["host"],
-			Usage: "The 'IP:Port' URI of the emitter broker",
-		},
-		cli.StringFlag{
 			Name:  "file",
 			Value: "flux.config.json",
 			Usage: "The JSON configuration file to read and publish",
@@ -35,7 +30,6 @@ func main() {
 
 	app.Action = func(c *cli.Context) error {
 
-		host := c.String("host")
 		filename := c.String("file")
 
 		filedata, err := ioutil.ReadFile(filename)
@@ -46,7 +40,7 @@ func main() {
 
 		running := true
 		for running {
-			client := pubsub.New(host)
+			client := pubsub.New(config.EmitterIOCfg)
 			channel := c.String("channel")
 			register := []string{channel}
 			subscribe := []string{}

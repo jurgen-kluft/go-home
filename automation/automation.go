@@ -26,7 +26,7 @@ func main() {
 	logger.AddEntry(module)
 
 	for {
-		auto.pubsub = pubsub.New(config.EmitterSecrets["host"])
+		auto.pubsub = pubsub.New(config.EmitterIOCfg)
 		err := auto.pubsub.Connect(module, []string{}, []string{"config/automation/"})
 
 		if err == nil {

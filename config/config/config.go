@@ -19,12 +19,12 @@ type context struct {
 	watcher *configFileWatcher
 }
 
-func newContext() *context {
+func newContext(emitter map[string]string) *context {
 	ctx := &context{}
 	ctx.log = logpkg.New("configs")
 	ctx.log.AddEntry("emitter")
 	ctx.log.AddEntry("configs")
-	ctx.pubsub = pubsub.New("configs", config.EmitterSecrets["host"])
+	ctx.pubsub = pubsub.New(emitter)
 	ctx.watcher = newConfigFileWatcher()
 	return ctx
 }
@@ -61,6 +61,8 @@ func (c *context) initializeReflectTypes() {
 			configuration.ReflectType = reflect.TypeOf(config.FluxConfig{})
 		case "hue":
 			configuration.ReflectType = reflect.TypeOf(config.HueConfig{})
+		case "hue-bridge":
+			configuration.ReflectType = reflect.TypeOf(config.HueBridgeConfig{})
 		case "presence":
 			configuration.ReflectType = reflect.TypeOf(config.PresenceConfig{})
 		case "samsung.tv":
@@ -141,7 +143,7 @@ func (c *context) sendConfigOnChannel(configtype string) (err error) {
 }
 
 func main() {
-	ctx := newContext()
+	ctx := newContext(config.EmitterIOCfg)
 
 	for {
 		connected := true

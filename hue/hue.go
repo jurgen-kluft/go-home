@@ -12,7 +12,7 @@ import (
 )
 
 // hue holds all necessary information to control the HUE bridge and lights
-type huecontext struct {
+type Huecontext struct {
 	key        string
 	config     *config.HueConfig
 	lights     *huelights.Lights
@@ -26,15 +26,15 @@ type huecontext struct {
 }
 
 // New creates a new instance of hue instance
-func New() *huecontext {
-	hue := &huecontext{}
+func New() *Huecontext {
+	hue := &Huecontext{}
 	hue.light = map[string]huelights.Light{}
 	hue.lightState.CT = new(uint16)
 	hue.lightState.Bri = new(uint8)
 	return hue
 }
 
-func (hue *huecontext) initialize() (err error) {
+func (hue *Huecontext) initialize() (err error) {
 	bridgeIP := hue.config.Host
 	bridgeKey := hue.config.Key
 
@@ -72,7 +72,7 @@ func (hue *huecontext) initialize() (err error) {
 	return err
 }
 
-func (hue *huecontext) flux() {
+func (hue *Huecontext) flux() {
 	*hue.lightState.CT = uint16(hue.CT)
 	*hue.lightState.Bri = uint8(hue.BRI)
 	hue.groups.SetGroupState(hue.group.ID, hue.lightState)
@@ -86,7 +86,7 @@ func main() {
 	hue.log.AddEntry("hue")
 
 	for {
-		client := pubsub.New(config.EmitterSecrets["host"])
+		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/hue/", "state/sensor/hue/", "sensor/light/hue/"}
 		subscribe := []string{"config/hue/", "state/sensor/hue/", "sensor/light/hue/"}
 		err := client.Connect("hue", register, subscribe)
