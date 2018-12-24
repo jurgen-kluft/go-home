@@ -202,7 +202,7 @@ func main() {
 
 	updateIntervalSec := time.Second * time.Duration(10)
 	for {
-		client := pubsub.New(config.EmitterSecrets["host"])
+		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/presence/", "state/presence/"}
 		subscribe := []string{"config/presence/"}
 		err := client.Connect("presence", register, subscribe)

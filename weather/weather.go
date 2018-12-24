@@ -193,7 +193,7 @@ func main() {
 	logger.AddEntry("weather")
 
 	for {
-		client := pubsub.New(config.EmitterSecrets["host"])
+		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/weather/", "state/sensor/weather/"}
 		subscribe := []string{"config/weather/"}
 		err := client.Connect("weather", register, subscribe)

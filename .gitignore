@@ -1,6 +1,5 @@
 #ignore all files
 *
-vendor/
 tags
 *.exe
 *.exe~
