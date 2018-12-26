@@ -17,7 +17,6 @@ type observation struct {
 
 // Instance is the Bayesian object
 type Instance struct {
-	name               string
 	inputs             map[int64]*dataInput
 	observations       []*observation
 	observationsSorted []int
@@ -29,9 +28,15 @@ type Instance struct {
 }
 
 // New creates a new instance of a Bayesian object
-func New() *Instance {
+func New(prior float64, threshold float64) *Instance {
 	inst := &Instance{}
-
+	inst.inputs = map[int64]*dataInput{}
+	inst.observations = []*observation{}
+	inst.observationsSorted = []int{}
+	inst.id2Observation = map[int64]int{}
+	inst.prior = prior
+	inst.threshold = threshold
+	inst.probability = 0.0
 	return inst
 }
 
@@ -54,46 +59,6 @@ func (b *Instance) ReadState() bool {
 	b.processState()
 	b.updateState()
 	return b.probability >= b.threshold
-}
-
-// Example will test all possible combinations
-// presence := Bayesian.New()
-// presence.Add("livingroom sensor", 0.95, 0.7)
-func Example() {
-	ishome := New()
-	ishome.AddInput(0, true, 0.9, 0.2) // iPhoneX is home/away
-	ishome.AddInput(1, true, 0.9, 0.2) // Macbook is home/away
-	ishome.AddInput(2, true, 0.9, 0.2) // Kindle is home/away
-
-	// Possibility A
-	ishome.SetInputState(0, false) // iPhoneX is home
-	ishome.SetInputState(0, false) // Macbook is away
-	ishome.SetInputState(0, false) // Kindle is away
-	ishome.ReadState()
-
-	// Possibility B
-	ishome.SetInputState(0, true)  // iPhoneX is home
-	ishome.SetInputState(0, false) // Macbook is away
-	ishome.SetInputState(0, false) // Kindle is away
-	ishome.ReadState()
-
-	// Possibility C
-	ishome.SetInputState(0, false) // iPhoneX is home
-	ishome.SetInputState(0, true)  // Macbook is away
-	ishome.SetInputState(0, false) // Kindle is away
-	ishome.ReadState()
-
-	// Possibility D
-	ishome.SetInputState(0, false) // iPhoneX is home
-	ishome.SetInputState(0, false) // Macbook is away
-	ishome.SetInputState(0, true)  // Kindle is away
-	ishome.ReadState()
-
-	// Possibility E
-	ishome.SetInputState(0, true)  // iPhoneX is home
-	ishome.SetInputState(0, true)  // Macbook is away
-	ishome.SetInputState(0, false) // Kindle is away
-	ishome.ReadState()
 }
 
 func (b *Instance) processState() {

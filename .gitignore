@@ -4,6 +4,9 @@ tags
 *.exe
 *.exe~
 
+#except all folders in go-home
+!*/
+
 #except the following files
 !*.cpp
 !*.hpp
