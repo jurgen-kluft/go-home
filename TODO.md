@@ -17,8 +17,9 @@ Setup the following on my Mac Mini:
 
 Still need to test the following processes:
 
-* hue   [Basics are tested, can connect to bridge, can retrieve list of lights]
-* wemo  [READY]
+* hue           [Basics are tested, can connect to bridge, can retrieve list of lights]
+* hue-bridge
+* wemo          [READY]
 
 The following have been tested:
 
