@@ -1,0 +1,38 @@
+{
+    "register_channels": [
+        "state/sensor/storymode/", 
+        "shout/message/"
+    ],
+    "emulated-devices": [
+		{
+			"name": "Frontdoor light"
+		}, 
+		{
+			"name": "Bedroom ceiling light"
+		},
+		{
+			"name": "Bedroom chandelier"
+		}, 
+		{
+			"name": "Bedroom WIFI"
+		}, 
+		{
+			"name": "Flux Mode"
+		}, 
+		{
+			"name": "Story Mode"
+		}, 
+		{
+			"name": "Christmas Mode"
+		}, 
+		{
+			"name": "Halloween Mode"
+		}, 
+		{
+			"name": "Music Mode"
+		}, 
+		{
+			"name": "Evening Call Mode"
+		}
+    ]
+}

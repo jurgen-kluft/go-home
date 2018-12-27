@@ -5,12 +5,10 @@ import (
 	"time"
 
 	emitter "github.com/emitter-io/go"
-	"github.com/jurgen-kluft/go-home/config"
 )
 
 type Context struct {
-	Host        string
-	Secret      string
+	EmitterCfg  map[string]string
 	ChannelKeys map[string]string
 	InMsgs      chan emitter.Message
 	Client      emitter.Emitter
@@ -27,11 +25,10 @@ func (d *DisconnectMessage) Payload() []byte {
 	return []byte{}
 }
 
-func New(host string) *Context {
+func New(emittercfg map[string]string) *Context {
 	ctx := &Context{}
-	ctx.Host = host
+	ctx.EmitterCfg = emittercfg
 	ctx.ChannelKeys = map[string]string{}
-	ctx.Secret = config.EmitterSecrets["secret"]
 	ctx.InMsgs = make(chan emitter.Message)
 	ctx.KeyRequest = make(chan bool)
 	return ctx
@@ -69,7 +66,7 @@ func (ctx *Context) Connect(username string, register, subscribe []string) error
 
 	})
 
-	options.AddBroker(ctx.Host)
+	options.AddBroker(ctx.EmitterCfg["host"])
 
 	// Create a new emitter client and connect to the broker
 	ctx.Client = emitter.NewClient(options)
@@ -105,7 +102,7 @@ func (ctx *Context) Connect(username string, register, subscribe []string) error
 func (ctx *Context) Register(channel string) error {
 
 	keygenRequest := emitter.NewKeyGenRequest()
-	keygenRequest.Key = config.EmitterSecrets["secret"]
+	keygenRequest.Key = ctx.EmitterCfg["secret"]
 	keygenRequest.Channel = channel
 	keygenRequest.Type = "rwslp"
 	keygenToken := ctx.Client.GenerateKey(keygenRequest)

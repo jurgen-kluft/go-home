@@ -30,11 +30,7 @@ func New(jsonstr string) (*Instance, error) {
 func (s *Instance) postMessage(jsonmsg string) (err error) {
 	m, err := config.ShoutMsgFromJSON(jsonmsg)
 	if err == nil {
-		params := slack.PostMessageParameters{}
-		params.Username = "g0-h0m3"
-		params.User = "g0-h0m3"
-		params.AsUser = true
-		_, _, err = s.client.PostMessage(m.Channel, m.Message, params)
+		_, _, err = s.client.PostMessage(m.Channel, slack.MsgOptionText("Some text", false), slack.MsgOptionUsername("g0-h0m3"), slack.MsgOptionAsUser(true))
 	}
 	return err
 }
@@ -50,7 +46,7 @@ func main() {
 	for {
 		connected := true
 		for connected {
-			client := pubsub.New(config.EmitterSecrets["host"])
+			client := pubsub.New(config.EmitterIOCfg)
 			register := []string{"config/shout/", "shout/message/"}
 			subscribe := []string{"config/shout/", "shout/message/"}
 			err := client.Connect("shout", register, subscribe)

@@ -53,7 +53,7 @@ func main() {
 	logger.AddEntry("bravia.tv")
 
 	for {
-		client := pubsub.New(config.EmitterSecrets["host"])
+		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/bravia.tv/", "state/bravia.tv/"}
 		subscribe := []string{"config/bravia.tv/", "state/bravia.tv/"}
 		err := client.Connect("bravia.tv", register, subscribe)

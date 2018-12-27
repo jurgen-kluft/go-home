@@ -56,7 +56,7 @@ func main() {
 	logger.AddEntry("samsung.tv")
 
 	for {
-		client := pubsub.New(config.EmitterSecrets["host"])
+		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/samsung.tv/", "state/samsung.tv/"}
 		subscribe := []string{"config/samsung.tv/", "state/samsung.tv/"}
 		err := client.Connect("tv.samsung", register, subscribe)

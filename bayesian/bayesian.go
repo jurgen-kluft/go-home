@@ -1,94 +1,111 @@
-package main
+package bayesian
 
 import "sort"
 
-type DataInput struct {
-	ID             int64
-	TrueState      bool
-	ProbGivenTrue  float64
-	ProbGivenFalse float64
-
-	State bool
+type dataInput struct {
+	id             int64
+	trueState      bool
+	probGivenTrue  float64
+	probGivenFalse float64
+	state          bool
 }
 
-type Observation struct {
-	ProbTrue  float64
-	ProbFalse float64
+type observation struct {
+	probTrue  float64
+	probFalse float64
 }
 
-type Bayesian struct {
-	Name      string
-	Prior     float64
-	Threshold float64
+// Instance is the Bayesian object
+type Instance struct {
+	inputs             map[int64]*dataInput
+	observations       []*observation
+	observationsSorted []int
+	id2Observation     map[int64]int
 
-	Inputs []DataInput
-
-	Observations       []*Observation
-	ObservationsSorted []int
-	ID2Observation     map[int64]int
-
-	Probability float64
+	prior       float64
+	threshold   float64
+	probability float64
 }
 
-func (b *Bayesian) ReadState() bool {
-	return b.Probability >= b.Threshold
+// New creates a new instance of a Bayesian object
+func New(prior float64, threshold float64) *Instance {
+	inst := &Instance{}
+	inst.inputs = map[int64]*dataInput{}
+	inst.observations = []*observation{}
+	inst.observationsSorted = []int{}
+	inst.id2Observation = map[int64]int{}
+	inst.prior = prior
+	inst.threshold = threshold
+	inst.probability = 0.0
+	return inst
 }
 
-func (b *Bayesian) OnChange() {
-	b.ProcessState()
-	b.Update()
+// AddInput is there to add an input to the bayesian observation
+func (b *Instance) AddInput(id int64, truestate bool, probGivenTrue float64, probGivenFalse float64) {
+	input := &dataInput{id: id, trueState: truestate, probGivenTrue: probGivenTrue, probGivenFalse: probGivenFalse, state: false}
+	b.inputs[id] = input
 }
 
-func (b *Bayesian) ProcessState() {
-	for _, input := range b.Inputs {
+// SetInputState will set the input state of one of the inputs that is identified by ID 'id'
+func (b *Instance) SetInputState(id int64, state bool) {
+	input, contains := b.inputs[id]
+	if contains {
+		input.state = state
+	}
+}
+
+// ReadState will return true/false according to the bayesian computation
+func (b *Instance) ReadState() bool {
+	b.processState()
+	b.updateState()
+	return b.probability >= b.threshold
+}
+
+func (b *Instance) processState() {
+	for _, input := range b.inputs {
 		// Add entity to current observations if state conditions are met
-		should_trigger := input.State
-		if should_trigger {
-			probtrue := input.ProbGivenTrue
-			probfalse := input.ProbGivenFalse
+		if input.state {
+			probtrue := input.probGivenTrue
+			probfalse := input.probGivenFalse
 
-			var obs *Observation
-			obsi, exists := b.ID2Observation[input.ID]
+			var obs *observation
+			obsi, exists := b.id2Observation[input.id]
 			if !exists {
-				obs = &Observation{ProbTrue: probtrue, ProbFalse: probfalse}
-				obsi = len(b.Observations)
+				obs = &observation{probTrue: probtrue, probFalse: probfalse}
+				obsi = len(b.observations)
 
-				b.Observations = append(b.Observations, obs)
+				b.observations = append(b.observations, obs)
 
-				b.ObservationsSorted = append(b.ObservationsSorted, obsi)
-				sort.Ints(b.ObservationsSorted)
+				b.observationsSorted = append(b.observationsSorted, obsi)
+				sort.Ints(b.observationsSorted)
 
-				b.ID2Observation[input.ID] = obsi
+				b.id2Observation[input.id] = obsi
 			}
-			obs.ProbTrue = probtrue
-			obs.ProbFalse = probfalse
+			obs.probTrue = probtrue
+			obs.probFalse = probfalse
 		} else {
-			obsi, exists := b.ID2Observation[input.ID]
+			obsi, exists := b.id2Observation[input.id]
 			if exists {
-				sobsi := sort.SearchInts(b.ObservationsSorted, obsi)
-				b.ObservationsSorted = append(b.ObservationsSorted[:sobsi], b.ObservationsSorted[sobsi+1:]...)
-				delete(b.ID2Observation, input.ID)
+				sobsi := sort.SearchInts(b.observationsSorted, obsi)
+				b.observationsSorted = append(b.observationsSorted[:sobsi], b.observationsSorted[sobsi+1:]...)
+				delete(b.id2Observation, input.id)
 			}
 		}
 	}
 }
 
-func (b *Bayesian) Update() {
-	prior := b.Prior
-	for _, obs := range b.Observations {
-		prior = b.UpdateProbability(prior, obs.ProbTrue, obs.ProbFalse)
+func (b *Instance) updateState() {
+	prior := b.prior
+	for _, obs := range b.observations {
+		prior = b.computeProbability(prior, obs.probTrue, obs.probFalse)
 	}
-	b.Probability = prior
+	b.probability = prior
 }
 
-func (b *Bayesian) UpdateProbability(prior float64, prob_true float64, prob_false float64) float64 {
+func (b *Instance) computeProbability(prior float64, probTrue float64, probFalse float64) float64 {
 	// Update probability using Bayes' rule.
-	numerator := prob_true * prior
-	denominator := numerator + prob_false*(1-prior)
+	numerator := probTrue * prior
+	denominator := numerator + probFalse*(1-prior)
 	probability := numerator / denominator
 	return probability
-}
-
-func main() {
-
 }

@@ -1,7 +1,11 @@
 #ignore all files
-*.*
-vendor/
+*
 tags
+*.exe
+*.exe~
+
+#except all folders in go-home
+!*/
 
 #except the following files
 !*.cpp
@@ -10,26 +14,5 @@ tags
 !*.h
 !*.inl
 
-!*.pl
-
 !*.go
-!*.lua
 !*.json
-
-!*.cs
-!*.csproj
-!*.resx
-
-!*.hlsl
-!*.fragment
-
-!*.mold
-!*.sc
-!*.diagram
-
-!*.ini
-!*.bat
-
-#except the following folders
-!bravia.tv/
-!samsung.tv/

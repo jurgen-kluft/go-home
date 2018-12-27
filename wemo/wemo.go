@@ -34,7 +34,7 @@ func main() {
 	thewemo := New()
 
 	for {
-		client := pubsub.New(config.EmitterSecrets["host"])
+		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/wemo/", "sensor/state/wemo/"}
 		subscribe := []string{"config/wemo/", "sensor/state/wemo/"}
 		err := client.Connect("wemo", register, subscribe)

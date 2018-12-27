@@ -40,7 +40,7 @@ func main() {
 	logger.AddEntry("yee")
 
 	for {
-		client := pubsub.New(config.EmitterSecrets["host"])
+		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/yee/", "state/sensor/yee/", "state/light/yee/"}
 		subscribe := []string{"config/yee/", "state/sensor/yee/", "state/light/yee/"}
 		err := client.Connect("yee", register, subscribe)

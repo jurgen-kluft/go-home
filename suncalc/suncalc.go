@@ -433,7 +433,7 @@ func main() {
 	logger.AddEntry("suncalc")
 
 	for {
-		client := pubsub.New(config.EmitterSecrets["host"])
+		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/suncalc/", "state/sensor/sun/"}
 		subscribe := []string{"config/suncalc/"}
 		err := client.Connect("suncalc", register, subscribe)
