@@ -6,13 +6,18 @@ import (
 
 // HueBridgeConfig is a struct that holds information for our emulated Hue Bridge
 type HueBridgeConfig struct {
-	RegisterChannels []string                  `json:"register_channels"`
-	EmulatedDevices  []HueBridgeEmulatedDevice `json:"emulated-devices"`
+	IPPort            string                    `json:"ip_port"`
+	RegisterChannels  []string                  `json:"register_channels"`
+	SubscribeChannels []string                  `json:"subscribe_channels"`
+	EmulatedDevices   []HueBridgeEmulatedDevice `json:"emulated-devices"`
 }
 
 // HueBridgeEmulatedDevice is a device emulated on the Hue Bridge
 type HueBridgeEmulatedDevice struct {
-	Name string `json:"name"`
+	Name    string `json:"name"`
+	Channel string `json:"channel"`
+	On      string `json:"on"`
+	Off     string `json:"off"`
 }
 
 // HueBridgeConfigFromJSON will decode a JSON string to a HueBridgeConfig struct

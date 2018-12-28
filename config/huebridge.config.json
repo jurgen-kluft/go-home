@@ -1,0 +1,70 @@
+{
+	"ip_port": "10.0.0.22:5000",
+    "register_channels": [
+        "shout/message/"
+    ],
+    "subscribe_channels": [
+    ],
+    "emulated-devices": [
+		{
+			"name": "Frontdoor light",
+            "channel": "state/vars/",
+            "on": "{\"name\": \"Frontdoor light\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Frontdoor light\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+		}, 
+		{
+			"name": "Bedroom ceiling light",
+            "channel": "state/vars/",
+            "on": "{\"name\": \"Bedroom ceiling light\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Bedroom ceiling light\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+		},
+		{
+			"name": "Bedroom chandelier",
+            "channel": "state/vars/",
+            "on": "{\"name\": \"Bedroom chandelier\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Bedroom chandelier\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+		}, 
+		{
+			"name": "Bedroom WIFI",
+            "channel": "state/vars/",
+            "on": "{\"name\": \"Bedroom WIFI\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Bedroom WIFI\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+		}, 
+		{
+			"name": "Flux Mode",
+            "channel": "state/vars/",
+            "on": "{\"name\": \"Flux Mode\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Flux Mode\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"off\"}]}"
+		}, 
+		{
+			"name": "Story Time",
+            "channel": "state/vars/",
+            "on": "{\"name\": \"Story Time\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Story Time\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"off\"}]}"
+		}, 
+		{
+			"name": "Christmas Mood",
+            "channel": "state/vars/",
+            "on": "{\"name\": \"Christmas Mood\",\"stringattrs\": [{\"name\": \"mood\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Christmas Mood\",\"stringattrs\": [{\"name\": \"mood\",\"value\": \"off\"}]}"
+		}, 
+		{
+			"name": "Halloween Mood",
+            "channel": "state/vars/",
+            "on": "{\"name\": \"Halloween Mood\",\"stringattrs\": [{\"name\": \"mood\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Halloween Mood\",\"stringattrs\": [{\"name\": \"mood\",\"value\": \"off\"}]}"
+		}, 
+		{
+			"name": "Music Mode",
+            "channel": "state/vars/",
+            "on": "{\"name\": \"Music Mode\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Music Mode\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"off\"}]}"
+		}, 
+		{
+			"name": "Evening Call",
+            "channel": "state/vars/",
+            "on": "{\"name\": \"Evening Call\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Evening Call\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"off\"}]}"
+		}
+    ]
+}

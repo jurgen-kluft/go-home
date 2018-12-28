@@ -14,6 +14,7 @@ import (
 )
 
 type instance struct {
+	name    string
 	config  *config.AqiConfig
 	update  time.Time
 	metrics *metrics.Metrics
@@ -21,10 +22,11 @@ type instance struct {
 
 func construct() (c *instance) {
 	c = &instance{}
+	c.name = "aqi"
 	c.update = time.Now()
 	c.metrics, _ = metrics.New()
 
-	c.metrics.Register("aqi", map[string]string{"aqi": "quality"}, map[string]interface{}{"pm2.5": 50.0})
+	c.metrics.Register(c.name, map[string]string{c.name: "quality"}, map[string]interface{}{"pm2.5": 50.0})
 	return c
 }
 
@@ -87,13 +89,13 @@ func (c *instance) Poll() (aqiStateJSON string, err error) {
 	if err == nil {
 
 		// Metrics
-		c.metrics.Begin("aqi")
-		c.metrics.Set("aqi", "pm2.5", aqi)
-		c.metrics.Send("aqi")
+		c.metrics.Begin(c.name)
+		c.metrics.Set(c.name, "pm2.5", aqi)
+		c.metrics.Send(c.name)
 
 		// MQTT: As a sensor
 		sensor := config.NewSensorState("sensor.weather.aqi")
-		sensor.AddFloatAttr("aqi", aqi)
+		sensor.AddFloatAttr(c.name, aqi)
 		level := c.getAiqTagAndDescr(aqi)
 		sensor.AddStringAttr("name", level.Tag)
 		sensor.AddStringAttr("caution", level.Caution)
@@ -105,17 +107,17 @@ func (c *instance) Poll() (aqiStateJSON string, err error) {
 
 func main() {
 
-	aqi := construct()
+	c := construct()
 
-	logger := logpkg.New("aqi")
+	logger := logpkg.New(c.name)
 	logger.AddEntry("emitter")
-	logger.AddEntry("aqi")
+	logger.AddEntry(c.name)
 
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/aqi/", "state/sensor/aqi/"}
 		subscribe := []string{"config/aqi/"}
-		err := client.Connect("aqi", register, subscribe)
+		err := client.Connect(c.name, register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
 
@@ -129,11 +131,11 @@ func main() {
 						jsonmsg := string(msg.Payload())
 						config, err := config.AqiConfigFromJSON(jsonmsg)
 						if err == nil {
-							logger.LogInfo("aqi", "received configuration")
-							aqi.config = config
+							logger.LogInfo(c.name, "received configuration")
+							c.config = config
 							pollCount = 0
 						} else {
-							logger.LogError("aqi", "received bad configuration, "+err.Error())
+							logger.LogError(c.name, "received bad configuration, "+err.Error())
 						}
 					} else if topic == "client/disconnected/" {
 						logger.LogInfo("emitter", "disconnected")
@@ -141,26 +143,26 @@ func main() {
 					}
 
 				case <-time.After(time.Second * 10):
-					if aqi != nil && aqi.config != nil {
-						if aqi.shouldPoll(time.Now(), pollCount == 0) {
-							logger.LogInfo("aqi", "polling Aqi")
-							jsonstate, err := aqi.Poll()
+					if c != nil && c.config != nil {
+						if c.shouldPoll(time.Now(), pollCount == 0) {
+							logger.LogInfo(c.name, "polling Aqi")
+							jsonstate, err := c.Poll()
 							if err == nil {
-								logger.LogInfo("aqi", "publish Aqi")
+								logger.LogInfo(c.name, "publish Aqi")
 								fmt.Println(jsonstate)
 								client.PublishTTL("state/sensor/aqi/", jsonstate, 5*60)
 							} else {
-								logger.LogError("aqi", err.Error())
+								logger.LogError(c.name, err.Error())
 							}
 							pollCount++
-							aqi.computeNextPoll(time.Now(), err)
+							c.computeNextPoll(time.Now(), err)
 						}
 					}
 				}
 			}
 		}
 		if err != nil {
-			logger.LogError("aqi", err.Error())
+			logger.LogError(c.name, err.Error())
 		}
 		time.Sleep(5 * time.Second)
 	}

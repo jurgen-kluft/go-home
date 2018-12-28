@@ -15,48 +15,52 @@ import (
 )
 
 type instance struct {
+	name   string
+	ccfg   string
 	config *config.BraviaTVConfig
 	tvs    map[string]*gobravia.BraviaTV
 }
 
 // New ...
-func New() *instance {
-	x := &instance{}
-	x.tvs = map[string]*gobravia.BraviaTV{}
-	return x
+func new() *instance {
+	c := &instance{}
+	c.name = "bravia.tv"
+	c.ccfg = "config/bravia.tv/"
+	c.tvs = map[string]*gobravia.BraviaTV{}
+	return c
 }
 
-func (x *instance) AddTV(host string, mac string, name string) {
+func (c *instance) AddTV(host string, mac string, name string) {
 	tv := gobravia.GetBravia(host, "0000", mac)
 	tv.GetCommands()
-	x.tvs[name] = tv
+	c.tvs[name] = tv
 }
 
-func (x *instance) poweron(name string) {
-	tv, exists := x.tvs[name]
+func (c *instance) poweron(name string) {
+	tv, exists := c.tvs[name]
 	if exists {
 		tv.Poweron("10.0.0.255")
 	}
 }
-func (x *instance) poweroff(name string) {
-	tv, exists := x.tvs[name]
+func (c *instance) poweroff(name string) {
+	tv, exists := c.tvs[name]
 	if exists {
 		tv.SendAlias("poweroff")
 	}
 }
 
 func main() {
-	bravia := New()
+	c := new()
 
-	logger := logpkg.New("bravia.tv")
+	logger := logpkg.New(c.name)
 	logger.AddEntry("emitter")
-	logger.AddEntry("bravia.tv")
+	logger.AddEntry(c.name)
 
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
-		register := []string{"config/bravia.tv/", "state/bravia.tv/"}
-		subscribe := []string{"config/bravia.tv/", "state/bravia.tv/"}
-		err := client.Connect("bravia.tv", register, subscribe)
+		register := []string{c.ccfg, "state/bravia.tv/"}
+		subscribe := []string{c.ccfg, "state/bravia.tv/"}
+		err := client.Connect(c.name, register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
 
@@ -65,18 +69,18 @@ func main() {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
-					if topic == "config/bravia.tv/" {
-						bravia.config, err = config.BraviaTVConfigFromJSON(string(msg.Payload()))
-						logger.LogInfo("bravia.tv", "received configuration")
+					if topic == c.ccfg {
+						c.config, err = config.BraviaTVConfigFromJSON(string(msg.Payload()))
+						logger.LogInfo(c.name, "received configuration")
 					} else if topic == "state/bravia.tv/" {
-						logger.LogInfo("bravia.tv", "received state")
+						logger.LogInfo(c.name, "received state")
 						state, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
 							power := state.GetValueAttr("power", "idle")
 							if power == "off" {
-								bravia.poweroff(state.Name)
+								c.poweroff(state.Name)
 							} else if power == "on" {
-								bravia.poweron(state.Name)
+								c.poweron(state.Name)
 							}
 						}
 					} else if topic == "client/disconnected/" {
@@ -90,7 +94,7 @@ func main() {
 		}
 
 		if err != nil {
-			logger.LogError("bravia.tv", err.Error())
+			logger.LogError(c.name, err.Error())
 		}
 		time.Sleep(5 * time.Second)
 

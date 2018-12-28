@@ -61,7 +61,7 @@ func (c *context) initializeReflectTypes() {
 			configuration.ReflectType = reflect.TypeOf(config.FluxConfig{})
 		case "hue":
 			configuration.ReflectType = reflect.TypeOf(config.HueConfig{})
-		case "hue-bridge":
+		case "huebridge":
 			configuration.ReflectType = reflect.TypeOf(config.HueBridgeConfig{})
 		case "presence":
 			configuration.ReflectType = reflect.TypeOf(config.PresenceConfig{})

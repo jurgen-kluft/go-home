@@ -32,6 +32,11 @@
       "channel": "config/hue/"
     },
     {
+      "name": "huebridge",
+      "filename": "huebridge.config.json",
+      "channel": "config/huebridge/"
+    },
+    {
       "name": "presence",
       "filename": "presence.config.json",
       "channel": "config/presence/"

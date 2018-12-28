@@ -14,6 +14,7 @@ import (
 
 // Calendar ...
 type Calendar struct {
+	name         string
 	config       *config.CalendarConfig
 	sensors      map[string]config.Csensor
 	sensorStates map[string]*config.SensorState
@@ -27,12 +28,13 @@ func New(jsonstr string, log *logpkg.Logger) (*Calendar, error) {
 	var err error
 
 	c := &Calendar{}
+	c.name = "calendar"
 	c.log = log
 	c.sensors = map[string]config.Csensor{}
 	c.sensorStates = map[string]*config.SensorState{}
 	c.config, err = config.CalendarConfigFromJSON(jsonstr)
 	if err != nil {
-		log.LogError("calendar", err.Error())
+		log.LogError(c.name, err.Error())
 	}
 	//c.ccal.print()
 	for _, sn := range c.config.Sensors {
@@ -57,7 +59,7 @@ func New(jsonstr string, log *logpkg.Logger) (*Calendar, error) {
 		} else if strings.HasPrefix(cal.URL.String, "file") {
 			c.cals = append(c.cals, icalendar.NewFileCalendar(cal.URL.String))
 		} else {
-			log.LogError("calendar", fmt.Sprintf("Unknown calendar source '%s'", cal.URL))
+			log.LogError(c.name, fmt.Sprintf("Unknown calendar source '%s'", cal.URL))
 		}
 	}
 
@@ -198,7 +200,7 @@ func (c *Calendar) applyRulesToSensorStates() {
 						sensor.StringAttrs[0].Value = p.State
 					}
 				} else {
-					c.log.LogError("calendar", fmt.Sprintf("Logical error when applying rules to sensor states (%s)", p.Key+", "+p.State))
+					c.log.LogError(c.name, fmt.Sprintf("Logical error when applying rules to sensor states (%s)", p.Key+", "+p.State))
 				}
 			}
 		}
@@ -223,7 +225,7 @@ func (c *Calendar) Process(client *pubsub.Context) {
 		// fmt.Println("CALENDAR: LOAD")
 		err := c.load()
 		if err != nil {
-			c.log.LogError("calendar", err.Error())
+			c.log.LogError(c.name, err.Error())
 			return
 		}
 	}
@@ -238,7 +240,7 @@ func (c *Calendar) Process(client *pubsub.Context) {
 			if err == nil {
 				publishSensorState("weekend", sensorjson, client)
 			} else {
-				c.log.LogError("calendar", err.Error())
+				c.log.LogError(c.name, err.Error())
 			}
 		}
 	}
@@ -254,27 +256,27 @@ func (c *Calendar) Process(client *pubsub.Context) {
 			if err == nil {
 				publishSensorState(ss.Name, jsonstr, client)
 			} else {
-				c.log.LogError("calendar", err.Error())
+				c.log.LogError(c.name, err.Error())
 			}
 		}
 	} else {
-		c.log.LogError("calendar", err.Error())
+		c.log.LogError(c.name, err.Error())
 	}
 }
 
 func main() {
 
-	var calendar *Calendar
+	var c *Calendar
 
-	logger := logpkg.New("calendar")
+	logger := logpkg.New(c.name)
 	logger.AddEntry("emitter")
-	logger.AddEntry("calendar")
+	logger.AddEntry(c.name)
 
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/calendar/"}
 		subscribe := []string{"config/calendar/"}
-		err := client.Connect("calendar", register, subscribe)
+		err := client.Connect(c.name, register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
 
@@ -284,15 +286,15 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/calendar/" {
-						logger.LogInfo("calendar", "received configuration")
+						logger.LogInfo(c.name, "received configuration")
 						jsonmsg := string(msg.Payload())
-						calendar, err = New(jsonmsg, logger)
+						c, err = New(jsonmsg, logger)
 						if err != nil {
-							calendar = nil
-							logger.LogError("calendar", err.Error())
+							c = nil
+							logger.LogError(c.name, err.Error())
 						} else {
 							// Register emitter channel for every sensor
-							for _, ss := range calendar.sensorStates {
+							for _, ss := range c.sensorStates {
 								if err = client.Register(fmt.Sprintf("state/sensor/%s/", ss.Name)); err != nil {
 									logger.LogError("emitter", err.Error())
 								}
@@ -304,8 +306,8 @@ func main() {
 					}
 					break
 				case <-time.After(time.Second * 60):
-					if calendar != nil && calendar.config != nil {
-						calendar.Process(client)
+					if c != nil && c.config != nil {
+						c.Process(client)
 					}
 					break
 				}
@@ -313,7 +315,7 @@ func main() {
 		}
 
 		if err != nil {
-			logger.LogError("calendar", err.Error())
+			logger.LogError(c.name, err.Error())
 		}
 		time.Sleep(5 * time.Second)
 	}

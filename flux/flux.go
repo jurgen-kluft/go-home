@@ -64,7 +64,9 @@ func (m *MovingAverage) Sample(sample float64) float64 {
 	return sum / float64(len(m.history))
 }
 
-type Flux struct {
+type context struct {
+	name       string
+	cfgch      string
 	config     *config.FluxConfig
 	metrics    *metrics.Metrics
 	suncalc    *config.SensorState
@@ -75,22 +77,24 @@ type Flux struct {
 	averageBRI *MovingAverage
 }
 
-func New() *Flux {
-	flux := &Flux{}
-	flux.metrics, _ = metrics.New()
-	flux.metrics.Register("hue", map[string]string{"CT": "Color Temperature", "BRI": "Brightness"}, map[string]interface{}{"CT": 200.0, "BRI": 200.0})
-	flux.metrics.Register("yee", map[string]string{"CT": "Color Temperature", "BRI": "Brightness"}, map[string]interface{}{"CT": 200.0, "BRI": 200.0})
-	flux.seasonName = "spring"
-	flux.averageCT = NewFilter(30)
-	flux.averageBRI = NewFilter(30)
-	return flux
+func new() *context {
+	c := &context{}
+	c.name = c.name
+	c.cfgch = "config/flux/"
+	c.metrics, _ = metrics.New()
+	c.metrics.Register("hue", map[string]string{"CT": "Color Temperature", "BRI": "Brightness"}, map[string]interface{}{"CT": 200.0, "BRI": 200.0})
+	c.metrics.Register("yee", map[string]string{"CT": "Color Temperature", "BRI": "Brightness"}, map[string]interface{}{"CT": 200.0, "BRI": 200.0})
+	c.seasonName = "spring"
+	c.averageCT = NewFilter(30)
+	c.averageBRI = NewFilter(30)
+	return c
 }
 
-func (s *Flux) updateSeasonFromName(season string) {
-	for _, e := range s.config.Seasons {
+func (c *context) updateSeasonFromName(season string) {
+	for _, e := range c.config.Seasons {
 		if e.Name == season {
-			s.season = &config.Season{}
-			*s.season = e
+			c.season = &config.Season{}
+			*c.season = e
 		}
 	}
 }
@@ -99,25 +103,25 @@ func (s *Flux) updateSeasonFromName(season string) {
 // States are both input and output, for example as input
 // there are Season/Weather states like 'Season':'Winter'
 // and 'Clouds':0.5
-func (f *Flux) Process(client *pubsub.Context) {
-	if f.config == nil || f.suncalc == nil {
+func (c *context) Process(client *pubsub.Context) {
+	if c.config == nil || c.suncalc == nil {
 		return
 	}
 
 	now := time.Now()
 
 	// Update our season
-	f.updateSeasonFromName(f.seasonName)
+	c.updateSeasonFromName(c.seasonName)
 
 	// First build our sun moments map
 	sunmoments := map[string]time.Time{}
-	for _, tss := range f.suncalc.TimeWndAttrs {
+	for _, tss := range c.suncalc.TimeWndAttrs {
 		sunmoments[tss.Name+".begin"] = tss.Begin
 		sunmoments[tss.Name+".end"] = tss.End
 	}
 
 	// Add our custom time-points to the sun moments map
-	for _, at := range f.config.SuncalcMoments {
+	for _, at := range c.config.SuncalcMoments {
 		moment, exists := sunmoments[at.Name]
 		if exists {
 			moment = moment.Add(time.Duration(at.Shift) * time.Minute)
@@ -126,20 +130,20 @@ func (f *Flux) Process(client *pubsub.Context) {
 	}
 
 	// Update our Lighttime start and end time from the sun moments map
-	for i, lt := range f.config.Lighttime {
+	for i, lt := range c.config.Lighttime {
 		start, exists := sunmoments[lt.TimeSlot.StartMoment]
 		if exists {
 			end, exists := sunmoments[lt.TimeSlot.EndMoment]
 			if exists {
-				f.config.Lighttime[i].TimeSlot.StartTime = start
-				f.config.Lighttime[i].TimeSlot.EndTime = end
+				c.config.Lighttime[i].TimeSlot.StartTime = start
+				c.config.Lighttime[i].TimeSlot.EndTime = end
 			}
 		}
 	}
 
 	// Figure out in which light time moment we are now
 	current := config.Lighttime{}
-	for _, sm := range f.config.Lighttime {
+	for _, sm := range c.config.Lighttime {
 		t0 := sm.TimeSlot.StartTime
 		t1 := sm.TimeSlot.EndTime
 		if inTimeSpan(t0, t1, now) {
@@ -155,10 +159,10 @@ func (f *Flux) Process(client *pubsub.Context) {
 
 	clouds := config.Weather{Clouds: config.MinMax{Min: 0.0, Max: 0.001}, CTPct: 0.0, BriPct: 0.0}
 	cloudFac := float64(0.0)
-	if f.weather != nil {
-		cloudFac = f.weather.GetFloatAttr("clouds", 0.0)
+	if c.weather != nil {
+		cloudFac = c.weather.GetFloatAttr("clouds", 0.0)
 	}
-	for _, w := range f.config.Weather {
+	for _, w := range c.config.Weather {
 		if cloudFac >= w.Clouds.Min && cloudFac < w.Clouds.Max {
 			clouds = w
 			break
@@ -179,8 +183,8 @@ func (f *Flux) Process(client *pubsub.Context) {
 			CT = CT + clouds.CTPct*CT
 		}
 	}
-	CT = f.season.CT.LinearInterpolated(CT)
-	CT = f.averageCT.Sample(CT)
+	CT = c.season.CT.LinearInterpolated(CT)
+	CT = c.averageCT.Sample(CT)
 
 	// Full cloud cover will increase brightness by 10% of (Max - Current)
 	// BRI = 0 -> Very dim light
@@ -195,8 +199,8 @@ func (f *Flux) Process(client *pubsub.Context) {
 			BRI = BRI + clouds.BriPct*BRI
 		}
 	}
-	BRI = f.season.BRI.LinearInterpolated(BRI)
-	BRI = f.averageBRI.Sample(BRI)
+	BRI = c.season.BRI.LinearInterpolated(BRI)
+	BRI = c.averageBRI.Sample(BRI)
 
 	// Publishing the following sensors:
 	//  - Sensor.Light.HUE, Name = CT, Value = float64(100.0)
@@ -205,20 +209,20 @@ func (f *Flux) Process(client *pubsub.Context) {
 	//  - Sensor.Light.YEE, Name = BRI, Value = float64(100.0)
 	//  - Sensor.Light.DarkOrLight = string(Dark)
 
-	for _, ltype := range f.config.Lighttype {
+	for _, ltype := range c.config.Lighttype {
 		sensor := config.NewSensorState("all")
 
-		f.metrics.Begin(ltype.Name)
+		c.metrics.Begin(ltype.Name)
 
 		lct := ltype.CT.LinearInterpolated(CT)
 		sensor.AddFloatAttr("CT", math.Floor(lct))
-		f.metrics.Set(ltype.Name, "CT", lct)
+		c.metrics.Set(ltype.Name, "CT", lct)
 
 		lbri := ltype.BRI.LinearInterpolated(BRI)
 		sensor.AddFloatAttr("BRI", math.Floor(lbri))
-		f.metrics.Set(ltype.Name, "BRI", lbri)
+		c.metrics.Set(ltype.Name, "BRI", lbri)
 
-		f.metrics.Send(ltype.Name)
+		c.metrics.Send(ltype.Name)
 
 		jsonstr, err := sensor.ToJSON()
 		if err == nil {
@@ -238,17 +242,17 @@ func publishSensor(channel string, sensorjson string, client *pubsub.Context) {
 }
 
 func main() {
-	flux := New()
+	c := new()
 
-	logger := logpkg.New("flux")
+	logger := logpkg.New(c.name)
 	logger.AddEntry("emitter")
-	logger.AddEntry("flux")
+	logger.AddEntry(c.name)
 
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/", "state/light/hue/", "state/light/yee/"}
 		subscribe := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/"}
-		err := client.Connect("flux", register, subscribe)
+		err := client.Connect(c.name, register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
 
@@ -257,47 +261,47 @@ func main() {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
-					if topic == "config/flux/" {
-						flux.config, err = config.FluxConfigFromJSON(string(msg.Payload()))
+					if topic == c.cfgch {
+						c.config, err = config.FluxConfigFromJSON(string(msg.Payload()))
 						if err == nil {
-							logger.LogInfo("flux", "received configuration")
+							logger.LogInfo(c.name, "received configuration")
 						} else {
-							logger.LogError("flux", err.Error())
+							logger.LogError(c.name, err.Error())
 						}
 					} else if topic == "state/sensor/weather/" {
-						flux.weather, err = config.SensorStateFromJSON(string(msg.Payload()))
+						c.weather, err = config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
-							logger.LogInfo("flux", "received weather state")
+							logger.LogInfo(c.name, "received weather state")
 						} else {
-							logger.LogError("flux", err.Error())
+							logger.LogError(c.name, err.Error())
 						}
 					} else if topic == "state/sensor/sun/" {
-						flux.suncalc, err = config.SensorStateFromJSON(string(msg.Payload()))
+						c.suncalc, err = config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
-							logger.LogInfo("flux", "received sun state")
+							logger.LogInfo(c.name, "received sun state")
 						} else {
-							logger.LogError("flux", err.Error())
+							logger.LogError(c.name, err.Error())
 						}
 					} else if topic == "state/sensor/season/" {
 						seasonSensorState, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
-							logger.LogInfo("flux", "received season state")
-							flux.seasonName = seasonSensorState.GetValueAttr("season", "winter")
+							logger.LogInfo(c.name, "received season state")
+							c.seasonName = seasonSensorState.GetValueAttr("season", "winter")
 						} else {
-							logger.LogError("flux", err.Error())
+							logger.LogError(c.name, err.Error())
 						}
 					} else if topic == "client/disconnected/" {
 						logger.LogInfo("emitter", "disconnected")
 						connected = false
 					}
 				case <-time.After(time.Second * 10):
-					flux.Process(client)
+					c.Process(client)
 				}
 			}
 		}
 
 		if err != nil {
-			logger.LogError("flux", err.Error())
+			logger.LogError(c.name, err.Error())
 		}
 		time.Sleep(5 * time.Second)
 	}

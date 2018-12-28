@@ -35,88 +35,132 @@ service 'automation' which in turn will execute the logic.
 
 */
 
-// Huecontext holds all necessary information
-type Huecontext struct {
-	key    string
+// context holds all necessary information
+type context struct {
+	name   string
 	config *config.HueBridgeConfig
-
-	log *logpkg.Logger
+	vars   map[string]bool
+	update []string
+	log    *logpkg.Logger
 }
 
 // New creates a new instance of hue instance
-func New() *Huecontext {
-	hue := &Huecontext{}
-	return hue
+func new() *context {
+	c := &context{}
+	c.name = "huebridge"
+	c.vars = map[string]bool{}
+	c.update = []string{}
+	return c
 }
 
-func (hue *Huecontext) initialize() (err error) {
+func (c *context) initialize() (err error) {
+	if c.config != nil {
+		// huebridge.SetLogger(os.Stdout)
+		// For every 'device' register a handler:
+		for _, dev := range c.config.EmulatedDevices {
+			huebridge.Handle(dev.Name, func(req huebridge.Request, res *huebridge.Response) {
+				fmt.Println("HueBridge request from:", req.RemoteAddr, req.RequestedOnState)
 
-	// huebridge.SetLogger(os.Stdout)
+				res.OnState = req.RequestedOnState
+				c.vars[dev.Name] = req.RequestedOnState
 
-	// Every 'device' (light/switch) is identical to 'handler'
+				// These will be send on the "state/sensor/vars/" channel
+				c.update = append(c.update, dev.Name)
 
-	// For every 'device' register a handler:
-	huebridge.Handle("test", func(req huebridge.Request, res *huebridge.Response) {
-		fmt.Println("im handling test from", req.RemoteAddr, req.RequestedOnState)
-		res.OnState = req.RequestedOnState
-
-		// Set ErrorState to true to have the echo respond with "unable to reach device"
-		// res.ErrorState = true
-		return
-	})
-
-	// it is very important to use a full IP here or the UPNP does not work correctly.
-	// one day ill fix this
-	err = huebridge.ListenAndServe("10.0.0.11:5000")
-
+				// Set ErrorState to true to have the echo respond with "unable to reach device"
+				// res.ErrorState = true
+				return
+			})
+		}
+		// it is very important to use a full IP here or the UPNP does not work correctly.
+		// one day ill fix this
+		err = huebridge.ListenAndServe(c.config.IPPort)
+	} else {
+		err = fmt.Errorf("Cannot initialize Hue-Bridge without a configuration")
+	}
 	return err
 }
 
-func main() {
-	hue := New()
+func (c *context) getChannelsToRegister() []string {
+	channels := []string{}
+	for _, ch := range c.config.RegisterChannels {
+		channels = append(channels, ch)
+	}
+	for _, dev := range c.config.EmulatedDevices {
+		channels = append(channels, dev.Name)
+	}
+	return channels
+}
 
-	hue.log = logpkg.New("hue-bridge")
-	hue.log.AddEntry("emitter")
-	hue.log.AddEntry("hue-bridge")
+func (c *context) getChannelsToSubscribe() []string {
+	channels := []string{}
+	channels = append(channels, "config/"+c.name+"/")
+	for _, ch := range c.config.SubscribeChannels {
+		channels = append(channels, ch)
+	}
+	return channels
+}
+
+func (c *context) process(client *pubsub.Context) {
+	vars := config.NewSensorState("state.sensor.vars")
+	for _, ev := range c.update {
+		state := c.vars[ev]
+		vars.AddBoolAttr(ev, state)
+	}
+
+	jsonstr, err := vars.ToJSON()
+	if err == nil {
+		fmt.Println(jsonstr)
+		client.Publish("state/sensor/vars/", jsonstr)
+	}
+}
+
+func main() {
+	c := new()
+
+	c.log = logpkg.New(c.name)
+	c.log.AddEntry("emitter")
+	c.log.AddEntry(c.name)
 
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
-		register := []string{"config/huebridge/"}
-		subscribe := []string{"config/hue/", "state/sensor/hue/", "sensor/light/hue/"}
-		err := client.Connect("hue-bridge", register, subscribe)
+		register := c.getChannelsToRegister()
+		subscribe := c.getChannelsToSubscribe()
+		err := client.Connect(c.name, register, subscribe)
 		if err == nil {
-			hue.log.LogInfo("emitter", "connected")
+			c.log.LogInfo("emitter", "connected")
 
 			connected := true
 			for connected {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
-					if topic == "config/huebridge/" {
+					if topic == "config/"+c.name+"/" {
 						config, err := config.HueBridgeConfigFromJSON(string(msg.Payload()))
 						if err == nil {
-							hue.log.LogInfo("hue-bridge", "received configuration")
-							hue.config = config
-							err = hue.initialize()
+							c.log.LogInfo(c.name, "received configuration")
+							c.config = config
+							err = c.initialize()
 							if err != nil {
-								hue.log.LogError("hue-bridge", err.Error())
+								c.log.LogError(c.name, err.Error())
 							}
 						} else {
-							hue.log.LogError("hue-bridge", err.Error())
+							c.log.LogError(c.name, err.Error())
 						}
 					} else if topic == "client/disconnected/" {
-						hue.log.LogInfo("emitter", "disconnected")
+						c.log.LogInfo("emitter", "disconnected")
 						connected = false
 					}
 
-				case <-time.After(time.Second * 60):
-					//
+				case <-time.After(time.Second * 1):
+					// Drain events and send them to 'state/sensor/var'
+					c.process(client)
 				}
 			}
 		}
 
 		if err != nil {
-			hue.log.LogError("hue-bridge", err.Error())
+			c.log.LogError(c.name, err.Error())
 		}
 
 		time.Sleep(5 * time.Second)
