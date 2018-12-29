@@ -10,24 +10,31 @@ import (
 )
 
 // Instance is our instant-messenger instance (currently Slack)
-type Instance struct {
+type instance struct {
+	name   string
 	config *config.ShoutConfig
 	client *slack.Client
 }
 
+func new() *instance {
+	s := &instance{}
+	s.name = "shout"
+	return s
+}
+
 // New creates a new instance of Slack
-func New(jsonstr string) (*Instance, error) {
-	shout := &Instance{}
+func (s *instance) initialize(jsonstr string) error {
+	s.name = "shout"
 	config, err := config.ShoutConfigFromJSON(jsonstr)
 	if err == nil {
-		shout.config = config
-		shout.client = slack.New(config.Key.String)
+		s.config = config
+		s.client = slack.New(config.Key.String)
 	}
-	return shout, err
+	return err
 }
 
 // postMessage posts a message to a channel
-func (s *Instance) postMessage(jsonmsg string) (err error) {
+func (s *instance) postMessage(jsonmsg string) (err error) {
 	m, err := config.ShoutMsgFromJSON(jsonmsg)
 	if err == nil {
 		_, _, err = s.client.PostMessage(m.Channel, slack.MsgOptionText("Some text", false), slack.MsgOptionUsername("g0-h0m3"), slack.MsgOptionAsUser(true))
@@ -37,11 +44,11 @@ func (s *Instance) postMessage(jsonmsg string) (err error) {
 
 func main() {
 
-	var shout *Instance
+	c := new()
 
-	logger := logpkg.New("shout")
+	logger := logpkg.New(c.name)
 	logger.AddEntry("emitter")
-	logger.AddEntry("shout")
+	logger.AddEntry(c.name)
 
 	for {
 		connected := true
@@ -49,7 +56,7 @@ func main() {
 			client := pubsub.New(config.EmitterIOCfg)
 			register := []string{"config/shout/", "shout/message/"}
 			subscribe := []string{"config/shout/", "shout/message/"}
-			err := client.Connect("shout", register, subscribe)
+			err := client.Connect(c.name, register, subscribe)
 			if err == nil {
 				logger.LogInfo("emitter", "connected")
 
@@ -58,21 +65,21 @@ func main() {
 					case msg := <-client.InMsgs:
 						topic := msg.Topic()
 						if topic == "config/shout/" {
-							logger.LogInfo("shout", "received configuration")
-							shout, err = New(string(msg.Payload()))
+							logger.LogInfo(c.name, "received configuration")
+							err = c.initialize(string(msg.Payload()))
 							if err != nil {
-								logger.LogError("shout", err.Error())
+								logger.LogError(c.name, err.Error())
 							}
 						} else if topic == "client/disconnected/" {
 							logger.LogInfo("emitter", "disconnected")
 							connected = false
 						} else if topic == "shout/message/" {
 							// Is this a message to send over slack ?
-							if shout != nil {
-								logger.LogInfo("shout", "message")
-								err = shout.postMessage(string(msg.Payload()))
+							if c.client != nil {
+								logger.LogInfo(c.name, "message")
+								err = c.postMessage(string(msg.Payload()))
 								if err != nil {
-									logger.LogError("shout", err.Error())
+									logger.LogError(c.name, err.Error())
 								}
 							}
 						}
@@ -87,7 +94,7 @@ func main() {
 			}
 
 			if err != nil {
-				logger.LogError("shout", err.Error())
+				logger.LogError(c.name, err.Error())
 			}
 		}
 

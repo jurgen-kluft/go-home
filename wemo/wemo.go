@@ -13,33 +13,35 @@ import (
 )
 
 type instance struct {
+	name    string
 	key     string
 	devices map[string]*Switch
 	config  *config.WemoConfig
 	log     *logpkg.Logger
 }
 
-func New() *instance {
-	thewemo := &instance{}
-	thewemo.devices = map[string]*Switch{}
+func new() *instance {
+	c := &instance{}
+	c.name = "wemo"
+	c.devices = map[string]*Switch{}
 
-	thewemo.log = logpkg.New("wemo")
-	thewemo.log.AddEntry("emitter")
-	thewemo.log.AddEntry("wemo")
+	c.log = logpkg.New(c.name)
+	c.log.AddEntry("emitter")
+	c.log.AddEntry(c.name)
 
-	return thewemo
+	return c
 }
 
 func main() {
-	thewemo := New()
+	c := new()
 
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/wemo/", "sensor/state/wemo/"}
 		subscribe := []string{"config/wemo/", "sensor/state/wemo/"}
-		err := client.Connect("wemo", register, subscribe)
+		err := client.Connect(c.name, register, subscribe)
 		if err == nil {
-			thewemo.log.LogInfo("emitter", "connected")
+			c.log.LogInfo("emitter", "connected")
 
 			connected := true
 			for connected {
@@ -47,19 +49,19 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/wemo/" {
-						thewemo.log.LogInfo("wemo", "received configuration")
-						thewemo.config, err = config.WemoConfigFromJSON(string(msg.Payload()))
-						thewemo.devices = map[string]*Switch{}
-						for _, d := range thewemo.config.Devices {
-							thewemo.devices[d.Name] = NewSwitch(d.Name, d.IP+":"+d.Port)
+						c.log.LogInfo(c.name, "received configuration")
+						c.config, err = config.WemoConfigFromJSON(string(msg.Payload()))
+						c.devices = map[string]*Switch{}
+						for _, d := range c.config.Devices {
+							c.devices[d.Name] = NewSwitch(d.Name, d.IP+":"+d.Port)
 						}
 					} else if topic == "sensor/state/wemo/" {
 						sensor, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
-							thewemo.log.LogInfo("wemo", "received configuration")
+							c.log.LogInfo(c.name, "received configuration")
 							devicename := sensor.GetValueAttr("name", "")
 							if devicename != "" {
-								device, exists := thewemo.devices[devicename]
+								device, exists := c.devices[devicename]
 								if exists {
 									power := sensor.GetValueAttr("power", "")
 									if power != "" {
@@ -72,10 +74,10 @@ func main() {
 								}
 							}
 						} else {
-							thewemo.log.LogError("wemo", "received bad configuration")
+							c.log.LogError(c.name, "received bad configuration")
 						}
 					} else if topic == "client/disconnected/" {
-						thewemo.log.LogInfo("emitter", "disconnected")
+						c.log.LogInfo("emitter", "disconnected")
 						connected = false
 					}
 				}
@@ -83,7 +85,7 @@ func main() {
 		}
 
 		if err != nil {
-			thewemo.log.LogError("wemo", err.Error())
+			c.log.LogError(c.name, err.Error())
 		}
 
 		time.Sleep(5 * time.Second)

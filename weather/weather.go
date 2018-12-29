@@ -15,6 +15,7 @@ func converFToC(fahrenheit float64) float64 {
 }
 
 type instance struct {
+	name      string
 	config    *config.WeatherConfig
 	location  *time.Location
 	darksky   *darksky.Client
@@ -24,17 +25,22 @@ type instance struct {
 	update    time.Time
 }
 
-func New(config *config.WeatherConfig) *instance {
+func new() *instance {
 	c := &instance{}
-	c.config = config
+	c.name = "weather"
 	c.darkargs = map[string]string{}
-	c.darksky = darksky.NewClient(c.config.Key.String)
+	c.darksky = nil
 	c.darkargs = map[string]string{}
 	c.darkargs["units"] = "si"
-	c.latitude = c.config.Location.Latitude
-	c.longitude = c.config.Location.Longitude
 	c.update = time.Now()
 	return c
+}
+
+func (c *instance) initialize(config *config.WeatherConfig) {
+	c.config = config
+	c.darksky = darksky.NewClient(c.config.Key.String)
+	c.latitude = c.config.Location.Latitude
+	c.longitude = c.config.Location.Longitude
 }
 
 func (c *instance) getRainDescription(rain float64) string {
@@ -151,10 +157,10 @@ func atHour(date time.Time, h int, m int) time.Time {
 	return now
 }
 
-func (c *instance) Process(client *pubsub.Context) {
+func (c *instance) process(client *pubsub.Context) {
 	now := time.Now()
 
-	state := config.NewSensorState("weather")
+	state := config.NewSensorState(c.name)
 
 	// Weather update every 5 minutes
 	if now.Unix() >= c.update.Unix() {
@@ -186,17 +192,17 @@ func (c *instance) Process(client *pubsub.Context) {
 }
 
 func main() {
-	var weather *instance
+	c := new()
 
-	logger := logpkg.New("weather")
+	logger := logpkg.New(c.name)
 	logger.AddEntry("emitter")
-	logger.AddEntry("weather")
+	logger.AddEntry(c.name)
 
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/weather/", "state/sensor/weather/"}
 		subscribe := []string{"config/weather/"}
-		err := client.Connect("weather", register, subscribe)
+		err := client.Connect(c.name, register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
 
@@ -206,12 +212,12 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/weather/" {
-						logger.LogInfo("weather", "received configuration")
+						logger.LogInfo(c.name, "received configuration")
 						weatherConfig, err := config.WeatherConfigFromJSON(string(msg.Payload()))
 						if err == nil {
-							weather = New(weatherConfig)
+							c.initialize(weatherConfig)
 						} else {
-							logger.LogError("weather", err.Error())
+							logger.LogError(c.name, err.Error())
 						}
 					} else if topic == "client/disconnected/" {
 						logger.LogInfo("emitter", "disconnected")
@@ -219,15 +225,15 @@ func main() {
 					}
 
 				case <-time.After(time.Second * 60):
-					if weather != nil {
-						weather.Process(client)
+					if c.darksky != nil {
+						c.process(client)
 					}
 				}
 			}
 		}
 
 		if err != nil {
-			logger.LogError("weather", err.Error())
+			logger.LogError(c.name, err.Error())
 		}
 
 		time.Sleep(5 * time.Second)

@@ -13,39 +13,58 @@ import (
 // https://github.com/nunows/goyeelight
 
 type instance struct {
+	name   string
 	key    string
 	lamps  map[string]*yee.Yeelight
 	config *config.YeeConfig
+	logger *logpkg.Logger
 }
 
-func (x *instance) poweron(name string) {
-	lamp, exists := x.lamps[name]
+func new() *instance {
+	c := &instance{}
+	c.name = "yee"
+	c.lamps = map[string]*yee.Yeelight{}
+
+	c.logger = logpkg.New(c.name)
+	c.logger.AddEntry("emitter")
+	c.logger.AddEntry(c.name)
+
+	return c
+}
+
+func (c *instance) initialize(jsonstr string) error {
+	var err error
+	c.config, err = config.YeeConfigFromJSON(jsonstr)
+	c.lamps = map[string]*yee.Yeelight{}
+	for _, lamp := range c.config.Lights {
+		c.lamps[lamp.Name] = yee.New(lamp.IP, lamp.Port)
+	}
+	return err
+}
+
+func (c *instance) poweron(name string) {
+	lamp, exists := c.lamps[name]
 	if exists {
 		lamp.On()
 	}
 }
-func (x *instance) poweroff(name string) {
-	lamp, exists := x.lamps[name]
+func (c *instance) poweroff(name string) {
+	lamp, exists := c.lamps[name]
 	if exists {
 		lamp.Off()
 	}
 }
 
 func main() {
-	yeelighting := &instance{}
-	yeelighting.lamps = map[string]*yee.Yeelight{}
-
-	logger := logpkg.New("yee")
-	logger.AddEntry("emitter")
-	logger.AddEntry("yee")
+	c := new()
 
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/yee/", "state/sensor/yee/", "state/light/yee/"}
 		subscribe := []string{"config/yee/", "state/sensor/yee/", "state/light/yee/"}
-		err := client.Connect("yee", register, subscribe)
+		err := client.Connect(c.name, register, subscribe)
 		if err == nil {
-			logger.LogInfo("emitter", "connected")
+			c.logger.LogInfo("emitter", "connected")
 
 			connected := true
 			for connected {
@@ -53,20 +72,16 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/yee/" {
-						logger.LogInfo("yee", "received configuration")
-						yeelighting.config, err = config.YeeConfigFromJSON(string(msg.Payload()))
-						yeelighting.lamps = map[string]*yee.Yeelight{}
-						for _, lamp := range yeelighting.config.Lights {
-							yeelighting.lamps[lamp.Name] = yee.New(lamp.IP, lamp.Port)
-						}
+						c.logger.LogInfo(c.name, "received configuration")
+						c.initialize(string(msg.Payload()))
 					} else if topic == "state/light/yee/" {
 						yeesensor, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
-							logger.LogInfo("yee", "received state")
+							c.logger.LogInfo(c.name, "received state")
 
 							lampname := yeesensor.GetValueAttr("name", "")
 							if lampname != "" {
-								lamp, exists := yeelighting.lamps[lampname]
+								lamp, exists := c.lamps[lampname]
 								if exists {
 									yeesensor.ExecValueAttr("power", func(power string) {
 										if power == "on" {
@@ -83,7 +98,7 @@ func main() {
 									})
 								}
 							} else if lampname == "all" {
-								for _, lamp := range yeelighting.lamps {
+								for _, lamp := range c.lamps {
 									yeesensor.ExecFloatAttr("ct", func(ct float64) {
 										lamp.SetCtAbx(fmt.Sprintf("%f", ct), "smooth", "500")
 									})
@@ -95,7 +110,7 @@ func main() {
 						}
 
 					} else if topic == "client/disconnected/" {
-						logger.LogInfo("emitter", "disconnected")
+						c.logger.LogInfo("emitter", "disconnected")
 						connected = false
 					}
 
@@ -106,7 +121,7 @@ func main() {
 		}
 
 		if err != nil {
-			logger.LogError("yee", err.Error())
+			c.logger.LogError(c.name, err.Error())
 		}
 
 		time.Sleep(5 * time.Second)

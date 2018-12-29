@@ -388,17 +388,23 @@ func getMoonTimes(date time.Time, lat float64, lng float64, inUTC bool) (moonris
 }
 
 type instance struct {
+	name   string
 	config *config.SuncalcConfig
 }
 
-func construct(jsonstr string) (*instance, error) {
+func new() *instance {
 	var s *instance
+	s = &instance{}
+	s.name = "suncalc"
+	return s
+}
+
+func (s *instance) initialize(jsonstr string) error {
 	config, err := config.SuncalcConfigFromJSON(jsonstr)
 	if err == nil {
-		s = &instance{}
 		s.config = config
 	}
-	return s, err
+	return err
 }
 
 func (s *instance) process(client *pubsub.Context) {
@@ -426,17 +432,17 @@ func (s *instance) process(client *pubsub.Context) {
 }
 
 func main() {
-	var suncalc *instance
+	suncalc := new()
 
-	logger := logpkg.New("suncalc")
+	logger := logpkg.New(suncalc.name)
 	logger.AddEntry("emitter")
-	logger.AddEntry("suncalc")
+	logger.AddEntry(suncalc.name)
 
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/suncalc/", "state/sensor/sun/"}
 		subscribe := []string{"config/suncalc/"}
-		err := client.Connect("suncalc", register, subscribe)
+		err := client.Connect(suncalc.name, register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
 
@@ -447,9 +453,9 @@ func main() {
 					topic := msg.Topic()
 					if topic == "config/suncalc/" {
 						logger.LogInfo("suncalc", "received configuration")
-						suncalc, err = construct(string(msg.Payload()))
+						err = suncalc.initialize(string(msg.Payload()))
 						if err != nil {
-							logger.LogError("suncalc", err.Error())
+							logger.LogError(suncalc.name, err.Error())
 						}
 					} else if topic == "client/disconnected/" {
 						logger.LogInfo("emitter", "disconnected")
@@ -465,7 +471,7 @@ func main() {
 		}
 
 		if err != nil {
-			logger.LogError("suncalc", err.Error())
+			logger.LogError(suncalc.name, err.Error())
 		}
 
 		time.Sleep(5 * time.Second)
