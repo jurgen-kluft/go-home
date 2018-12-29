@@ -82,14 +82,15 @@ func CryptKey() []byte {
 		key := os.Getenv("GO_HOME_KEY")
 		if key == "" {
 			fmt.Println("Error, you did not set the environment variable GO_HOME_KEY")
+		} else {
+			SetCryptKey([]byte(key))
 		}
-		cryptKeeperKey = []byte(key)
 	}
 	//fmt.Println("CryptKey:", string(cryptKeeperKey))
 	return cryptKeeperKey
 }
 
-// AES-encrypt string and then base64-encode
+// Encrypt AES-encrypt string and then base64-encode
 func Encrypt(text string) (string, error) {
 	plaintext := []byte(text)
 
@@ -112,7 +113,7 @@ func Encrypt(text string) (string, error) {
 	return base64.URLEncoding.EncodeToString(ciphertext), nil
 }
 
-// base64-decode and then AES decrypt string
+// Decrypt base64-decode and then AES decrypt string
 func Decrypt(cryptoText string) (string, error) {
 	ciphertext, err := base64.URLEncoding.DecodeString(cryptoText)
 	if err != nil {
@@ -127,7 +128,7 @@ func Decrypt(cryptoText string) (string, error) {
 	// The IV needs to be unique, but not secure. Therefore it's common to
 	// include it at the beginning of the ciphertext.
 	if byteLen := len(ciphertext); byteLen < aes.BlockSize {
-		return "", fmt.Errorf("invalid cipher size %d.", byteLen)
+		return "", fmt.Errorf("invalid cipher size %d", byteLen)
 	}
 
 	iv := ciphertext[:aes.BlockSize]
