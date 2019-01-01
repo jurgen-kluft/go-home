@@ -18,8 +18,8 @@ var EmitterIOWork = map[string]string{
 var EmitterIOCfg = EmitterIOHome
 
 var InfluxSecrets = map[string]string{
-	"host": "http://localhost:8086",
-	//"host":     "http://10.0.0.22:8086",
+	//"host": "http://localhost:8086",
+	"host":     "http://10.0.0.22:8086",
 	"username": "influxdb",
 	"password": "password",
 	"database": "gohome",

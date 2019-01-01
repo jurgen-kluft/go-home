@@ -23,18 +23,22 @@ type Calendar struct {
 	log          *logpkg.Logger
 }
 
-// New  ... create a new Calendar from the given JSON configuration
-func New(jsonstr string, log *logpkg.Logger) (*Calendar, error) {
-	var err error
-
+func new() *Calendar {
 	c := &Calendar{}
 	c.name = "calendar"
-	c.log = log
+	c.log = logpkg.New(c.name)
+	c.log.AddEntry("emitter")
+	c.log.AddEntry(c.name)
 	c.sensors = map[string]config.Csensor{}
 	c.sensorStates = map[string]*config.SensorState{}
+	return c
+}
+
+// initialize  ... create a new Calendar from the given JSON configuration
+func (c *Calendar) initialize(jsonstr string) (err error) {
 	c.config, err = config.CalendarConfigFromJSON(jsonstr)
 	if err != nil {
-		log.LogError(c.name, err.Error())
+		c.log.LogError(c.name, err.Error())
 	}
 	//c.ccal.print()
 	for _, sn := range c.config.Sensors {
@@ -59,13 +63,13 @@ func New(jsonstr string, log *logpkg.Logger) (*Calendar, error) {
 		} else if strings.HasPrefix(cal.URL.String, "file") {
 			c.cals = append(c.cals, icalendar.NewFileCalendar(cal.URL.String))
 		} else {
-			log.LogError(c.name, fmt.Sprintf("Unknown calendar source '%s'", cal.URL))
+			c.log.LogError(c.name, fmt.Sprintf("Unknown calendar source '%s'", cal.URL))
 		}
 	}
 
 	c.update = time.Now()
 
-	return c, err
+	return err
 }
 
 func (c *Calendar) updateSensorStates(when time.Time) error {
@@ -266,11 +270,7 @@ func (c *Calendar) Process(client *pubsub.Context) {
 
 func main() {
 
-	var c *Calendar
-
-	logger := logpkg.New(c.name)
-	logger.AddEntry("emitter")
-	logger.AddEntry(c.name)
+	c := new()
 
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
@@ -278,7 +278,7 @@ func main() {
 		subscribe := []string{"config/calendar/"}
 		err := client.Connect(c.name, register, subscribe)
 		if err == nil {
-			logger.LogInfo("emitter", "connected")
+			c.log.LogInfo("emitter", "connected")
 
 			connected := true
 			for connected {
@@ -286,22 +286,22 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/calendar/" {
-						logger.LogInfo(c.name, "received configuration")
+						c.log.LogInfo(c.name, "received configuration")
 						jsonmsg := string(msg.Payload())
-						c, err = New(jsonmsg, logger)
+						err = c.initialize(jsonmsg)
 						if err != nil {
 							c = nil
-							logger.LogError(c.name, err.Error())
+							c.log.LogError(c.name, err.Error())
 						} else {
 							// Register emitter channel for every sensor
 							for _, ss := range c.sensorStates {
 								if err = client.Register(fmt.Sprintf("state/sensor/%s/", ss.Name)); err != nil {
-									logger.LogError("emitter", err.Error())
+									c.log.LogError("emitter", err.Error())
 								}
 							}
 						}
 					} else if topic == "client/disconnected/" {
-						logger.LogInfo("emitter", "disconnected")
+						c.log.LogInfo("emitter", "disconnected")
 						connected = false
 					}
 					break
@@ -315,7 +315,7 @@ func main() {
 		}
 
 		if err != nil {
-			logger.LogError(c.name, err.Error())
+			c.log.LogError(c.name, err.Error())
 		}
 		time.Sleep(5 * time.Second)
 	}

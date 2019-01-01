@@ -1,0 +1,23 @@
+{
+    "componentConfigs": [
+        {
+            "id": "a3b9bbb7-3644-f0ab-ba4b-d79792d17ca6",
+            "folder": "",
+            "name": "",
+            "dependencies": [],
+            "type": "IoTHub"
+        },
+        {
+            "id": "31c17571-315e-4da9-3e63-28ad1f6a0af9",
+            "folder": "Functions",
+            "name": "",
+            "dependencies": [
+                {
+                    "id": "a3b9bbb7-3644-f0ab-ba4b-d79792d17ca6",
+                    "type": 1
+                }
+            ],
+            "type": "AzureFunctions"
+        }
+    ]
+}

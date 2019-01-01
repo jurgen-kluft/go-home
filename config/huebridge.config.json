@@ -1,5 +1,5 @@
 {
-	"ip_port": "10.0.0.22:5000",
+	"ip_port": "10.0.0.11:5000",
     "register_channels": [
         "shout/message/"
     ],

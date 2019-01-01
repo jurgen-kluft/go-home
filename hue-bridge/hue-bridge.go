@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
+	"github.com/jurgen-kluft/go-home/hue-bridge/hue-bridgex"
 	logpkg "github.com/jurgen-kluft/go-home/logging"
 	"github.com/jurgen-kluft/go-home/pubsub"
-	huebridge "github.com/pborges/huejack"
 )
 
 /*
@@ -55,14 +56,15 @@ func new() *context {
 
 func (c *context) initialize() (err error) {
 	if c.config != nil {
-		// huebridge.SetLogger(os.Stdout)
+		huebridgex.SetLogger(os.Stdout)
 		// For every 'device' register a handler:
 		for _, dev := range c.config.EmulatedDevices {
-			huebridge.Handle(dev.Name, func(req huebridge.Request, res *huebridge.Response) {
+			huebridgex.Handle(dev.Name, func(req huebridgex.Request, res *huebridgex.Response) {
 				fmt.Println("HueBridge request from:", req.RemoteAddr, req.RequestedOnState)
 
-				res.OnState = req.RequestedOnState
 				c.vars[dev.Name] = req.RequestedOnState
+				res.OnState = c.vars[dev.Name]
+				res.ErrorState = false
 
 				// These will be send on the "state/sensor/vars/" channel
 				c.update = append(c.update, dev.Name)
@@ -71,10 +73,13 @@ func (c *context) initialize() (err error) {
 				// res.ErrorState = true
 				return
 			})
+			fmt.Println("HueBridge handler added:", dev.Name)
 		}
 		// it is very important to use a full IP here or the UPNP does not work correctly.
 		// one day ill fix this
-		err = huebridge.ListenAndServe(c.config.IPPort)
+		go huebridgex.ListenAndServe(c.config.IPPort)
+
+		fmt.Println("HueBridge initialized:", c.config.IPPort)
 	} else {
 		err = fmt.Errorf("Cannot initialize Hue-Bridge without a configuration")
 	}
@@ -83,11 +88,14 @@ func (c *context) initialize() (err error) {
 
 func (c *context) getChannelsToRegister() []string {
 	channels := []string{}
-	for _, ch := range c.config.RegisterChannels {
-		channels = append(channels, ch)
-	}
-	for _, dev := range c.config.EmulatedDevices {
-		channels = append(channels, dev.Name)
+	channels = append(channels, "config/"+c.name+"/")
+	if c.config != nil {
+		for _, ch := range c.config.RegisterChannels {
+			channels = append(channels, ch)
+		}
+		for _, dev := range c.config.EmulatedDevices {
+			channels = append(channels, dev.Name)
+		}
 	}
 	return channels
 }
@@ -95,23 +103,31 @@ func (c *context) getChannelsToRegister() []string {
 func (c *context) getChannelsToSubscribe() []string {
 	channels := []string{}
 	channels = append(channels, "config/"+c.name+"/")
-	for _, ch := range c.config.SubscribeChannels {
-		channels = append(channels, ch)
+	if c.config != nil {
+		for _, ch := range c.config.SubscribeChannels {
+			channels = append(channels, ch)
+		}
 	}
 	return channels
 }
 
 func (c *context) process(client *pubsub.Context) {
-	vars := config.NewSensorState("state.sensor.vars")
-	for _, ev := range c.update {
-		state := c.vars[ev]
-		vars.AddBoolAttr(ev, state)
-	}
+	if len(c.update) > 0 {
+		vars := config.NewSensorState("state.sensor.vars")
+		for _, ev := range c.update {
+			state := c.vars[ev]
+			vars.AddBoolAttr(ev, state)
+		}
 
-	jsonstr, err := vars.ToJSON()
-	if err == nil {
+		jsonstr, err := vars.ToJSON()
+		if err == nil {
+			client.Publish("state/sensor/vars/", jsonstr)
+		}
 		fmt.Println(jsonstr)
-		client.Publish("state/sensor/vars/", jsonstr)
+
+		// Ok, finished pushing the updates on the channel
+		// Clear the update log
+		c.update = []string{}
 	}
 }
 

@@ -6,6 +6,8 @@ tags
 
 #except all folders in go-home
 !*/
+.vscode/
+.build/
 
 #except the following files
 !*.cpp
@@ -16,3 +18,9 @@ tags
 
 !*.go
 !*.json
+!*.md
+
+!*.ino
+
+!*.code-workspace
+!*.iotworkbenchproject
