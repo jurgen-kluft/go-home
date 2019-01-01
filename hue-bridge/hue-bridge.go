@@ -31,9 +31,6 @@ Wild ideas:
 
 Ok, so the configuration is mostly about defining 'variables' which are mostly routed to
 service 'automation' which in turn will execute the logic.
-
-
-
 */
 
 // context holds all necessary information

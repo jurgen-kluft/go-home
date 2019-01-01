@@ -13,53 +13,55 @@ import (
 )
 
 type instance struct {
+	name   string
 	config *config.SamsungTVConfig
 	tvs    map[string]samote.Remote
 }
 
 // New ...
-func New() *instance {
-	x := &instance{}
-	x.config = nil
-	x.tvs = map[string]samote.Remote{}
-	return x
+func new() *instance {
+	c := &instance{}
+	c.name = "samsung.tv"
+	c.config = nil
+	c.tvs = map[string]samote.Remote{}
+	return c
 }
 
-func (x *instance) Add(host string, name string, id string) error {
+func (c *instance) Add(host string, name string, id string) error {
 	var err error
 	var remote samote.Remote
 	remote, err = samote.Dial(host, name, id)
 	if err == nil {
-		x.tvs[name] = remote
+		c.tvs[name] = remote
 	}
 	return err
 }
 
-func (x *instance) poweron(name string) {
-	remote, exists := x.tvs[name]
+func (c *instance) poweron(name string) {
+	remote, exists := c.tvs[name]
 	if exists {
 		remote.SendKey(samote.KEY_POWERON)
 	}
 }
-func (x *instance) poweroff(name string) {
-	remote, exists := x.tvs[name]
+func (c *instance) poweroff(name string) {
+	remote, exists := c.tvs[name]
 	if exists {
 		remote.SendKey(samote.KEY_POWEROFF)
 	}
 }
 
 func main() {
-	samsung := New()
+	c := new()
 
-	logger := logpkg.New("samsung.tv")
+	logger := logpkg.New(c.name)
 	logger.AddEntry("emitter")
-	logger.AddEntry("samsung.tv")
+	logger.AddEntry(c.name)
 
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/samsung.tv/", "state/samsung.tv/"}
 		subscribe := []string{"config/samsung.tv/", "state/samsung.tv/"}
-		err := client.Connect("tv.samsung", register, subscribe)
+		err := client.Connect(c.name, register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
 
@@ -69,25 +71,25 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/samsung.tv/" {
-						logger.LogInfo("samsung.tv", "received configuration")
-						samsung.config, err = config.SamsungTVConfigFromJSON(string(msg.Payload()))
-						for _, tv := range samsung.config.Devices {
-							err = samsung.Add(tv.IP, tv.Name, tv.ID)
+						logger.LogInfo(c.name, "received configuration")
+						c.config, err = config.SamsungTVConfigFromJSON(string(msg.Payload()))
+						for _, tv := range c.config.Devices {
+							err = c.Add(tv.IP, tv.Name, tv.ID)
 							if err == nil {
-								logger.LogInfo("samsung.tv", "registered TV with name "+tv.Name)
+								logger.LogInfo(c.name, "registered TV with name "+tv.Name)
 							} else {
-								logger.LogError("samsung.tv", err.Error())
+								logger.LogError(c.name, err.Error())
 							}
 						}
 					} else if topic == "state/samsung.tv/" {
-						logger.LogInfo("samsung.tv", "received configuration")
+						logger.LogInfo(c.name, "received configuration")
 						state, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
 							power := state.GetValueAttr("power", "idle")
 							if power == "off" {
-								samsung.poweroff(state.Name)
+								c.poweroff(state.Name)
 							} else if power == "on" {
-								samsung.poweron(state.Name)
+								c.poweron(state.Name)
 							}
 						}
 					} else if topic == "client/disconnected/" {
@@ -102,7 +104,7 @@ func main() {
 		}
 
 		if err != nil {
-			logger.LogError("samsung.tv", err.Error())
+			logger.LogError(c.name, err.Error())
 		}
 		time.Sleep(5 * time.Second)
 	}
