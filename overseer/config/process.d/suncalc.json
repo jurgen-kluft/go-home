@@ -1,0 +1,6 @@
+{
+    "name": "suncalc",
+    "command": "../suncalc/suncalc",
+    "redirect_stderr": true,
+    "stdout_logfile": "log/suncalc"
+}

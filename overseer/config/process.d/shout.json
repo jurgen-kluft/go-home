@@ -1,0 +1,6 @@
+{
+    "name": "shout",
+    "command": "../shout/shout",
+    "redirect_stderr": true,
+    "stdout_logfile": "log/shout"
+}

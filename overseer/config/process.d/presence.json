@@ -1,0 +1,6 @@
+{
+    "name": "presence",
+    "command": "../presence/presence",
+    "redirect_stderr": true,
+    "stdout_logfile": "log/presence"
+}

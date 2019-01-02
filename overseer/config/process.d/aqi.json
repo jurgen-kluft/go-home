@@ -1,0 +1,6 @@
+{
+    "name": "aqi",
+    "command": "../aqi/aqi",
+    "redirect_stderr": true,
+    "stdout_logfile": "log/aqi"
+}

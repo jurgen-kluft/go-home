@@ -1,0 +1,6 @@
+{
+    "name": "hue-bridge",
+    "command": "../hue-bridge/hue-bridge",
+    "redirect_stderr": true,
+    "stdout_logfile": "log/hue-bridge"
+}

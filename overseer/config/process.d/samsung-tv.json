@@ -1,0 +1,6 @@
+{
+    "name": "Samsung TV",
+    "command": "../samsung.tv/samsung.tv",
+    "redirect_stderr": true,
+    "stdout_logfile": "log/samsung.tv"
+}

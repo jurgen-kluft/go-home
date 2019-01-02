@@ -1,0 +1,6 @@
+{
+    "name": "flux",
+    "command": "../flux/flux",
+    "redirect_stderr": true,
+    "stdout_logfile": "log/flux"
+}

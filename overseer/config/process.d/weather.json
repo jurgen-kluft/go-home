@@ -1,0 +1,6 @@
+{
+    "name": "weather",
+    "command": "../weather/weather",
+    "redirect_stderr": true,
+    "stdout_logfile": "log/weather"
+}

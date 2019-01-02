@@ -1,0 +1,6 @@
+{
+    "name": "yee",
+    "command": "../yee/yee",
+    "redirect_stderr": true,
+    "stdout_logfile": "log/yee"
+}

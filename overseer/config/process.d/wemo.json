@@ -1,0 +1,6 @@
+{
+    "name": "wemo",
+    "command": "../wemo/wemo",
+    "redirect_stderr": true,
+    "stdout_logfile": "log/wemo"
+}

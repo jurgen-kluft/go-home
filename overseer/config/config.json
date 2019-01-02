@@ -1,0 +1,7 @@
+{
+  "http": {
+    "enabled": true,
+    "listen": "127.0.0.1:5000"
+  },
+  "log_directory": "/logs/overseer"
+}

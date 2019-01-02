@@ -1,0 +1,6 @@
+{
+    "name": "automation",
+    "command": "../automation/automation",
+    "redirect_stderr": true,
+    "stdout_logfile": "log/automation"
+}

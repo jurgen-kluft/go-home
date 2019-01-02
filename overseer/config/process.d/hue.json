@@ -1,0 +1,6 @@
+{
+    "name": "hue",
+    "command": "../hue/hue",
+    "redirect_stderr": true,
+    "stdout_logfile": "log/hue"
+}

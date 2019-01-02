@@ -1,0 +1,6 @@
+{
+    "name": "calendar",
+    "command": "../calendar/calendar",
+    "redirect_stderr": true,
+    "stdout_logfile": "log/calendar"
+}
