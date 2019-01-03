@@ -12,18 +12,18 @@ Still need to integrate the following:
 Setup the following on my Mac Mini:
 
 * Emitter.IO [DONE]
-* Influx DB
-* Grafana
+* Influx DB  [DONE]
+* Grafana    [WIP]
 
 ## Test
 
 Still need to test the following processes:
 
 * hue           [Basics are tested, can connect to bridge, can retrieve list of lights]
-* hue-bridge
+* hue-bridge    [Basics are tested, alexa can see the emulated bridge, variables can be set on/off]
 * wemo          [READY]
 
-The following have been tested:
+## Tested
 
 * aqi
 * bravia.tv
@@ -31,7 +31,7 @@ The following have been tested:
 * flux
 * presence
 * samsung.tv
-* shout 
+* shout
 * suncalc
 * weather
 * xiaomi
