@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	auto := New()
+	auto := new()
 
 	module := "automation"
 	logger := logpkg.New(module)
@@ -62,7 +62,7 @@ func main() {
 					} else if strings.HasPrefix(topic, "state/") {
 						state, err := config.SensorStateFromJSON(string(msg.Payload()))
 						if err == nil {
-							auto.HandleEvent(topic, state)
+							auto.handleEvent(topic, state)
 						} else {
 							logger.LogError(module, err.Error())
 						}
@@ -70,7 +70,7 @@ func main() {
 				case <-time.After(time.Second * 5):
 					if auto.config != nil {
 						auto.now = time.Now()
-						auto.UpdateTimedActions()
+						auto.updateTimedActions()
 					}
 				}
 			}
@@ -84,38 +84,34 @@ func main() {
 	}
 }
 
-type HomePresence struct {
+type homePresence struct {
 	occupied        bool
 	detection       bool
-	detectionResult bool
 	detectionStamp  time.Time
 	detectionWindow time.Duration
 	presence        map[string]bool
 }
 
-func NewPresence() *HomePresence {
-	h := &HomePresence{}
+func newPresence() *homePresence {
+	h := &homePresence{}
 	h.occupied = true
 	h.detection = true
-	h.detectionResult = false
 	h.detectionStamp = time.Now()
-	h.detectionWindow = time.Minute * 15
+	h.detectionWindow = time.Minute * 2
 	h.presence = map[string]bool{}
 	return h
 }
 
 // reset() should be called when the front-door is opened->closed because this
 // can indicate people have left the house.
-func (h *HomePresence) reset() {
+func (h *homePresence) reset() {
 	h.detection = true
-	h.detectionResult = false
 	h.detectionStamp = time.Now()
 }
 
-func (h *HomePresence) detect(now time.Time) {
+func (h *homePresence) detect(now time.Time) {
 	if h.detection {
 		if now.Sub(h.detectionStamp) > h.detectionWindow {
-			h.occupied = h.detectionResult
 			h.detection = false
 		}
 	} else {
@@ -128,20 +124,16 @@ func (h *HomePresence) detect(now time.Time) {
 	}
 }
 
-// report() should be called when a causation is detected like a button press or light switch press
-func (h *HomePresence) report(now time.Time) {
-	if h.detection {
-		if now.Sub(h.detectionStamp) < h.detectionWindow {
-			h.detectionResult = true
-		}
-	} else {
+// report() should be called when a causation is detected like a button press, light switch press or movement
+func (h *homePresence) report(now time.Time) {
+	if !h.detection {
 		// Any detected presence after the detection window means that people are home
 		// This kind of presence is a button, light switch or plug press
 		h.occupied = true
 	}
 }
 
-type Automation struct {
+type automation struct {
 	pubsub                      *pubsub.Context
 	config                      *config.AutomationConfig
 	sensors                     map[string]string
@@ -150,27 +142,27 @@ type Automation struct {
 	lastseenMotionInHouse       time.Time
 	lastseenMotionInKitchenArea time.Time
 	lastseenMotionInBedroom     time.Time
-	timedActions                map[string]*TimedAction
-	presence                    *HomePresence
+	timedActions                map[string]*timedAction
+	presence                    *homePresence
 }
 
-func New() *Automation {
-	auto := &Automation{}
+func new() *automation {
+	auto := &automation{}
 	auto.sensors = map[string]string{}
-	auto.presence = NewPresence()
+	auto.presence = newPresence()
 	return auto
 }
 
-func (a *Automation) FamilyIsHome() bool {
+func (a *automation) familyIsHome() bool {
 	return a.presence.occupied
 }
 
-func (a *Automation) SensorHasValue(name string, value string) bool {
+func (a *automation) sensorHasValue(name string, value string) bool {
 	v, e := a.sensors[name]
 	return e && (v == value)
 }
 
-func (a *Automation) TurnOnDevice(name string) error {
+func (a *automation) turnOnDevice(name string) error {
 	dc, exists := a.config.DeviceControlCache["name"]
 	if exists {
 		err := a.pubsub.Publish(dc.Channel, dc.On)
@@ -178,7 +170,7 @@ func (a *Automation) TurnOnDevice(name string) error {
 	}
 	return fmt.Errorf("device with name %s doesn't exist", name)
 }
-func (a *Automation) TurnOffDevice(name string) error {
+func (a *automation) turnOffDevice(name string) error {
 	dc, exists := a.config.DeviceControlCache["name"]
 	if exists {
 		err := a.pubsub.Publish(dc.Channel, dc.Off)
@@ -186,7 +178,7 @@ func (a *Automation) TurnOffDevice(name string) error {
 	}
 	return fmt.Errorf("device with name %s doesn't exist", name)
 }
-func (a *Automation) ToggleDevice(name string) error {
+func (a *automation) toggleDevice(name string) error {
 	dc, exists := a.config.DeviceControlCache["name"]
 	if exists {
 		err := a.pubsub.Publish(dc.Channel, dc.Toggle)
@@ -195,7 +187,7 @@ func (a *Automation) ToggleDevice(name string) error {
 	return fmt.Errorf("device with name %s doesn't exist", name)
 }
 
-func (a *Automation) HandleEvent(channel string, state *config.SensorState) {
+func (a *automation) handleEvent(channel string, state *config.SensorState) {
 	sensortype := ""
 	sensorname := ""
 	parts := strings.Split(channel, "/")
@@ -209,144 +201,144 @@ func (a *Automation) HandleEvent(channel string, state *config.SensorState) {
 	if sensorname != "" && sensortype == "sensor" {
 		a.sensors[sensorname] = state.GetValueAttr(sensorname, "")
 		if sensorname == "timeofday" {
-			a.HandleTimeOfDay(a.sensors[sensorname])
+			a.handleTimeOfDay(a.sensors[sensorname])
 		}
 	} else if sensortype == "xiaomi" {
 		name := state.Name
 		if name == config.SophiaRoomSwitch || name == config.BedroomSwitch {
-			a.HandleSwitch(name, state)
+			a.handleSwitch(name, state)
 		} else if name == config.KitchenMotionSensor || name == config.LivingroomMotionSensor || name == config.BedroomMotionSensor {
-			a.HandleMotionSensor(name, state)
+			a.handleMotionSensor(name, state)
 		} else if name == config.FrontdoorMagnetSensor {
-			a.HandleMagnetSensor(name, state)
+			a.handleMagnetSensor(name, state)
 		}
 	} else if sensortype == "presence" {
-		a.HandlePresence(state)
+		a.handlePresence(state)
 	}
 }
 
-func wakeUpParentsForJennifer(ta *TimedAction, a *Automation) {
+func wakeUpParentsForJennifer(ta *timedAction, a *automation) {
 	a.sendNotification("Waking up Parents for Jennifer")
-	a.TurnOnDevice(config.BedroomLights)
+	a.turnOnDevice(config.BedroomLights)
 }
-func wakeUpParentsForSophia(ta *TimedAction, a *Automation) {
+func wakeUpParentsForSophia(ta *timedAction, a *automation) {
 	a.sendNotification("Waking up Parents for Sophia")
-	a.TurnOnDevice(config.BedroomLights)
+	a.turnOnDevice(config.BedroomLights)
 }
-func wakeUpParentsForWork(ta *TimedAction, a *Automation) {
+func wakeUpParentsForWork(ta *timedAction, a *automation) {
 	a.sendNotification("Waking up Parents")
-	a.TurnOnDevice(config.BedroomLights)
+	a.turnOnDevice(config.BedroomLights)
 }
-func wakeUpJennifer(ta *TimedAction, a *Automation) {
+func wakeUpJennifer(ta *timedAction, a *automation) {
 	a.sendNotification("Waking up Jennifer")
-	a.TurnOnDevice(config.JenniferRoomLights)
+	a.turnOnDevice(config.JenniferRoomLights)
 }
-func wakeUpSophia(ta *TimedAction, a *Automation) {
+func wakeUpSophia(ta *timedAction, a *automation) {
 	a.sendNotification("Waking up Sophia")
-	a.TurnOnDevice(config.SophiaRoomLights)
+	a.turnOnDevice(config.SophiaRoomLights)
 }
-func turnOnFrontdoorHallLight(ta *TimedAction, a *Automation) {
-	a.TurnOnDevice(config.FrontdoorHallLight)
+func turnOnFrontdoorHallLight(ta *timedAction, a *automation) {
+	a.turnOnDevice(config.FrontdoorHallLight)
 }
 
 // HandleTimeOfDay deals with time-of-day transitions
-func (a *Automation) HandleTimeOfDay(to string) {
+func (a *automation) handleTimeOfDay(to string) {
 	if to != a.timeofday {
 		a.timeofday = to
 		switch to {
 		case "breakfast":
-			jenniferHasSchool := a.SensorHasValue("jennifer", "school")
-			sophiaHasSchool := a.SensorHasValue("sophia", "school")
-			parentsHaveToWork := a.SensorHasValue("parents", "work")
+			jenniferHasSchool := a.sensorHasValue("jennifer", "school")
+			sophiaHasSchool := a.sensorHasValue("sophia", "school")
+			parentsHaveToWork := a.sensorHasValue("parents", "work")
 			if jenniferHasSchool {
-				a.SetRealTimeAction("Waking up Parents for Jennifer", 6, 20, wakeUpParentsForJennifer)
+				a.setRealTimeAction("Waking up Parents for Jennifer", 6, 20, wakeUpParentsForJennifer)
 			} else if sophiaHasSchool {
-				a.SetRealTimeAction("Waking up Parents for Sophia", 7, 0, wakeUpParentsForSophia)
+				a.setRealTimeAction("Waking up Parents for Sophia", 7, 0, wakeUpParentsForSophia)
 			} else if parentsHaveToWork {
-				a.SetRealTimeAction("Waking up Parents", 7, 30, wakeUpParentsForWork)
+				a.setRealTimeAction("Waking up Parents", 7, 30, wakeUpParentsForWork)
 			}
 			if jenniferHasSchool {
-				a.SetRealTimeAction("Waking up Jennifer", 6, 30, wakeUpJennifer)
-				a.SetRealTimeAction("Turn on Hall Light", 7, 11, turnOnFrontdoorHallLight)
+				a.setRealTimeAction("Waking up Jennifer", 6, 30, wakeUpJennifer)
+				a.setRealTimeAction("Turn on Hall Light", 7, 11, turnOnFrontdoorHallLight)
 			}
 			if sophiaHasSchool {
-				a.SetRealTimeAction("Waking up Sophia", 7, 10, wakeUpSophia)
+				a.setRealTimeAction("Waking up Sophia", 7, 10, wakeUpSophia)
 			}
 		case "morning":
 			a.sendNotification("Turning off lights since it is morning")
-			a.TurnOffDevice(config.KitchenLights)
-			a.TurnOffDevice(config.LivingroomLights)
+			a.turnOffDevice(config.KitchenLights)
+			a.turnOffDevice(config.LivingroomLights)
 		case "lunch":
-			if a.FamilyIsHome() {
+			if a.familyIsHome() {
 				a.sendNotification("Turning on lights since it is noon and someone is home")
-				a.TurnOnDevice(config.KitchenLights)
+				a.turnOnDevice(config.KitchenLights)
 			}
 		case "afternoon":
 			a.sendNotification("Turning off lights since it is afternoon")
-			a.TurnOffDevice(config.KitchenLights)
+			a.turnOffDevice(config.KitchenLights)
 		case "evening":
-			a.TurnOnDevice(config.KitchenLights)
-			a.TurnOnDevice(config.LivingroomLights)
+			a.turnOnDevice(config.KitchenLights)
+			a.turnOnDevice(config.LivingroomLights)
 		case "bedtime":
-			if a.FamilyIsHome() {
-				if a.SensorHasValue("jennifer", "school") {
-					a.TurnOnDevice(config.JenniferRoomLights)
+			if a.familyIsHome() {
+				if a.sensorHasValue("jennifer", "school") {
+					a.turnOnDevice(config.JenniferRoomLights)
 				}
-				if a.SensorHasValue("sophia", "school") {
-					a.TurnOnDevice(config.SophiaRoomLights)
+				if a.sensorHasValue("sophia", "school") {
+					a.turnOnDevice(config.SophiaRoomLights)
 				}
 			}
 		case "sleeptime":
-			if a.FamilyIsHome() {
-				a.TurnOnDevice(config.BedroomLights)
-				if a.SensorHasValue("jennifer", "school") {
-					a.TurnOffDevice(config.JenniferRoomLights)
+			if a.familyIsHome() {
+				a.turnOnDevice(config.BedroomLights)
+				if a.sensorHasValue("jennifer", "school") {
+					a.turnOffDevice(config.JenniferRoomLights)
 				}
-				if a.SensorHasValue("sophia", "school") {
-					a.TurnOffDevice(config.SophiaRoomLights)
+				if a.sensorHasValue("sophia", "school") {
+					a.turnOffDevice(config.SophiaRoomLights)
 				}
 			}
 		case "night":
-			if a.SensorHasValue("jennifer", "school") {
-				a.TurnOffDevice(config.BedroomLights)
+			if a.sensorHasValue("jennifer", "school") {
+				a.turnOffDevice(config.BedroomLights)
 			}
-			a.TurnOffDevice(config.KitchenLights)
-			a.TurnOffDevice(config.LivingroomLights)
-			a.TurnOffDevice(config.JenniferRoomLights)
-			a.TurnOffDevice(config.SophiaRoomLights)
-			a.TurnOffDevice(config.FrontdoorHallLight)
+			a.turnOffDevice(config.KitchenLights)
+			a.turnOffDevice(config.LivingroomLights)
+			a.turnOffDevice(config.JenniferRoomLights)
+			a.turnOffDevice(config.SophiaRoomLights)
+			a.turnOffDevice(config.FrontdoorHallLight)
 		}
 	}
 }
 
 // HandleSwitch deals with switches being pressed
-func (a *Automation) HandleSwitch(name string, state *config.SensorState) {
+func (a *automation) handleSwitch(name string, state *config.SensorState) {
 	if name == config.BedroomSwitch {
 		value := state.GetValueAttr("click", "")
 		if value == config.WirelessSwitchDoubleClick {
 			a.presence.report(a.now)
-			a.ToggleDevice(config.BedroomLights)
+			a.toggleDevice(config.BedroomLights)
 		}
 		if value == config.WirelessSwitchSingleClick {
 			a.presence.report(a.now)
-			a.TurnOffDevice(config.BedroomCeilingLightSwitch)
-			a.TurnOffDevice(config.BedroomChandelierLightSwitch)
+			a.turnOffDevice(config.BedroomCeilingLightSwitch)
+			a.turnOffDevice(config.BedroomChandelierLightSwitch)
 		}
 		if value == config.WirelessSwitchLongPress {
 			a.presence.report(a.now)
-			a.ToggleDevice(config.BedroomPowerPlug)
+			a.toggleDevice(config.BedroomPowerPlug)
 		}
 	} else if name == config.SophiaRoomSwitch {
 		value := state.GetValueAttr("click", "")
 		if value == config.WirelessSwitchSingleClick {
 			a.presence.report(a.now)
-			a.ToggleDevice(config.SophiaRoomLights)
+			a.toggleDevice(config.SophiaRoomLights)
 		}
 	}
 }
 
 // HandleMotionSensor deals with motion detected
-func (a *Automation) HandleMotionSensor(name string, state *config.SensorState) {
+func (a *automation) handleMotionSensor(name string, state *config.SensorState) {
 	now := time.Now()
 	if name == config.KitchenMotionSensor || name == config.LivingroomMotionSensor {
 		value := state.GetValueAttr("motion", "")
@@ -355,11 +347,11 @@ func (a *Automation) HandleMotionSensor(name string, state *config.SensorState) 
 			a.lastseenMotionInHouse = now // Update the time we last detected motion
 			if name == config.KitchenMotionSensor {
 				a.lastseenMotionInKitchenArea = now
-				a.SetDelayTimeAction("Turnoff front door hall light", 4*time.Minute, func(ta *TimedAction, a *Automation) { a.TurnOffDevice("Front door hall light") })
+				a.setDelayTimeAction("Turnoff front door hall light", 4*time.Minute, func(ta *timedAction, a *automation) { a.turnOffDevice("Front door hall light") })
 			}
 			if a.timeofday == "breakfast" {
-				a.TurnOnDevice(config.KitchenLights)
-				a.TurnOnDevice(config.LivingroomLights)
+				a.turnOnDevice(config.KitchenLights)
+				a.turnOnDevice(config.LivingroomLights)
 			}
 
 			if a.timeofday == "night" {
@@ -368,10 +360,10 @@ func (a *Automation) HandleMotionSensor(name string, state *config.SensorState) 
 				} else if name == config.LivingroomMotionSensor {
 					a.sendNotification("Turning on kitchen and livingroom lights since it is night and there is movement in the livingroom area")
 				}
-				a.TurnOnDevice(config.KitchenLights)
-				a.TurnOnDevice(config.LivingroomLights)
-				a.SetDelayTimeAction(config.KitchenLights, 5*time.Minute, func(ta *TimedAction, a *Automation) { a.TurnOffDevice(config.KitchenLights) })
-				a.SetDelayTimeAction(config.KitchenLights, 5*time.Minute, func(ta *TimedAction, a *Automation) { a.TurnOffDevice(config.KitchenLights) })
+				a.turnOnDevice(config.KitchenLights)
+				a.turnOnDevice(config.LivingroomLights)
+				a.setDelayTimeAction(config.KitchenLights, 5*time.Minute, func(ta *timedAction, a *automation) { a.turnOffDevice(config.KitchenLights) })
+				a.setDelayTimeAction(config.KitchenLights, 5*time.Minute, func(ta *timedAction, a *automation) { a.turnOffDevice(config.KitchenLights) })
 			}
 		}
 	} else if name == config.BedroomMotionSensor {
@@ -384,44 +376,44 @@ func (a *Automation) HandleMotionSensor(name string, state *config.SensorState) 
 
 			if a.timeofday == "evening" || a.timeofday == "bedtime" {
 				if lastseenDuration > (time.Duration(15) * time.Minute) {
-					a.TurnOnDevice(config.BedroomLights)
-					a.TurnOnDevice(config.BedroomChandelierLightSwitch)
+					a.turnOnDevice(config.BedroomLights)
+					a.turnOnDevice(config.BedroomChandelierLightSwitch)
 				}
 			}
 		} else if value == "off" {
 			if a.timeofday != "night" && a.timeofday != "sleeptime" {
 				if lastseenDuration > (time.Duration(30) * time.Minute) {
-					a.TurnOffDevice(config.BedroomLights)
-					a.TurnOffDevice(config.BedroomChandelierLightSwitch)
-					a.TurnOffDevice(config.BedroomCeilingLightSwitch)
+					a.turnOffDevice(config.BedroomLights)
+					a.turnOffDevice(config.BedroomChandelierLightSwitch)
+					a.turnOffDevice(config.BedroomCeilingLightSwitch)
 				}
 			}
 		}
 	}
 }
 
-func (a *Automation) HandleMagnetSensor(name string, state *config.SensorState) {
+func (a *automation) handleMagnetSensor(name string, state *config.SensorState) {
 	if name == config.FrontdoorMagnetSensor {
 		value := state.GetValueAttr("state", "")
 		if value == "open" {
 			a.sendNotification("Front door opened")
-			a.TurnOnDevice(config.FrontdoorHallLight)
-			a.SetDelayTimeAction("Turnoff front door hall light", 10*time.Minute, func(ta *TimedAction, a *Automation) { a.TurnOffDevice("Front door hall light") })
+			a.turnOnDevice(config.FrontdoorHallLight)
+			a.setDelayTimeAction("Turnoff front door hall light", 10*time.Minute, func(ta *timedAction, a *automation) { a.turnOffDevice("Front door hall light") })
 
 			a.lastseenMotionInKitchenArea = time.Now()
 		} else if value == "close" {
 			a.sendNotification("Front door closed")
-			a.SetDelayTimeAction("Turnoff front door hall light", 5*time.Minute, func(ta *TimedAction, a *Automation) { a.TurnOffDevice("Front door hall light") })
+			a.setDelayTimeAction("Turnoff front door hall light", 5*time.Minute, func(ta *timedAction, a *automation) { a.turnOffDevice("Front door hall light") })
 			a.presence.reset()
 		}
 	}
 }
 
-func (a *Automation) sendNotification(message string) {
+func (a *automation) sendNotification(message string) {
 	a.pubsub.Publish("shout/message/", message)
 }
 
-func (a *Automation) updatePresence(name string, presence bool) (current bool, previous bool) {
+func (a *automation) updatePresence(name string, presence bool) (current bool, previous bool) {
 	var exists bool
 	previous, exists = a.presence.presence[name]
 	if !exists {
@@ -431,9 +423,9 @@ func (a *Automation) updatePresence(name string, presence bool) (current bool, p
 	return presence, previous
 }
 
-func (a *Automation) HandlePresence(state *config.SensorState) {
+func (a *automation) handlePresence(state *config.SensorState) {
 	if state.StringAttrs != nil {
-		anyonehome := a.FamilyIsHome()
+		anyonehome := a.familyIsHome()
 		for _, attr := range state.StringAttrs {
 			presence, previous := a.updatePresence(attr.Name, attr.Value == "home")
 			if presence != previous {
@@ -444,89 +436,88 @@ func (a *Automation) HandlePresence(state *config.SensorState) {
 				}
 			}
 		}
-		if !anyonehome && a.FamilyIsHome() {
+		if !anyonehome && a.familyIsHome() {
 			// Depending on time-of-day
 			switch a.timeofday {
 			case "lunch":
 				a.sendNotification("Turning on kitchen lights since it is noon and someone came home")
-				a.TurnOnDevice(config.KitchenLights)
+				a.turnOnDevice(config.KitchenLights)
 			case "evening":
 				a.sendNotification("Turning on kitchen and livingroom lights since it is evening and someone came home")
-				a.TurnOnDevice(config.KitchenLights)
-				a.TurnOnDevice(config.LivingroomLights)
+				a.turnOnDevice(config.KitchenLights)
+				a.turnOnDevice(config.LivingroomLights)
 			case "bedtime":
 				a.sendNotification("Turning on kitchen and livingroom lights since it is bedtime and someone came home")
-				a.TurnOnDevice(config.KitchenLights)
-				a.TurnOnDevice(config.LivingroomLights)
+				a.turnOnDevice(config.KitchenLights)
+				a.turnOnDevice(config.LivingroomLights)
 			case "sleeptime":
-				a.sendNotification("Turning on kitchen, livingroom and bedroom lights since it is bedtime and someone came home")
-				a.TurnOnDevice(config.KitchenLights)
-				a.TurnOnDevice(config.LivingroomLights)
-				a.TurnOnDevice(config.BedroomLights)
+				a.sendNotification("Turning on kitchen and livingroom lights since it is sleeptime and someone came home")
+				a.turnOnDevice(config.KitchenLights)
+				a.turnOnDevice(config.LivingroomLights)
 			}
 
-		} else if anyonehome && !a.FamilyIsHome() {
+		} else if anyonehome && !a.familyIsHome() {
 			// Turn off everything
-			a.TurnOffEverything()
+			a.turnOffEverything()
 		}
 	}
 }
 
-func (a *Automation) TurnOffEverything() {
-	a.TurnOffDevice(config.KitchenLights)
-	a.TurnOffDevice(config.LivingroomLights)
-	a.TurnOffDevice(config.BedroomLights)
-	a.TurnOffDevice(config.JenniferRoomLights)
-	a.TurnOffDevice(config.SophiaRoomLights)
-	a.TurnOffDevice(config.FrontdoorHallLight)
-	a.TurnOffDevice(config.BedroomPowerPlug)
-	a.TurnOffDevice(config.BedroomChandelierLightSwitch)
-	a.TurnOffDevice(config.BedroomCeilingLightSwitch)
+func (a *automation) turnOffEverything() {
+	a.turnOffDevice(config.KitchenLights)
+	a.turnOffDevice(config.LivingroomLights)
+	a.turnOffDevice(config.BedroomLights)
+	a.turnOffDevice(config.JenniferRoomLights)
+	a.turnOffDevice(config.SophiaRoomLights)
+	a.turnOffDevice(config.FrontdoorHallLight)
+	a.turnOffDevice(config.BedroomPowerPlug)
+	a.turnOffDevice(config.BedroomChandelierLightSwitch)
+	a.turnOffDevice(config.BedroomCeilingLightSwitch)
 
-	a.TurnOffDevice(config.BedroomSamsungTV)
-	a.TurnOffDevice(config.LivingroomBraviaTV)
+	a.turnOffDevice(config.BedroomSamsungTV)
+	a.turnOffDevice(config.LivingroomBraviaTV)
 }
 
-// ActionDelegate is the action delegate
-type ActionDelegate func(ta *TimedAction, a *Automation)
+// actionDelegate is the action delegate
+type actionDelegate func(ta *timedAction, a *automation)
 
-// TimedAction holds the 'when' and 'action' necessary to trigger
-type TimedAction struct {
+// timedAction holds the 'when' and 'action' necessary to trigger
+type timedAction struct {
 	Name   string
 	When   time.Time
-	Action ActionDelegate
+	Action actionDelegate
 }
 
-// SetRealTimeAction sets an action that will trigger at a specific time
-func (a *Automation) SetRealTimeAction(name string, hour int, minute int, ad ActionDelegate) {
+// setRealTimeAction sets an action that will trigger at a specific time
+func (a *automation) setRealTimeAction(name string, hour int, minute int, ad actionDelegate) {
 	action, exists := a.timedActions[name]
 	if !exists {
 		when := time.Date(a.now.Year(), a.now.Month(), a.now.Day(), hour, minute, 0, 0, a.now.Location())
-		action = &TimedAction{Name: name, When: when, Action: ad}
+		action = &timedAction{Name: name, When: when, Action: ad}
 		a.timedActions[name] = action
 	}
 }
 
-// SetDelayTimeAction sets an action that trigger after 'duration'
-func (a *Automation) SetDelayTimeAction(name string, duration time.Duration, actiondelegate ActionDelegate) {
+// setDelayTimeAction sets an action that trigger after 'duration'
+func (a *automation) setDelayTimeAction(name string, duration time.Duration, actiondelegate actionDelegate) {
 	action, exists := a.timedActions[name]
 	if !exists {
-		action = &TimedAction{Name: name, When: time.Now().Add(duration), Action: actiondelegate}
+		action = &timedAction{Name: name, When: time.Now().Add(duration), Action: actiondelegate}
 		a.timedActions[name] = action
 	} else {
 		action.When = time.Now().Add(duration)
 	}
 }
 
-// Tick returns true when the action has ended, false otherwise
-func (ta *TimedAction) Tick(now time.Time) bool {
+// tick returns true when the action has ended, false otherwise
+func (ta *timedAction) tick(now time.Time) bool {
 	return now.After(ta.When)
 }
 
 // UpdateTimedActions will tick all actions and remove any that have ended
-func (a *Automation) UpdateTimedActions() {
+func (a *automation) updateTimedActions() {
 	for name, ta := range a.timedActions {
-		if ta.Tick(a.now) == true {
+		if ta.tick(a.now) == true {
 			ta.Action(ta, a)
 			delete(a.timedActions, name)
 		}
