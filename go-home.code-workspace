@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "E:\\Dev.Go\\src\\github.com\\jurgen-kluft\\migateway"
+		},
+		{
+			"path": "E:\\Dev.Go\\src\\github.com\\jurgen-kluft\\go-hue"
+		}
+	],
+	"settings": {
+		"git.ignoreLimitWarning": true
+	}
+}
