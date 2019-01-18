@@ -59,23 +59,27 @@ func (m *Metrics) Register(name string, tags map[string]string, fields map[strin
 	metric.fields = fields
 }
 
-func (m *Metrics) Begin(name string) error {
+func (m *Metrics) Begin(name string) (metric *Metric, err error) {
 	metric, exists := m.metrics[name]
 	if !exists {
-		return fmt.Errorf("No metric registered with name %s", name)
+		return nil, fmt.Errorf("No metric registered with name %s", name)
 	}
 
 	// Create a new point batch
-	var err error
 	metric.bp, err = client.NewBatchPoints(client.BatchPointsConfig{
 		Database:  config.InfluxSecrets["database"],
 		Precision: "s",
 	})
+	return metric, err
+}
 
-	if err != nil {
-		return err
-	}
-	return nil
+func (m *Metrics) Get(name string) *Metric {
+	metric, _ := m.metrics[name]
+	return metric
+}
+
+func (m *Metric) Set(field string, value float64) {
+	m.fields[field] = value
 }
 
 func (m *Metrics) Set(name string, field string, value float64) error {
@@ -86,6 +90,19 @@ func (m *Metrics) Set(name string, field string, value float64) error {
 
 	metric.fields[field] = value
 	return nil
+}
+
+func (m *Metrics) SendMetric(metric *Metric, t time.Time) error {
+	pt, err := client.NewPoint(metric.name, metric.tags, metric.fields, t)
+	if err != nil {
+		return err
+	}
+
+	metric.bp.AddPoint(pt)
+
+	// Write the batch
+	err = m.client.Write(metric.bp)
+	return err
 }
 
 func (m *Metrics) Send(name string) error {
