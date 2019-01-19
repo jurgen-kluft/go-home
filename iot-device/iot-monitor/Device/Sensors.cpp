@@ -3,35 +3,36 @@
 #include "LPS22HBSensor.h"
 #include "LSM6DSLSensor.h"
 #include "OledDisplay.h"
+
 #include "Sensors.h"
 
-void Sensors::Init()
+void Sensors::Init(OLEDDisplay* screen)
 {
-    Screen.print(2, "Initializing...");
+    screen->print(2, "Initializing...");
     m_i2c = new DevI2C(D14, D15);
 
-    Screen.print(3, " > Magnetometer");
+    screen->print(3, " > Magnetometer");
     m_lis2mdl = new LIS2MDLSensor(*m_i2c);
     m_lis2mdl->init(NULL);
 
-    Screen.print(3, " > HTS221Sensor");
+    screen->print(3, " > HTS221Sensor");
     m_hts221sensor = new HTS221Sensor(*m_i2c);
     m_hts221sensor->init(NULL);
     m_hts221sensor->enable();
     m_hts221sensor->reset();
 
-    Screen.print(3, " > LSM6DSLSensor");
+    screen->print(3, " > LSM6DSLSensor");
     m_lsm6dslsensor = new LSM6DSLSensor(*m_i2c, D4, D5);
     m_lsm6dslsensor->init(NULL);
     m_lsm6dslsensor->enableAccelerator();
     m_lsm6dslsensor->enableGyroscope();
 
-    Screen.print(3, " > LPS22HBSensor");
+    screen->print(3, " > LPS22HBSensor");
     m_lps22hbsensor = new LPS22HBSensor(*m_i2c);
     m_lps22hbsensor->init(NULL);
 }
 
-bool SensorData::ReadAll()
+bool SensorData::ReadAll(Sensors* sensors)
 {
     int res = 0;
 
@@ -39,54 +40,54 @@ bool SensorData::ReadAll()
     this->Humidity = 0;
     this->Pressure = -1.0;
     
-    res += m_hts221sensor->getTemperature(&this->Temperature);
-    res += m_hts221sensor->getHumidity(&this->Humidity);
+    res += sensors->m_hts221sensor->getTemperature(&this->Temperature);
+    res += sensors->m_hts221sensor->getHumidity(&this->Humidity);
 
-    res += m_lps22hbsensor->getPressure(&this->Pressure);
+    res += sensors->m_lps22hbsensor->getPressure(&this->Pressure);
 
-    res += m_lsm6dslsensor->getXAxes(this->Accelerator);
-    res += m_lsm6dslsensor->getGAxes(this->Gyroscope);
+    res += sensors->m_lsm6dslsensor->getXAxes(this->Accelerator);
+    res += sensors->m_lsm6dslsensor->getGAxes(this->Gyroscope);
 
-    res += m_lis2mdl->getMAxes(this->Magnetic);
+    res += sensors->m_lis2mdl->getMAxes(this->Magnetic);
 
     return res == 0;
 }
 
-bool SensorData::ReadTemperature(SensorData* sd)
+bool SensorData::ReadTemperature(Sensors* sensors)
 {
     this->Temperature = 0;
-    int res           = m_hts221sensor->getTemperature(&this->Temperature);
+    int res           = sensors->m_hts221sensor->getTemperature(&this->Temperature);
     return res == 0;
 }
 
-bool SensorData::ReadHumidity()
+bool SensorData::ReadHumidity(Sensors* sensors)
 {
     this->Humidity = 0;
-    int res        = m_hts221sensor->getHumidity(&this->Humidity);
+    int res        = sensors->m_hts221sensor->getHumidity(&this->Humidity);
     return res == 0;
 }
 
-bool SensorData::ReadPressure()
+bool SensorData::ReadPressure(Sensors* sensors)
 {
     this->Pressure = -1.0;
-    int res        = m_lps22hbsensor->getPressure(&this->Pressure);
+    int res        = sensors->m_lps22hbsensor->getPressure(&this->Pressure);
     return res == 0;
 }
 
-bool SensorData::ReadAcceleration()
+bool SensorData::ReadAcceleration(Sensors* sensors)
 {
-    int res = m_lsm6dslsensor->getXAxes(this->Accelerator);
+    int res = sensors->m_lsm6dslsensor->getXAxes(this->Accelerator);
     return res == 0;
 }
 
-bool SensorData::ReadGyroscope()
+bool SensorData::ReadGyroscope(Sensors* sensors)
 {
-    int res = m_lsm6dslsensor->getGAxes(this->Gyroscope);
+    int res = sensors->m_lsm6dslsensor->getGAxes(this->Gyroscope);
     return res == 0;
 }
 
-bool SensorData::ReadMagnetic()
+bool SensorData::ReadMagnetic(Sensors* sensors)
 {
-    int res = m_lis2mdl->getMAxes(this->Magnetic);
+    int res = sensors->m_lis2mdl->getMAxes(this->Magnetic);
     return res == 0;
 }

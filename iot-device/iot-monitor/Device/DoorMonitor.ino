@@ -5,6 +5,7 @@
 #include "LPS22HBSensor.h"
 #include "LSM6DSLSensor.h"
 #include "OledDisplay.h"
+
 #include "Sensors.h"
 
 #define LOOP_DELAY 10
@@ -63,7 +64,8 @@ void setup()
         return;
     }
 
-    gSensors.Init();
+    //OLEDDisplay* screen = &Screen;
+    gSensors.Init(&Screen);
 
     Screen.print(2, "Monitoring...");
     Screen.print(3, "");
@@ -87,7 +89,7 @@ void loop()
 {
     if (gHasWifi)
     {
-        gSensorData[gSensorIndex].readAll();
+        gSensorData[gSensorIndex].ReadAll(&gSensors);
         gSensorIndex += 1;
 
         if (gSensorIndex == 16)
@@ -98,7 +100,7 @@ void loop()
         }
 
         gIteration = (gIteration + 1) % 128;
-        Screen.print(3, gProgress + (gIteration/16);
+        Screen.print(3, gProgress + (gIteration/16));
     }
 
     delay(LOOP_DELAY);

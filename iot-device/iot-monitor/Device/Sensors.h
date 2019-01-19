@@ -5,6 +5,7 @@
 #pragma once 
 #endif
 
+struct Sensors;
 
 struct SensorData
 {
@@ -15,22 +16,22 @@ struct SensorData
     int   Accelerator[3];
     int   Gyroscope[3];
 
-    bool ReadAll();
+    bool ReadAll(Sensors* sensors);
 
-    bool ReadTemperature();
-    bool ReadHumidity();
-    bool ReadPressure();
-    bool ReadAcceleration();
-    bool ReadGyroscope();
-    bool ReadMagnetic();
+    bool ReadTemperature(Sensors* sensors);
+    bool ReadHumidity(Sensors* sensors);
+    bool ReadPressure(Sensors* sensors);
+    bool ReadAcceleration(Sensors* sensors);
+    bool ReadGyroscope(Sensors* sensors);
+    bool ReadMagnetic(Sensors* sensors);
 };
 
 // Forward declares
-struct DevI2C;
-struct LIS2MDLSensor;
-struct HTS221Sensor;
-struct LPS22HBSensor;
-struct LSM6DSLSensor;
+//struct DevI2C;
+//struct LIS2MDLSensor;
+//struct HTS221Sensor;
+//struct LPS22HBSensor;
+//struct LSM6DSLSensor;
 
 struct Sensors
 {
@@ -40,7 +41,7 @@ struct Sensors
     LPS22HBSensor* m_lps22hbsensor;
     LSM6DSLSensor* m_lsm6dslsensor;
 
-    void Init();
+    void Init(OLEDDisplay* screen);
 };
 
 

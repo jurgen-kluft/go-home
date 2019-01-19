@@ -148,7 +148,7 @@ func main() {
 			p.data = inpkt
 			t := time.Now()
 
-			em, ee := c.metrics.Begin("Environment Sensors")
+			em, _ := c.metrics.Begin("Environment Sensors")
 			temp := p.readTemperature()
 			temp = c.mavTemperature.sample(temp)
 			hum := p.readHumidity()
@@ -160,9 +160,9 @@ func main() {
 				em.Set("T", temp)
 				em.Set("H", hum)
 				em.Set("P", press)
-				c.metrics.SendMetric(c.timestamp)
+				c.metrics.SendMetric(em, c.timestamp)
 
-				deltatime := (t - c.timestamp) / 16
+				deltatime := t.Sub(c.timestamp) / 16
 				di := deltatime
 				for i := 0; i <= 16; i++ {
 					m, e := c.metrics.Begin("Movement Sensors")
@@ -179,7 +179,7 @@ func main() {
 						m.Set("GX", x)
 						m.Set("GY", y)
 						m.Set("GZ", z)
-						ti := c.timestamp + di
+						ti := c.timestamp.Add(di)
 						c.metrics.SendMetric(m, ti)
 					}
 					di += deltatime
