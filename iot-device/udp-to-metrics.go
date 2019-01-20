@@ -58,6 +58,18 @@ type sensordata struct {
 	data []byte
 }
 
+func (s *sensordata) init() {
+	s.stride = 16
+
+	s.temperature = 0
+	s.humidity = 4
+	s.pressure = 8
+
+	s.magnetic = 12
+	s.acceleration = 24
+	s.gyroscope = 36
+}
+
 func (s *sensordata) readTemperature() float64 {
 	t := int64(0)
 	o := s.temperature
@@ -138,6 +150,7 @@ func main() {
 
 	c := new()
 	p := &sensordata{}
+	p.init()
 
 	connected := true
 	for connected {
