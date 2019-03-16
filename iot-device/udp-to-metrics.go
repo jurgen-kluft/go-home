@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"fmt"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/metrics"
@@ -77,7 +78,7 @@ func (s *sensordata) readTemperature() float64 {
 		t += int64(binary.LittleEndian.Uint32(s.data[o : o+4]))
 		o += s.stride
 	}
-	return float64(t)
+	return float64(t / 16)
 }
 func (s *sensordata) readHumidity() float64 {
 	t := int64(0)
@@ -86,7 +87,7 @@ func (s *sensordata) readHumidity() float64 {
 		t += int64(binary.LittleEndian.Uint32(s.data[o : o+4]))
 		o += s.stride
 	}
-	return float64(t)
+	return float64(t / 16)
 }
 func (s *sensordata) readPressure() float64 {
 	t := int64(0)
@@ -95,7 +96,7 @@ func (s *sensordata) readPressure() float64 {
 		t += int64(binary.LittleEndian.Uint32(s.data[o : o+4]))
 		o += s.stride
 	}
-	return float64(t)
+	return float64(t / 16)
 }
 
 func (s *sensordata) readMagnetic(i int) (X float64, Y float64, Z float64) {
@@ -184,14 +185,25 @@ func main() {
 						m.Set("MX", x)
 						m.Set("MY", y)
 						m.Set("MZ", z)
+
 						x, y, z = p.readAcceleration(i)
 						m.Set("AX", x)
 						m.Set("AY", y)
 						m.Set("AZ", z)
+
+						if i == 0 {
+							fmt.Printf("Movement Acc: %v:%v:%v\n", x, y, z)
+						}
+
 						x, y, z = p.readGyroscope(i)
 						m.Set("GX", x)
 						m.Set("GY", y)
 						m.Set("GZ", z)
+
+						if i == 0 {
+							fmt.Printf("Movement Gyro: %v:%v:%v\n", x, y, z)
+						}
+
 						ti := c.timestamp.Add(di)
 						c.metrics.SendMetric(m, ti)
 					}
