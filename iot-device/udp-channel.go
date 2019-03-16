@@ -5,9 +5,7 @@ import (
 	"sync"
 )
 
-// Usually the MTU is 1500 bytes and
-// a little over 10k for jumbo frames.
-// 10k should be plenty.
+// Usually the MTU is <1500 bytes
 const mtu = 1500
 
 // Connect dials to address and returns a send-only
