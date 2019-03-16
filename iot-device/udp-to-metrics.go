@@ -60,7 +60,7 @@ type sensordata struct {
 }
 
 func (s *sensordata) init() {
-	s.stride = 16
+	s.stride = 12 * 4
 
 	s.temperature = 0
 	s.humidity = 4
@@ -102,30 +102,24 @@ func (s *sensordata) readPressure() float64 {
 func (s *sensordata) readMagnetic(i int) (X float64, Y float64, Z float64) {
 	o := s.magnetic + i*s.stride
 	X = float64(binary.LittleEndian.Uint32(s.data[o : o+4]))
-	o += 4
-	Y = float64(binary.LittleEndian.Uint32(s.data[o : o+4]))
-	o += 4
-	Z = float64(binary.LittleEndian.Uint32(s.data[o : o+4]))
+	Y = float64(binary.LittleEndian.Uint32(s.data[o+4 : o+8]))
+	Z = float64(binary.LittleEndian.Uint32(s.data[o+8 : o+12]))
 	return X, Y, Z
 }
 
 func (s *sensordata) readAcceleration(i int) (X float64, Y float64, Z float64) {
 	o := s.acceleration + i*s.stride
 	X = float64(binary.LittleEndian.Uint32(s.data[o : o+4]))
-	o += 4
-	Y = float64(binary.LittleEndian.Uint32(s.data[o : o+4]))
-	o += 4
-	Z = float64(binary.LittleEndian.Uint32(s.data[o : o+4]))
+	Y = float64(binary.LittleEndian.Uint32(s.data[o+4 : o+8]))
+	Z = float64(binary.LittleEndian.Uint32(s.data[o+8 : o+12]))
 	return X, Y, Z
 }
 
 func (s *sensordata) readGyroscope(i int) (X float64, Y float64, Z float64) {
 	o := s.gyroscope + i*s.stride
 	X = float64(binary.LittleEndian.Uint32(s.data[o : o+4]))
-	o += 4
-	Y = float64(binary.LittleEndian.Uint32(s.data[o : o+4]))
-	o += 4
-	Z = float64(binary.LittleEndian.Uint32(s.data[o : o+4]))
+	Y = float64(binary.LittleEndian.Uint32(s.data[o+4 : o+8]))
+	Z = float64(binary.LittleEndian.Uint32(s.data[o+8 : o+12]))
 	return X, Y, Z
 }
 
@@ -176,6 +170,10 @@ func main() {
 				em.Set("P", press)
 				c.metrics.SendMetric(em, c.timestamp)
 
+				fmt.Printf("Temp: %v\n", temp)
+				fmt.Printf("Humidity: %v\n", hum)
+				fmt.Printf("Pressure: %v\n", press)
+
 				deltatime := t.Sub(c.timestamp) / 16
 				di := deltatime
 				for i := 0; i <= 16; i++ {
@@ -192,7 +190,7 @@ func main() {
 						m.Set("AZ", z)
 
 						if i == 0 {
-							fmt.Printf("Movement Acc: %v:%v:%v\n", x, y, z)
+							fmt.Printf("Movement Acc: %v / %v / %v\n", x, y, z)
 						}
 
 						x, y, z = p.readGyroscope(i)
@@ -201,7 +199,7 @@ func main() {
 						m.Set("GZ", z)
 
 						if i == 0 {
-							fmt.Printf("Movement Gyro: %v:%v:%v\n", x, y, z)
+							fmt.Printf("Movement Gyro: %v / %v / %v\n", x, y, z)
 						}
 
 						ti := c.timestamp.Add(di)

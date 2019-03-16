@@ -32,6 +32,12 @@ void Sensors::Init(OLEDDisplay* screen)
     m_lps22hbsensor->init(NULL);
 }
 
+void SensorData::Init()
+{
+    this->HDR = 0xF00D;
+    Length = sizeof(int) + 3 * sizeof(int) + 3 * 3 * sizeof(int);
+}
+
 bool SensorData::ReadAll(Sensors* sensors)
 {
     int res = 0;

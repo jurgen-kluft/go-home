@@ -9,6 +9,8 @@ struct Sensors;
 
 struct SensorData
 {
+    int   HDR;
+    int   Length;
     float Temperature;
     float Humidity;
     float Pressure;
@@ -16,6 +18,7 @@ struct SensorData
     int   Accelerator[3];
     int   Gyroscope[3];
 
+    void Init();
     bool ReadAll(Sensors* sensors);
 
     bool ReadTemperature(Sensors* sensors);
