@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/binary"
-	"fmt"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/metrics"
@@ -47,7 +46,8 @@ type context struct {
 }
 
 type sensordata struct {
-	stride      int
+	stride int
+
 	temperature int
 	humidity    int
 	pressure    int
@@ -60,15 +60,15 @@ type sensordata struct {
 }
 
 func (s *sensordata) init() {
-	s.stride = 12 * 4
+	s.stride = (1 + 1 + 3 + 3*3) * 4
 
-	s.temperature = 0
-	s.humidity = 4
-	s.pressure = 8
+	s.temperature = 8
+	s.humidity = 12
+	s.pressure = 16
 
-	s.magnetic = 12
-	s.acceleration = 24
-	s.gyroscope = 36
+	s.magnetic = 20
+	s.acceleration = 32
+	s.gyroscope = 44
 }
 
 func (s *sensordata) readTemperature() float64 {
@@ -78,7 +78,7 @@ func (s *sensordata) readTemperature() float64 {
 		t += int64(binary.LittleEndian.Uint32(s.data[o : o+4]))
 		o += s.stride
 	}
-	return float64(t / 16)
+	return float64(t/16) / 100.0
 }
 func (s *sensordata) readHumidity() float64 {
 	t := int64(0)
@@ -87,7 +87,7 @@ func (s *sensordata) readHumidity() float64 {
 		t += int64(binary.LittleEndian.Uint32(s.data[o : o+4]))
 		o += s.stride
 	}
-	return float64(t / 16)
+	return float64(t/16) / 100.0
 }
 func (s *sensordata) readPressure() float64 {
 	t := int64(0)
@@ -96,30 +96,42 @@ func (s *sensordata) readPressure() float64 {
 		t += int64(binary.LittleEndian.Uint32(s.data[o : o+4]))
 		o += s.stride
 	}
-	return float64(t / 16)
+	return float64(t/16) / 100.0
 }
 
+func read_int32(data []byte, o int) int32 {
+	return int32(uint32(data[o+0]) + uint32(data[o+1])<<8 + uint32(data[o+2])<<16 + uint32(data[o+3])<<24)
+}
 func (s *sensordata) readMagnetic(i int) (X float64, Y float64, Z float64) {
 	o := s.magnetic + i*s.stride
-	X = float64(binary.LittleEndian.Uint32(s.data[o : o+4]))
-	Y = float64(binary.LittleEndian.Uint32(s.data[o+4 : o+8]))
-	Z = float64(binary.LittleEndian.Uint32(s.data[o+8 : o+12]))
+	x32 := read_int32(s.data, o)
+	X = float64(x32)
+	y32 := read_int32(s.data, o+4)
+	Y = float64(y32)
+	z32 := read_int32(s.data, o+8)
+	Z = float64(z32)
 	return X, Y, Z
 }
 
 func (s *sensordata) readAcceleration(i int) (X float64, Y float64, Z float64) {
 	o := s.acceleration + i*s.stride
-	X = float64(binary.LittleEndian.Uint32(s.data[o : o+4]))
-	Y = float64(binary.LittleEndian.Uint32(s.data[o+4 : o+8]))
-	Z = float64(binary.LittleEndian.Uint32(s.data[o+8 : o+12]))
+	x32 := read_int32(s.data, o)
+	X = float64(x32)
+	y32 := read_int32(s.data, o+4)
+	Y = float64(y32)
+	z32 := read_int32(s.data, o+8)
+	Z = float64(z32)
 	return X, Y, Z
 }
 
 func (s *sensordata) readGyroscope(i int) (X float64, Y float64, Z float64) {
 	o := s.gyroscope + i*s.stride
-	X = float64(binary.LittleEndian.Uint32(s.data[o : o+4]))
-	Y = float64(binary.LittleEndian.Uint32(s.data[o+4 : o+8]))
-	Z = float64(binary.LittleEndian.Uint32(s.data[o+8 : o+12]))
+	x32 := read_int32(s.data, o)
+	X = float64(x32)
+	y32 := read_int32(s.data, o+4)
+	Y = float64(y32)
+	z32 := read_int32(s.data, o+8)
+	Z = float64(z32)
 	return X, Y, Z
 }
 
@@ -129,9 +141,9 @@ func new() *context {
 	c.metrics, _ = metrics.New()
 	c.metrics.Register("Environment Sensors", map[string]string{"T": "Temperature", "H": "Humidity", "P": "Pressure"}, map[string]interface{}{"T": 20, "H": 20, "P": 1000})
 	c.metrics.Register("Movement Sensors", map[string]string{"MX": "Magnetic-X", "MY": "Magnetic-Y", "MZ": "Magnetic-Z", "AX": "Acceleration-X", "AY": "Acceleration-Y", "AZ": "Acceleration-Z", "GX": "Gyroscope-X", "GY": "Gyroscope-Y", "GZ": "Gyroscope-Z"}, map[string]interface{}{"MX": 0, "MY": 0, "MZ": 0, "AX": 0, "AY": 0, "AZ": 0, "GX": 0, "GY": 0, "GZ": 0})
-	c.mavTemperature = newFilter(30)
-	c.mavHumidity = newFilter(30)
-	c.mavPressure = newFilter(30)
+	c.mavTemperature = newFilter(2)
+	c.mavHumidity = newFilter(2)
+	c.mavPressure = newFilter(2)
 	c.index = 0
 	return c
 }
@@ -170,13 +182,13 @@ func main() {
 				em.Set("P", press)
 				c.metrics.SendMetric(em, c.timestamp)
 
-				fmt.Printf("Temp: %v\n", temp)
-				fmt.Printf("Humidity: %v\n", hum)
-				fmt.Printf("Pressure: %v\n", press)
+				//fmt.Printf("Temp: %v\n", temp)
+				//fmt.Printf("Humidity: %v\n", hum)
+				//fmt.Printf("Pressure: %v\n", press)
 
 				deltatime := t.Sub(c.timestamp) / 16
 				di := deltatime
-				for i := 0; i <= 16; i++ {
+				for i := 0; i < 16; i++ {
 					m, e := c.metrics.Begin("Movement Sensors")
 					if e == nil {
 						x, y, z := p.readMagnetic(i)
@@ -190,7 +202,7 @@ func main() {
 						m.Set("AZ", z)
 
 						if i == 0 {
-							fmt.Printf("Movement Acc: %v / %v / %v\n", x, y, z)
+							//fmt.Printf("Movement Acc: %v / %v / %v\n", x, y, z)
 						}
 
 						x, y, z = p.readGyroscope(i)
@@ -199,7 +211,7 @@ func main() {
 						m.Set("GZ", z)
 
 						if i == 0 {
-							fmt.Printf("Movement Gyro: %v / %v / %v\n", x, y, z)
+							//fmt.Printf("Movement Gyro: %v / %v / %v\n", x, y, z)
 						}
 
 						ti := c.timestamp.Add(di)
