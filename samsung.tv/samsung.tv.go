@@ -60,7 +60,7 @@ func main() {
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/samsung.tv/", "state/samsung.tv/"}
-		subscribe := []string{"config/samsung.tv/", "state/samsung.tv/"}
+		subscribe := []string{"config/samsung.tv/", "state/samsung.tv/", "config/request/"}
 		err := client.Connect(c.name, register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
@@ -97,7 +97,10 @@ func main() {
 						connected = false
 					}
 
-				case <-time.After(time.Second * 10):
+				case <-time.After(time.Minute * 1): // Try and request our configuration
+					if c.config == nil {
+						client.Publish("config/request/", "samsung.tv")
+					}
 
 				}
 			}

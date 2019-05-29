@@ -100,7 +100,7 @@ func main() {
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/xiaomi/", "state/xiaomi/"}
-		subscribe := []string{"config/xiaomi/", "state/xiaomi/"}
+		subscribe := []string{"config/xiaomi/", "state/xiaomi/", "config/request/"}
 		err := client.Connect("xiaomi", register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
@@ -247,9 +247,11 @@ func main() {
 
 					}
 
-				case <-time.After(time.Second * 10):
+				case <-time.After(time.Minute * 1): // Try and request our configuration
+					if xiaomi.config == nil {
+						client.Publish("config/request/", "calendar")
+					}
 
-					break
 				}
 			}
 		}

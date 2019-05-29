@@ -204,7 +204,7 @@ func main() {
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/presence/", "state/presence/"}
-		subscribe := []string{"config/presence/"}
+		subscribe := []string{"config/presence/", "config/request/"}
 		err := client.Connect("presence", register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
@@ -236,6 +236,12 @@ func main() {
 							logger.LogError("presence", err.Error())
 						}
 					}
+
+				case <-time.After(time.Minute * 1): // Try and request our configuration
+					if presence == nil {
+						client.Publish("config/request/", "calendar")
+					}
+
 				}
 			}
 		}

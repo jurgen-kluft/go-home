@@ -88,7 +88,7 @@ func main() {
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/hue/", "state/sensor/hue/", "sensor/light/hue/"}
-		subscribe := []string{"config/hue/", "state/sensor/hue/", "sensor/light/hue/"}
+		subscribe := []string{"config/hue/", "state/sensor/hue/", "sensor/light/hue/", "config/request/"}
 		err := client.Connect("hue", register, subscribe)
 		if err == nil {
 			hue.log.LogInfo("emitter", "connected")
@@ -157,6 +157,12 @@ func main() {
 
 				case <-time.After(time.Second * 60):
 					hue.flux()
+
+				case <-time.After(time.Minute * 1): // Try and request our configuration
+					if hue.config == nil {
+						client.Publish("config/request/", "hue")
+					}
+
 				}
 			}
 		}

@@ -38,7 +38,7 @@ func main() {
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/wemo/", "sensor/state/wemo/"}
-		subscribe := []string{"config/wemo/", "sensor/state/wemo/"}
+		subscribe := []string{"config/wemo/", "sensor/state/wemo/", "config/request/"}
 		err := client.Connect(c.name, register, subscribe)
 		if err == nil {
 			c.log.LogInfo("emitter", "connected")
@@ -80,6 +80,12 @@ func main() {
 						c.log.LogInfo("emitter", "disconnected")
 						connected = false
 					}
+
+				case <-time.After(time.Minute * 1): // Try and request our configuration
+					if c.config == nil {
+						client.Publish("config/request/", "wemo")
+					}
+
 				}
 			}
 		}

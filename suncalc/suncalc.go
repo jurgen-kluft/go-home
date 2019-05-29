@@ -441,7 +441,7 @@ func main() {
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/suncalc/", "state/sensor/sun/"}
-		subscribe := []string{"config/suncalc/"}
+		subscribe := []string{"config/suncalc/", "config/request/"}
 		err := client.Connect(suncalc.name, register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
@@ -463,7 +463,9 @@ func main() {
 					}
 
 				case <-time.After(time.Minute * 1):
-					if suncalc != nil {
+					if suncalc.config == nil {
+						client.Publish("config/request/", "suncalc")
+					} else {
 						suncalc.process(client)
 					}
 				}

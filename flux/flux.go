@@ -251,7 +251,7 @@ func main() {
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/", "state/light/hue/", "state/light/yee/"}
-		subscribe := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/"}
+		subscribe := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/", "config/request/"}
 		err := client.Connect(c.name, register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
@@ -296,7 +296,14 @@ func main() {
 					}
 				case <-time.After(time.Second * 10):
 					c.Process(client)
+
+				case <-time.After(time.Minute * 1): // Try and request our configuration
+					if c.config == nil {
+						client.Publish("config/request/", "flux")
+					}
+
 				}
+
 			}
 		}
 

@@ -55,7 +55,7 @@ func main() {
 		for connected {
 			client := pubsub.New(config.EmitterIOCfg)
 			register := []string{"config/shout/", "shout/message/"}
-			subscribe := []string{"config/shout/", "shout/message/"}
+			subscribe := []string{"config/shout/", "shout/message/", "config/request/"}
 			err := client.Connect(c.name, register, subscribe)
 			if err == nil {
 				logger.LogInfo("emitter", "connected")
@@ -83,10 +83,10 @@ func main() {
 								}
 							}
 						}
-						break
-					case <-time.After(time.Second * 10):
-
-						break
+					case <-time.After(time.Minute * 1): // Try and request our configuration
+						if c.config == nil {
+							client.Publish("config/request/", "shout")
+						}
 					}
 				}
 			} else {

@@ -116,7 +116,7 @@ func main() {
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/aqi/", "state/sensor/aqi/"}
-		subscribe := []string{"config/aqi/"}
+		subscribe := []string{"config/aqi/", "config/request/"}
 		err := client.Connect(c.name, register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
@@ -157,6 +157,12 @@ func main() {
 							pollCount++
 							c.computeNextPoll(time.Now(), err)
 						}
+					}
+
+				case <-time.After(time.Minute * 1):
+					if c != nil && c.config == nil {
+						// Try and request our configuration
+						client.Publish("config/request/", "aqi")
 					}
 				}
 			}

@@ -27,7 +27,7 @@ func main() {
 
 	for {
 		auto.pubsub = pubsub.New(config.EmitterIOCfg)
-		err := auto.pubsub.Connect(module, []string{}, []string{"config/automation/"})
+		err := auto.pubsub.Connect(module, []string{}, []string{"config/automation/", "config/request/"})
 
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
@@ -71,6 +71,11 @@ func main() {
 					if auto.config != nil {
 						auto.now = time.Now()
 						auto.updateTimedActions()
+					}
+
+				case <-time.After(time.Minute * 1): // Try and request our configuration
+					if auto.config == nil {
+						auto.pubsub.Publish("config/config/", "automation")
 					}
 				}
 			}

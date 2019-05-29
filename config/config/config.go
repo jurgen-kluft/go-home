@@ -52,7 +52,7 @@ func (c *context) initializeReflectTypes() {
 		case "aqi":
 			configuration.ReflectType = reflect.TypeOf(config.AqiConfig{})
 		case "automation":
-
+			configuration.ReflectType = reflect.TypeOf(config.AutomationConfig{})
 		case "bravia.tv":
 			configuration.ReflectType = reflect.TypeOf(config.BraviaTVConfig{})
 		case "calendar":
@@ -92,9 +92,11 @@ func (c *context) initializeConfigFileWatcher() {
 func (c *context) updateConfigFileWatcher() {
 	events := c.watcher.update()
 	for _, event := range events {
-		_, exists := c.configs.Configurations[event.User]
-		if exists {
-			c.sendConfigOnChannel(event.User)
+		if event.Event == MODIFIED {
+			_, exists := c.configs.Configurations[event.User]
+			if exists {
+				c.sendConfigOnChannel(event.User)
+			}
 		}
 	}
 }
@@ -148,8 +150,8 @@ func main() {
 	for {
 		connected := true
 		for connected {
-			register := []string{"config/config/"}
-			subscribe := []string{"config/config/"}
+			register := []string{"config/config/", "config/request/"}
+			subscribe := []string{"config/config/", "config/request/"}
 			err := ctx.pubsub.Connect("configs", register, subscribe)
 			if err == nil {
 				ctx.log.LogInfo("emitter", "connected")
@@ -172,10 +174,13 @@ func main() {
 							} else {
 								ctx.log.LogError("configs", err.Error())
 							}
+						} else if topic == "config/request/" {
+							configname := string(msg.Payload())
+							ctx.log.LogInfo("configs", "requested configuration for '"+configname+"'.")
+							ctx.sendConfigOnChannel(configname)
 						}
 						break
 					case <-time.After(time.Second * 10):
-
 						// Any config files updated ?
 						ctx.updateConfigFileWatcher()
 						break

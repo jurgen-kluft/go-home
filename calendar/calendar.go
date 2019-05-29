@@ -275,7 +275,7 @@ func main() {
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/calendar/"}
-		subscribe := []string{"config/calendar/"}
+		subscribe := []string{"config/calendar/", "config/request/"}
 		err := client.Connect(c.name, register, subscribe)
 		if err == nil {
 			c.log.LogInfo("emitter", "connected")
@@ -304,12 +304,17 @@ func main() {
 						c.log.LogInfo("emitter", "disconnected")
 						connected = false
 					}
-					break
+
 				case <-time.After(time.Second * 60):
 					if c != nil && c.config != nil {
 						c.Process(client)
 					}
-					break
+
+				case <-time.After(time.Minute * 1): // Try and request our configuration
+					if c.config == nil {
+						client.Publish("config/request/", "calendar")
+					}
+
 				}
 			}
 		}

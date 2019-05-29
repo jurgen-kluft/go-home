@@ -201,7 +201,7 @@ func main() {
 	for {
 		client := pubsub.New(config.EmitterIOCfg)
 		register := []string{"config/weather/", "state/sensor/weather/"}
-		subscribe := []string{"config/weather/"}
+		subscribe := []string{"config/weather/", "config/request/"}
 		err := client.Connect(c.name, register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
@@ -224,9 +224,11 @@ func main() {
 						connected = false
 					}
 
-				case <-time.After(time.Second * 60):
+				case <-time.After(time.Minute * 1):
 					if c.darksky != nil {
 						c.process(client)
+					} else {
+						client.Publish("config/request/", "weather")
 					}
 				}
 			}
