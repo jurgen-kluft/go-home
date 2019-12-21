@@ -75,7 +75,7 @@ func main() {
 
 				case <-time.After(time.Minute * 1): // Try and request our configuration
 					if auto.config == nil {
-						auto.pubsub.Publish("config/config/", "automation")
+						auto.pubsub.Publish("config/request/", "automation")
 					}
 				}
 			}
