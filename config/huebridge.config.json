@@ -1,70 +1,69 @@
 {
-	"ip_port": "10.0.0.11:5000",
+    "ip_port": "10.0.0.11:5000",
     "register_channels": [
         "shout/message/"
     ],
-    "subscribe_channels": [
-    ],
+    "subscribe_channels": [],
     "emulated-devices": [
-		{
-			"name": "Frontdoor light",
+        {
+            "name": "Frontdoor light",
             "channel": "state/vars/",
             "on": "{\"name\": \"Frontdoor light\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Frontdoor light\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
-		}, 
-		{
-			"name": "Bedroom ceiling light",
+        },
+        {
+            "name": "Bedroom ceiling light",
             "channel": "state/vars/",
             "on": "{\"name\": \"Bedroom ceiling light\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Bedroom ceiling light\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
-		},
-		{
-			"name": "Bedroom chandelier",
+        },
+        {
+            "name": "Bedroom chandelier",
             "channel": "state/vars/",
             "on": "{\"name\": \"Bedroom chandelier\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Bedroom chandelier\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
-		}, 
-		{
-			"name": "Bedroom WIFI",
+        },
+        {
+            "name": "Bedroom WIFI",
             "channel": "state/vars/",
             "on": "{\"name\": \"Bedroom WIFI\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Bedroom WIFI\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
-		}, 
-		{
-			"name": "Flux Mode",
+        },
+        {
+            "name": "Flux Mode",
             "channel": "state/vars/",
             "on": "{\"name\": \"Flux Mode\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Flux Mode\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"off\"}]}"
-		}, 
-		{
-			"name": "Story Time",
+        },
+        {
+            "name": "Story Time",
             "channel": "state/vars/",
             "on": "{\"name\": \"Story Time\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Story Time\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"off\"}]}"
-		}, 
-		{
-			"name": "Christmas Mood",
+        },
+        {
+            "name": "Meeting Time",
+            "channel": "state/vars/",
+            "on": "{\"name\": \"Meeting Time\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Meeting Time\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"off\"}]}"
+        },
+        {
+            "name": "Christmas Mood",
             "channel": "state/vars/",
             "on": "{\"name\": \"Christmas Mood\",\"stringattrs\": [{\"name\": \"mood\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Christmas Mood\",\"stringattrs\": [{\"name\": \"mood\",\"value\": \"off\"}]}"
-		}, 
-		{
-			"name": "Halloween Mood",
+        },
+        {
+            "name": "Halloween Mood",
             "channel": "state/vars/",
             "on": "{\"name\": \"Halloween Mood\",\"stringattrs\": [{\"name\": \"mood\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Halloween Mood\",\"stringattrs\": [{\"name\": \"mood\",\"value\": \"off\"}]}"
-		}, 
-		{
-			"name": "Music Mode",
+        },
+        {
+            "name": "Music Mode",
             "channel": "state/vars/",
             "on": "{\"name\": \"Music Mode\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Music Mode\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"off\"}]}"
-		}, 
-		{
-			"name": "Evening Call",
-            "channel": "state/vars/",
-            "on": "{\"name\": \"Evening Call\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"on\"}]}",
-            "off": "{\"name\": \"Evening Call\",\"stringattrs\": [{\"name\": \"mode\",\"value\": \"off\"}]}"
-		}
+        }
     ]
 }
