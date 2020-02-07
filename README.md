@@ -8,17 +8,18 @@ Devices/Hardware:
 - Philips HUE
 - Xiaomi Yee
 - Xiaomi Aqara
+  - Wall Switch
+  - Button Switch
+  - Power Switch
+  - Sensors (Motion, Magnet)
 - Wemo switch
+- Amazon Alexa
 - Samsung TV
 - Sony Bravia TV
 
 Note:
-  There is a HUE emulator in Go, this could be used to have Alexa control virtual devices like
-  the Xiaomi Gateway light, our DualWiredWallSwitch, Power Plug etc..
-  Github: <https://github.com/pborges/huemulator>
-
-Note:
   InfluxDB for tracking metrics and usage of all processes.
+  Since all of this is written in Go it should be able to run anywhere, from a Raspberry PI to a Windows/Mac machine.
 
 App Structure:
 
@@ -36,8 +37,14 @@ App Structure:
   - Shout               (Has Slack as the back-end to send messages)
   - Wemo                (Wemo devices)
   - Hue                 (Philips HUE lighting, turn on/off, change CT and BRI)
+  - Hue Emulator        (Philips HUE lighting emulator, turn on/off)
   - Yee                 (Xiaomi Yee lighting, turn on/off, change CT and BRI)
   - Xiaomi aqara        (Xiaomi Gateway connection, getting information from motion sensors and controlling switches and plugs)
   - Sony Bravia Remote  (Turn on/off Sony Bravia TV(s))
   - Samsung TV Remote   (Turn on/off Samsung TV(s))
   - Automation; reacting to all events and executing automation rules
+
+Status:
+
+I am currently not yet running this, however i have tested all sub-processes and they all function. The only one not
+tested yet is 'automation'.
