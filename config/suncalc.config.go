@@ -36,5 +36,5 @@ type CMoment struct {
 	Title string `json:"title"`
 	Descr string `json:"descr"`
 	Begin string `json:"begin"`
-	End   string `json:"end  "`
+	End   string `json:"end"`
 }
