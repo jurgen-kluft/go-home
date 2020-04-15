@@ -4,10 +4,10 @@
 			"path": "."
 		},
 		{
-			"path": "E:\\Dev.Go\\src\\github.com\\jurgen-kluft\\migateway"
+			"path": "E:\\Dev.Go\\src\\github.com\\jurgen-kluft\\go-hue"
 		},
 		{
-			"path": "E:\\Dev.Go\\src\\github.com\\jurgen-kluft\\go-hue"
+			"path": "..\\home-assistant-v2"
 		}
 	],
 	"settings": {
