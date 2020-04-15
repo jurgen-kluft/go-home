@@ -116,7 +116,7 @@ func main() {
 
 				case <-time.After(time.Minute * 1): // Try and request our configuration
 					if c.config == nil {
-						client.Publish("config/request/", "calendar")
+						client.Publish("config/request/", "yee")
 					}
 
 				}

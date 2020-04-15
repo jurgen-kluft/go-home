@@ -21,6 +21,7 @@ type DisconnectMessage struct {
 func (d *DisconnectMessage) Topic() string {
 	return "client/disconnected/"
 }
+
 func (d *DisconnectMessage) Payload() []byte {
 	return []byte{}
 }

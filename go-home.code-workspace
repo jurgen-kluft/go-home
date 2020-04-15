@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "..\\home-assistant-v2"
+		},
+		{
+			"path": "../go-conbee"
 		}
 	],
 	"settings": {
