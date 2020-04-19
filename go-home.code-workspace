@@ -4,6 +4,12 @@
 			"path": "."
 		},
 		{
+			"path": "E:\\Dev.Go\\src\\github.com\\jurgen-kluft\\go-hue"
+		},
+		{
+			"path": "..\\home-assistant-v2"
+		},
+		{
 			"path": "../go-conbee"
 		}
 	],

@@ -70,6 +70,7 @@ func main() {
 				case <-time.After(time.Second * 5):
 					if auto.config != nil {
 						auto.now = time.Now()
+						auto.presenceDetection()
 						auto.updateTimedActions()
 					}
 
@@ -90,40 +91,72 @@ func main() {
 }
 
 type homePresence struct {
-	occupied        bool
-	detection       bool
-	detectionStamp  time.Time
-	detectionWindow time.Duration
-	presence        map[string]bool
+	peopleAreHome          bool
+	detectionStamp         time.Time
+	detectionState         string
+	detectionDelayDuration time.Duration
+	detectionEvalResult    bool
+	detectionEvalDuration  time.Duration
+	presence               map[string]bool
 }
 
 func newPresence() *homePresence {
 	h := &homePresence{}
-	h.occupied = true
-	h.detection = true
+	h.peopleAreHome = true
+	h.detectionState = "Open/Closed"
 	h.detectionStamp = time.Now()
-	h.detectionWindow = time.Minute * 2
+	h.detectionDelayDuration = time.Minute * 15
+	h.detectionEvalResult = false
+	h.detectionEvalDuration = time.Minute * 10
 	h.presence = map[string]bool{}
 	return h
 }
 
 // reset() should be called when the front-door is opened->closed because this
-// can indicate people have left the house.
-func (h *homePresence) reset() {
-	h.detection = true
+// can indicate people have left the house. This will start a procedure:
+// - Wait for 10 minutes to start an evaluation window
+// - In the evaluation window we determine if there are people home by Wifi and Motion
+// - If after the evaluation window nothing is detected we mark 'peopleAreHome' as false
+// - After the evaluation state a scan state is started that will keep looking at
+//   Wifi and Motion etc..
+func (h *homePresence) frontDoorOpenClosed() {
+	h.detectionState = "Open/Closed"
 	h.detectionStamp = time.Now()
 }
 
-func (h *homePresence) detect(now time.Time) {
-	if h.detection {
-		if now.Sub(h.detectionStamp) > h.detectionWindow {
-			h.detection = false
+// determineIfPeopleAreHome is the only function that is allowed to change
+// the variable 'peopleAreHome'!
+func (h *homePresence) determineIfPeopleAreHome(now time.Time) {
+	if h.detectionState == "OpenClosed" {
+		// The door was opened/closed so that means people are/where at home
+		h.peopleAreHome = true
+
+		if now.Sub(h.detectionStamp) > h.detectionDelayDuration {
+			h.detectionState = "Evaluate"
+			h.detectionStamp = time.Now()
+			h.detectionEvalResult = false
 		}
-	} else {
-		// After the detection window (door was closed + N minutes) we can look at the wifi-presence again.
-		if h.occupied == false {
+	} else if h.detectionState == "Evaluate" {
+		if now.Sub(h.detectionStamp) > h.detectionEvalDuration {
+			// After the evaluation window, did we detect any motion, switch presses or Wifi Presence ?
+			// If we did not then it means nobody is home.
+			if h.detectionEvalResult == false {
+				h.peopleAreHome = false
+			}
+			h.detectionState = "Scan"
+		} else {
+			// Look at the Wifi presence. (Should we actually do this, is motion not enough ?)
+			if h.peopleAreHome == false {
+				for _, prsnc := range h.presence {
+					h.peopleAreHome = h.peopleAreHome || prsnc
+				}
+			}
+		}
+	} else if h.detectionState == "Scan" {
+		// After the detection and evaluation window (door was closed + N minutes) we can look at the wifi-presence again.
+		if h.peopleAreHome == false {
 			for _, prsnc := range h.presence {
-				h.occupied = h.occupied || prsnc
+				h.peopleAreHome = h.peopleAreHome || prsnc
 			}
 		}
 	}
@@ -131,10 +164,17 @@ func (h *homePresence) detect(now time.Time) {
 
 // report() should be called when a causation is detected like a button press, light switch press or movement
 func (h *homePresence) report(now time.Time) {
-	if !h.detection {
-		// Any detected presence after the detection window means that people are home
-		// This kind of presence is a button, light switch or plug press
-		h.occupied = true
+	if h.detectionState == "Evaluate" {
+		// Any detected presence after the detection window but within the evaluation
+		// window means that there are people home. Indicate this by setting the
+		// evaluation windows result to true.
+		h.detectionEvalResult = true
+	} else if h.detectionState == "Scan" {
+		if h.peopleAreHome == false {
+			// Any detected presence after the detection window means that people are home
+			// This kind of presence is a button, motion, light switch or plug press
+			h.peopleAreHome = true
+		}
 	}
 }
 
@@ -159,8 +199,8 @@ func new() *automation {
 	return auto
 }
 
-func (a *automation) familyIsHome() bool {
-	return a.presence.occupied
+func (a *automation) peopleAreHome() bool {
+	return a.presence.peopleAreHome
 }
 
 func (a *automation) sensorHasValue(name string, value string) bool {
@@ -191,6 +231,37 @@ func (a *automation) toggleDevice(name string) error {
 		return err
 	}
 	return fmt.Errorf("device with name %s doesn't exist", name)
+}
+
+func (a *automation) presenceDetection() {
+	peopleWhereHome := a.peopleAreHome()
+	a.presence.determineIfPeopleAreHome(a.now)
+	peopleAreHome := a.peopleAreHome()
+
+	if !peopleWhereHome && peopleAreHome {
+		// Depending on time-of-day
+		switch a.timeofday {
+		case "lunch":
+			a.sendNotification("Turning on kitchen lights since it is noon and someone came home")
+			a.turnOnDevice(config.KitchenLights)
+		case "evening":
+			a.sendNotification("Turning on kitchen and livingroom lights since it is evening and someone came home")
+			a.turnOnDevice(config.KitchenLights)
+			a.turnOnDevice(config.LivingroomLights)
+		case "bedtime":
+			a.sendNotification("Turning on kitchen and livingroom lights since it is bedtime and someone came home")
+			a.turnOnDevice(config.KitchenLights)
+			a.turnOnDevice(config.LivingroomLights)
+		case "sleeptime":
+			a.sendNotification("Turning on kitchen and livingroom lights since it is sleeptime and someone came home")
+			a.turnOnDevice(config.KitchenLights)
+			a.turnOnDevice(config.LivingroomLights)
+		}
+
+	} else if peopleWhereHome && !peopleAreHome {
+		// Turn off everything
+		a.turnOffEverything()
+	}
 }
 
 func (a *automation) handleEvent(channel string, state *config.SensorState) {
@@ -275,7 +346,7 @@ func (a *automation) handleTimeOfDay(to string) {
 			a.turnOffDevice(config.KitchenLights)
 			a.turnOffDevice(config.LivingroomLights)
 		case "lunch":
-			if a.familyIsHome() {
+			if a.peopleAreHome() {
 				a.sendNotification("Turning on lights since it is noon and someone is home")
 				a.turnOnDevice(config.KitchenLights)
 			}
@@ -286,7 +357,7 @@ func (a *automation) handleTimeOfDay(to string) {
 			a.turnOnDevice(config.KitchenLights)
 			a.turnOnDevice(config.LivingroomLights)
 		case "bedtime":
-			if a.familyIsHome() {
+			if a.peopleAreHome() {
 				if a.sensorHasValue("jennifer", "school") {
 					a.turnOnDevice(config.JenniferRoomLights)
 				}
@@ -295,7 +366,7 @@ func (a *automation) handleTimeOfDay(to string) {
 				}
 			}
 		case "sleeptime":
-			if a.familyIsHome() {
+			if a.peopleAreHome() {
 				a.turnOnDevice(config.BedroomLights)
 				if a.sensorHasValue("jennifer", "school") {
 					a.turnOffDevice(config.JenniferRoomLights)
@@ -410,7 +481,7 @@ func (a *automation) handleMagnetSensor(name string, state *config.SensorState) 
 		} else if value == "close" {
 			a.sendNotification("Front door closed")
 			a.setDelayTimeAction("Turnoff front door hall light", 5*time.Minute, func(ta *timedAction, a *automation) { a.turnOffDevice("Front door hall light") })
-			a.presence.reset()
+			a.presence.frontDoorOpenClosed()
 		}
 	}
 }
@@ -431,7 +502,6 @@ func (a *automation) updatePresence(name string, presence bool) (current bool, p
 
 func (a *automation) handlePresence(state *config.SensorState) {
 	if state.StringAttrs != nil {
-		anyonehome := a.familyIsHome()
 		for _, attr := range state.StringAttrs {
 			presence, previous := a.updatePresence(attr.Name, attr.Value == "home")
 			if presence != previous {
@@ -441,30 +511,6 @@ func (a *automation) handlePresence(state *config.SensorState) {
 					a.sendNotification(fmt.Sprintf("%s is home", attr.Name))
 				}
 			}
-		}
-		if !anyonehome && a.familyIsHome() {
-			// Depending on time-of-day
-			switch a.timeofday {
-			case "lunch":
-				a.sendNotification("Turning on kitchen lights since it is noon and someone came home")
-				a.turnOnDevice(config.KitchenLights)
-			case "evening":
-				a.sendNotification("Turning on kitchen and livingroom lights since it is evening and someone came home")
-				a.turnOnDevice(config.KitchenLights)
-				a.turnOnDevice(config.LivingroomLights)
-			case "bedtime":
-				a.sendNotification("Turning on kitchen and livingroom lights since it is bedtime and someone came home")
-				a.turnOnDevice(config.KitchenLights)
-				a.turnOnDevice(config.LivingroomLights)
-			case "sleeptime":
-				a.sendNotification("Turning on kitchen and livingroom lights since it is sleeptime and someone came home")
-				a.turnOnDevice(config.KitchenLights)
-				a.turnOnDevice(config.LivingroomLights)
-			}
-
-		} else if anyonehome && !a.familyIsHome() {
-			// Turn off everything
-			a.turnOffEverything()
 		}
 	}
 }
