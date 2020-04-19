@@ -26,7 +26,7 @@ func main() {
 	logger.AddEntry(module)
 
 	for {
-		auto.pubsub = pubsub.New(config.EmitterIOCfg)
+		auto.pubsub = pubsub.New(config.PubSubCfg)
 		err := auto.pubsub.Connect(module, []string{}, []string{"config/automation/", "config/request/"})
 
 		if err == nil {
@@ -148,6 +148,7 @@ type automation struct {
 	lastseenMotionInKitchenArea time.Time
 	lastseenMotionInBedroom     time.Time
 	timedActions                map[string]*timedAction
+	motionBasedActions          map[string]*motionBasedAction
 	presence                    *homePresence
 }
 
@@ -521,10 +522,136 @@ func (ta *timedAction) tick(now time.Time) bool {
 
 // UpdateTimedActions will tick all actions and remove any that have ended
 func (a *automation) updateTimedActions() {
+	var toremove []string
 	for name, ta := range a.timedActions {
 		if ta.tick(a.now) == true {
 			ta.Action(ta, a)
-			delete(a.timedActions, name)
+			toremove = append(toremove, name)
 		}
+	}
+	for _, name := range toremove {
+		delete(a.motionBasedActions, name)
+	}
+}
+
+// Examples:
+// A) While there is motion every 10 minutes keep the lights ON, once there is not turn the
+//    lights OFF and auto-delete
+// B) Once there is no motion in the kitchen for 15 minutes turn OFF the lights and auto-delete
+// C) For the next duration once there is motion turn ON the lights and auto-delete
+//
+type motionDelegate func(ta *motionBasedAction, a *automation)
+type motionType int
+
+const (
+	whileMotionEveryPeriodThen motionType = iota
+	whileNoMotionForCertainDurationThen
+	whileNoMotionUntilMotion
+)
+
+type motionBasedAction struct {
+	Name                string
+	Sensors             []string
+	From                time.Time
+	Duration            time.Duration
+	Count               int
+	Action              motionDelegate
+	Type                motionType
+	RemoveWhenTriggered bool // When this action fired should we remove ourselves?
+}
+
+// setNoMotionAction sets an action that will trigger at a specific time
+func (a *automation) setMotionAction(name string, motiontype motionType, sensors []string, hour int, minute int, actiondelegate motionDelegate, removeWhenTriggered bool) {
+	action, exists := a.motionBasedActions[name]
+	duration := time.Date(a.now.Year(), a.now.Month(), a.now.Day(), hour, minute, 0, 0, a.now.Location()).Sub(a.now)
+	if !exists {
+		action = &motionBasedAction{Name: name}
+		action.Sensors = sensors
+		action.From = a.now
+		action.Duration = duration
+		action.Count = 0
+		action.Action = actiondelegate
+		action.Type = motiontype
+		action.RemoveWhenTriggered = removeWhenTriggered
+		a.motionBasedActions[name] = action
+	} else {
+		action.Sensors = sensors
+		action.From = a.now
+		action.Duration = duration
+		action.Count = 0
+		action.Action = actiondelegate
+		action.Type = motiontype
+		action.RemoveWhenTriggered = removeWhenTriggered
+	}
+}
+
+// resetMotionAction sets an action that trigger after 'motion'
+func (ta *motionBasedAction) reset(now time.Time) {
+	ta.From = now
+	ta.Count = 0
+}
+
+type tickResult int
+
+const (
+	actionTriggered tickResult = iota
+	actionEvaluating
+	actionFailed
+)
+
+// tick returns the result when the action is still evaluating, has been triggered or has failed
+func (ta *motionBasedAction) tick(now time.Time, sensors map[string]bool) tickResult {
+	motion := false
+	for _, name := range ta.Sensors {
+		state, exists := sensors[name]
+		if exists {
+			motion = motion || state
+		}
+	}
+	if ta.Type == whileMotionEveryPeriodThen {
+		until := ta.From.Add(ta.Duration)
+		if now.After(until) {
+			if ta.Count > 0 {
+				ta.From = now
+				ta.Count = 0
+				return actionEvaluating
+			}
+			return actionTriggered
+		} else if motion {
+			ta.Count++
+		}
+		return actionEvaluating
+	} else if ta.Type == whileNoMotionForCertainDurationThen {
+		when := ta.From.Add(ta.Duration)
+		if now.After(when) {
+			return actionTriggered
+		}
+		if !motion {
+			return actionEvaluating
+		}
+	} else if ta.Type == whileNoMotionUntilMotion {
+		if motion {
+			return actionTriggered
+		}
+		return actionEvaluating
+	}
+	return actionFailed
+}
+
+// UpdateTimedActions will tick all actions and remove any that have ended
+func (a *automation) updateMotionBasedActions(sensors map[string]bool) {
+	var toremove []string
+	for name, ta := range a.motionBasedActions {
+		if ta.tick(a.now, sensors) == actionTriggered {
+			ta.Action(ta, a)
+			if ta.RemoveWhenTriggered {
+				toremove = append(toremove, name)
+			} else {
+				ta.reset(a.now)
+			}
+		}
+	}
+	for _, name := range toremove {
+		delete(a.motionBasedActions, name)
 	}
 }
