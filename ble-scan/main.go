@@ -1,52 +1,68 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"github.com/paypal/gatt"
-	"github.com/paypal/gatt/examples/option"
 	"log"
+	"time"
+
+	"github.com/pkg/errors"
+	"golang.org/x/net/context"
+
+	"github.com/currantlabs/ble"
+	"github.com/currantlabs/ble/examples/lib/dev"
 )
 
-func onStateChanged(device gatt.Device, s gatt.State) {
-	switch s {
-	case gatt.StatePoweredOn:
-		fmt.Println("Scanning for iBeacon Broadcasts...")
-		device.Scan([]gatt.UUID{}, true)
-		return
-	default:
-		device.StopScanning()
-	}
-}
+var (
+	device = flag.String("device", "default", "implementation of ble")
+	du     = flag.Duration("du", 15*time.Second, "scanning duration")
+	dup    = flag.Bool("dup", true, "allow duplicate reported")
+)
 
 func main() {
-	bluetooth := Create()
-	device, err := gatt.NewDevice(option.DefaultClientOptions...)
-	if err != nil {
-		log.Fatalf("Failed to open device, err: %s\n", err)
-		return
-	}
-	device.Handle(gatt.PeripheralDiscovered(func(p gatt.Peripheral, a *gatt.Advertisement, rssi int) {
-		if !bluetooth.HaveSeenBeacon(a.ManufacturerData) {
-			b, err := bluetooth.NewBeacon(a.ManufacturerData)
-			if err == nil {
-				b.RSSI = ((rssi / 10) * 10)
-				fmt.Println("UUID: ", b.UUID)
-				fmt.Println("Major: ", b.Major)
-				fmt.Println("Minor: ", b.Minor)
-				fmt.Println("RSSI: ", rssi)
-			}
-		} else {
-			b := bluetooth.GetExistingBeacon(a.ManufacturerData)
-			if b.RSSI != ((rssi / 10) * 10) {
-				b.RSSI = ((rssi / 10) * 10)
-				fmt.Println("UUID: ", b.UUID)
-				fmt.Println("Major: ", b.Major)
-				fmt.Println("Minor: ", b.Minor)
-				fmt.Println("RSSI: ", rssi)
-			}
-		}
-	}))
+	flag.Parse()
 
-	device.Init(onStateChanged)
-	select {}
+	d, err := dev.NewDevice(*device)
+	if err != nil {
+		log.Fatalf("can't new device : %s", err)
+	}
+	ble.SetDefaultDevice(d)
+
+	// Scan for specified durantion, or until interrupted by user.
+	fmt.Printf("Scanning for %s...\n", *du)
+	ctx := ble.WithSigHandler(context.WithTimeout(context.Background(), *du))
+	chkErr(ble.Scan(ctx, *dup, advHandler, nil))
+}
+
+func advHandler(a ble.Advertisement) {
+	if a.Connectable() {
+		fmt.Printf("[%s] C %3d:", a.Address(), a.RSSI())
+	} else {
+		fmt.Printf("[%s] N %3d:", a.Address(), a.RSSI())
+	}
+	comma := ""
+	if len(a.LocalName()) > 0 {
+		fmt.Printf(" Name: %s", a.LocalName())
+		comma = ","
+	}
+	if len(a.Services()) > 0 {
+		fmt.Printf("%s Svcs: %v", comma, a.Services())
+		comma = ","
+	}
+	if len(a.ManufacturerData()) > 0 {
+		fmt.Printf("%s MD: %X", comma, a.ManufacturerData())
+	}
+	fmt.Printf("\n")
+}
+
+func chkErr(err error) {
+	switch errors.Cause(err) {
+	case nil:
+	case context.DeadlineExceeded:
+		fmt.Printf("done\n")
+	case context.Canceled:
+		fmt.Printf("canceled\n")
+	default:
+		log.Fatalf(err.Error())
+	}
 }
