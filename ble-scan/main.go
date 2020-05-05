@@ -9,8 +9,8 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 
-	"github.com/currantlabs/ble"
-	"github.com/currantlabs/ble/examples/lib/dev"
+	"github.com/jurgen-kluft/ble"
+	"github.com/jurgen-kluft/ble/examples/lib/dev"
 )
 
 var (
@@ -85,7 +85,11 @@ func main() {
 			comma = ","
 		}
 		if len(b.Services) > 0 {
-			fmt.Printf("%s Svcs: %v", comma, b.Services)
+			fmt.Printf("%s Services: ", comma)
+			comma = ""
+			for _, srv := range b.Services {
+				fmt.Printf("%s %v", comma, srv.String())
+			}
 			comma = ","
 		}
 		fmt.Printf("\n")
