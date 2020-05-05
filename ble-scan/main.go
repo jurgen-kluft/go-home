@@ -18,23 +18,35 @@ func onStateChanged(device gatt.Device, s gatt.State) {
 	}
 }
 
-func onPeripheralDiscovered(p gatt.Peripheral, a *gatt.Advertisement, rssi int) {
-	b, err := NewBeacon(a.ManufacturerData)
-	if err == nil {
-		fmt.Println("UUID: ", b.uuid)
-		fmt.Println("Major: ", b.major)
-		fmt.Println("Minor: ", b.minor)
-		fmt.Println("RSSI: ", rssi)
-	}
-}
-
 func main() {
+	bluetooth := Create()
 	device, err := gatt.NewDevice(option.DefaultClientOptions...)
 	if err != nil {
 		log.Fatalf("Failed to open device, err: %s\n", err)
 		return
 	}
-	device.Handle(gatt.PeripheralDiscovered(onPeripheralDiscovered))
+	device.Handle(gatt.PeripheralDiscovered(func(p gatt.Peripheral, a *gatt.Advertisement, rssi int) {
+		if !bluetooth.HaveSeenBeacon(a.ManufacturerData) {
+			b, err := bluetooth.NewBeacon(a.ManufacturerData)
+			if err == nil {
+				b.RSSI = ((rssi / 10) * 10)
+				fmt.Println("UUID: ", b.uuid)
+				fmt.Println("Major: ", b.major)
+				fmt.Println("Minor: ", b.minor)
+				fmt.Println("RSSI: ", rssi)
+			}
+		} else {
+			b := bluetooth.GetExistingBeacon(a.ManufacturerData)
+			if b.RSSI != ((rssi / 10) * 10) {
+				b.RSSI = ((rssi / 10) * 10)
+				fmt.Println("UUID: ", b.uuid)
+				fmt.Println("Major: ", b.major)
+				fmt.Println("Minor: ", b.minor)
+				fmt.Println("RSSI: ", rssi)
+			}
+		}
+	}))
+
 	device.Init(onStateChanged)
 	select {}
 }
