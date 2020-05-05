@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -57,14 +58,18 @@ func main() {
 	}
 	ble.SetDefaultDevice(d)
 
+	mux := sync.Mutex{}
 	beacons := make(map[string]*beacon)
+
 	advFilter := func(a ble.Advertisement) bool {
+		mux.Lock()
 		b, exists := beacons[a.Address().String()]
 		if !exists {
 			b := &beacon{Address: a.Address().String(), RSSI: a.RSSI()}
 			b.Services = make(map[string]ble.UUID)
 			b.Name = getNameForBeacon(b.Address)
 			beacons[a.Address().String()] = b
+			mux.Unlock()
 			return true
 		}
 
@@ -84,15 +89,17 @@ func main() {
 
 			if intAbs(b.RSSI-rssi) > 30 {
 				b.RSSI = (b.RSSI + rssi) / 2 // Take average
+				mux.Unlock()
 				return true
 			}
 		}
-
+		mux.Unlock()
 		return false
 	}
 	advHandler := func(a ble.Advertisement) {
-
+		mux.Lock()
 		b, _ := beacons[a.Address().String()]
+		mux.Unlock()
 
 		if a.Connectable() {
 			fmt.Printf("[%s] C %3d:", b.Name, intAbs(b.RSSI))
@@ -100,8 +107,9 @@ func main() {
 			fmt.Printf("[%s] N %3d:", b.Name, intAbs(b.RSSI))
 		}
 		comma := ""
-		if len(a.LocalName()) > 0 {
-			fmt.Printf(" Name: %s", a.LocalName())
+		if len(a.ManufacturerData()) > 0 {
+			manufacturerstr := string(a.ManufacturerData())
+			fmt.Printf(" Manufacturer: %s", manufacturerstr)
 			comma = ","
 		}
 		if len(b.Services) > 0 {
