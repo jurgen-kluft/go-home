@@ -28,6 +28,8 @@ type beacon struct {
 var knownBeacons = map[string]struct{ Name string }{
 	"cc:98:8b:d1:4a:0f": {Name: "Sony Headphone   "},
 	"d8:0f:99:88:c3:7a": {Name: "Fitbit Charge 3  "},
+	"60:03:08:ac:bb:0d": {Name: " Mini iPad       "},
+	"6e:f0:14:6d:38:a9": {Name: " ??  "},
 }
 
 func getNameForBeacon(address string) string {
@@ -94,19 +96,21 @@ func main() {
 		} else {
 			fmt.Printf("[%s] N %3d:", b.Name, intAbs(b.RSSI))
 		}
-		//comma := ""
+		comma := ""
 		if len(a.LocalName()) > 0 {
 			fmt.Printf(" Name: %s", a.LocalName())
-			//comma = ","
+			comma = ","
 		}
-		//if len(b.Services) > 0 {
-		//	fmt.Printf("%s Services: ", comma)
-		//	comma = ""
-		//	for _, srv := range b.Services {
-		//		fmt.Printf("%s %v", comma, srv.String())
-		//	}
-		//	comma = ","
-		//}
+		if len(b.Services) > 0 {
+			fmt.Printf("%s Services: ", comma)
+			comma = ""
+			for _, srv := range b.Services {
+				if ble.IsServiceKnown(srv) {
+					fmt.Printf("%s %v", comma, ble.KnownServiceName(srv))
+				}
+			}
+			comma = ","
+		}
 		fmt.Printf("\n")
 	}
 
