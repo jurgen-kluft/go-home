@@ -19,8 +19,9 @@ var (
 )
 
 type beacon struct {
-	Address string
-	RSSI    int
+	Address  string
+	RSSI     int
+	Services map[string]ble.UUID
 }
 
 func intAbs(v int) int {
@@ -44,43 +45,56 @@ func main() {
 		b, exists := beacons[a.Address().String()]
 		if !exists {
 			b := &beacon{Address: a.Address().String(), RSSI: a.RSSI()}
+			b.Services = make(map[string]ble.UUID)
 			beacons[a.Address().String()] = b
 			return true
 		}
 
-		if intAbs(b.RSSI-a.RSSI()) > 20 {
-			b.RSSI = (b.RSSI + a.RSSI()) / 2 // Take average
+		// Append any new services
+		for _, srv := range a.Services() {
+			_, e := b.Services[srv.String()]
+			if !e {
+				b.Services[srv.String()] = srv
+			}
+		}
+
+		rssi := a.RSSI()
+		if rssi > 0 {
+			rssi = -rssi
+		}
+
+		if intAbs(b.RSSI-rssi) > 20 {
+			b.RSSI = (b.RSSI + rssi) / 2 // Take average
 			return true
 		}
 
 		return false
+	}
+	advHandler := func(a ble.Advertisement) {
+
+		b, _ := beacons[a.Address().String()]
+
+		if a.Connectable() {
+			fmt.Printf("[%s] C %3d:", a.Address(), intAbs(b.RSSI))
+		} else {
+			fmt.Printf("[%s] N %3d:", a.Address(), intAbs(b.RSSI))
+		}
+		comma := ""
+		if len(a.LocalName()) > 0 {
+			fmt.Printf(" Name: %s", a.LocalName())
+			comma = ","
+		}
+		if len(b.Services) > 0 {
+			fmt.Printf("%s Svcs: %v", comma, b.Services)
+			comma = ","
+		}
+		fmt.Printf("\n")
 	}
 
 	// Scan for specified durantion, or until interrupted by user.
 	fmt.Printf("Scanning for %s...\n", *du)
 	ctx := ble.WithSigHandler(context.WithTimeout(context.Background(), *du))
 	chkErr(ble.Scan(ctx, true, advHandler, advFilter))
-}
-
-func advHandler(a ble.Advertisement) {
-	if a.Connectable() {
-		fmt.Printf("[%s] C %3d:", a.Address(), a.RSSI())
-	} else {
-		fmt.Printf("[%s] N %3d:", a.Address(), a.RSSI())
-	}
-	comma := ""
-	if len(a.LocalName()) > 0 {
-		fmt.Printf(" Name: %s", a.LocalName())
-		comma = ","
-	}
-	if len(a.Services()) > 0 {
-		fmt.Printf("%s Svcs: %v", comma, a.Services())
-		comma = ","
-	}
-	if len(a.ManufacturerData()) > 0 {
-		fmt.Printf("%s MD: %X", comma, a.ManufacturerData())
-	}
-	fmt.Printf("\n")
 }
 
 func chkErr(err error) {
