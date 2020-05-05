@@ -36,14 +36,16 @@ func main() {
 	advFilter := func(a ble.Advertisement) bool {
 		b, exists := beacons[a.Address().String()]
 		if !exists {
-			b := &beacon{Address: a.Address().String(), RSSI: ((a.RSSI() / 5) * 5)}
+			b := &beacon{Address: a.Address().String(), RSSI: (a.RSSI() / 10)}
 			beacons[a.Address().String()] = b
 			return true
 		}
-		if b.RSSI != ((a.RSSI() / 5) * 5) {
-			b.RSSI = ((a.RSSI() / 5) * 5)
+
+		if b.RSSI != (a.RSSI() / 10) {
+			b.RSSI = (a.RSSI() / 10)
 			return true
 		}
+
 		return false
 	}
 
