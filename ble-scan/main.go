@@ -16,8 +16,12 @@ import (
 var (
 	device = flag.String("device", "default", "implementation of ble")
 	du     = flag.Duration("du", 15*time.Second, "scanning duration")
-	dup    = flag.Bool("dup", true, "allow duplicate reported")
 )
+
+type beacon struct {
+	Address string
+	RSSI    int
+}
 
 func main() {
 	flag.Parse()
@@ -28,10 +32,25 @@ func main() {
 	}
 	ble.SetDefaultDevice(d)
 
+	beacons := make(map[string]*beacon)
+	advFilter := func(a ble.Advertisement) bool {
+		b, exists := beacons[a.Address().String()]
+		if !exists {
+			b := &beacon{Address: a.Address().String(), RSSI: ((a.RSSI() / 5) * 5)}
+			beacons[a.Address().String()] = b
+			return true
+		}
+		if b.RSSI != ((a.RSSI() / 5) * 5) {
+			b.RSSI = ((a.RSSI() / 5) * 5)
+			return true
+		}
+		return false
+	}
+
 	// Scan for specified durantion, or until interrupted by user.
 	fmt.Printf("Scanning for %s...\n", *du)
 	ctx := ble.WithSigHandler(context.WithTimeout(context.Background(), *du))
-	chkErr(ble.Scan(ctx, *dup, advHandler, nil))
+	chkErr(ble.Scan(ctx, true, advHandler, advFilter))
 }
 
 func advHandler(a ble.Advertisement) {
