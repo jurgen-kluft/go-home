@@ -23,6 +23,13 @@ type beacon struct {
 	RSSI    int
 }
 
+func intAbs(v int) int {
+	if v < 0 {
+		return -v
+	}
+	return v
+}
+
 func main() {
 	flag.Parse()
 
@@ -36,13 +43,13 @@ func main() {
 	advFilter := func(a ble.Advertisement) bool {
 		b, exists := beacons[a.Address().String()]
 		if !exists {
-			b := &beacon{Address: a.Address().String(), RSSI: (a.RSSI() / 10)}
+			b := &beacon{Address: a.Address().String(), RSSI: a.RSSI()}
 			beacons[a.Address().String()] = b
 			return true
 		}
 
-		if b.RSSI != (a.RSSI() / 10) {
-			b.RSSI = (a.RSSI() / 10)
+		if intAbs(b.RSSI-a.RSSI()) > 20 {
+			b.RSSI = b.RSSI + a.RSSI()/2 // Take average
 			return true
 		}
 
