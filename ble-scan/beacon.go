@@ -20,9 +20,9 @@ func Create() *Bluetooth {
 
 // Beacon is an instance that holds information of a BLE device
 type Beacon struct {
-	uuid  string
-	major uint16
-	minor uint16
+	UUID  string
+	Major uint16
+	Minor uint16
 	RSSI  int
 }
 
@@ -53,8 +53,9 @@ func (bt *Bluetooth) NewBeacon(data []byte) (*Beacon, error) {
 		beacon, exists := bt.beacons[uuid]
 		if !exists {
 			beacon = new(Beacon)
-			beacon.major = binary.BigEndian.Uint16(data[20:22])
-			beacon.minor = binary.BigEndian.Uint16(data[22:24])
+			beacon.UUID = uuid
+			beacon.Major = binary.BigEndian.Uint16(data[20:22])
+			beacon.Minor = binary.BigEndian.Uint16(data[22:24])
 			beacon.RSSI = 0
 			bt.beacons[uuid] = beacon
 		}

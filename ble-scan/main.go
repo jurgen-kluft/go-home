@@ -30,18 +30,18 @@ func main() {
 			b, err := bluetooth.NewBeacon(a.ManufacturerData)
 			if err == nil {
 				b.RSSI = ((rssi / 10) * 10)
-				fmt.Println("UUID: ", b.uuid)
-				fmt.Println("Major: ", b.major)
-				fmt.Println("Minor: ", b.minor)
+				fmt.Println("UUID: ", b.UUID)
+				fmt.Println("Major: ", b.Major)
+				fmt.Println("Minor: ", b.Minor)
 				fmt.Println("RSSI: ", rssi)
 			}
 		} else {
 			b := bluetooth.GetExistingBeacon(a.ManufacturerData)
 			if b.RSSI != ((rssi / 10) * 10) {
 				b.RSSI = ((rssi / 10) * 10)
-				fmt.Println("UUID: ", b.uuid)
-				fmt.Println("Major: ", b.major)
-				fmt.Println("Minor: ", b.minor)
+				fmt.Println("UUID: ", b.UUID)
+				fmt.Println("Major: ", b.Major)
+				fmt.Println("Minor: ", b.Minor)
 				fmt.Println("RSSI: ", rssi)
 			}
 		}
