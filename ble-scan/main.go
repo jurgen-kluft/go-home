@@ -49,7 +49,7 @@ func main() {
 		}
 
 		if intAbs(b.RSSI-a.RSSI()) > 20 {
-			b.RSSI = b.RSSI + a.RSSI()/2 // Take average
+			b.RSSI = (b.RSSI + a.RSSI()) / 2 // Take average
 			return true
 		}
 
