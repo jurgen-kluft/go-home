@@ -15,7 +15,7 @@ import (
 
 var (
 	device = flag.String("device", "default", "implementation of ble")
-	du     = flag.Duration("du", 15*time.Second, "scanning duration")
+	du     = flag.Duration("du", 3000*time.Second, "scanning duration")
 )
 
 type beacon struct {
@@ -28,8 +28,8 @@ type beacon struct {
 var knownBeacons = map[string]struct{ Name string }{
 	"cc:98:8b:d1:4a:0f": {Name: "Sony Headphone   "},
 	"d8:0f:99:88:c3:7a": {Name: "Fitbit Charge 3  "},
-	"60:03:08:ac:bb:0d": {Name: " Mini iPad       "},
-	"6e:f0:14:6d:38:a9": {Name: " ??  "},
+	"60:03:08:ac:bb:0d": {Name: "Mini iPad        "},
+	"6e:f0:14:6d:38:a9": {Name: "??               "},
 }
 
 func getNameForBeacon(address string) string {
@@ -75,14 +75,16 @@ func main() {
 			}
 		}
 
-		rssi := a.RSSI()
-		if rssi > 0 {
-			rssi = -rssi
-		}
+		if a.Connectable() {
+			rssi := a.RSSI()
+			if rssi > 0 {
+				rssi = -rssi
+			}
 
-		if intAbs(b.RSSI-rssi) > 20 {
-			b.RSSI = (b.RSSI + rssi) / 2 // Take average
-			return true
+			if intAbs(b.RSSI-rssi) > 30 {
+				b.RSSI = (b.RSSI + rssi) / 2 // Take average
+				return true
+			}
 		}
 
 		return false
@@ -102,12 +104,15 @@ func main() {
 			comma = ","
 		}
 		if len(b.Services) > 0 {
-			fmt.Printf("%s Services: ", comma)
 			comma = ""
 			for _, srv := range b.Services {
+				if comma == "" {
+					fmt.Printf("Services: ")
+				}
 				if ble.IsServiceKnown(srv) {
 					fmt.Printf("%s %v", comma, ble.KnownServiceName(srv))
 				}
+				comma = ","
 			}
 			comma = ","
 		}
