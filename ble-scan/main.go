@@ -20,8 +20,22 @@ var (
 
 type beacon struct {
 	Address  string
+	Name     string
 	RSSI     int
 	Services map[string]ble.UUID
+}
+
+var knownBeacons = map[string]struct{ Name string }{
+	"cc:98:8b:d1:4a:0f": {Name: "Sony Headphone   "},
+	"d8:0f:99:88:c3:7a": {Name: "Fitbit Charge 3  "},
+}
+
+func getNameForBeacon(address string) string {
+	name, exists := knownBeacons[address]
+	if !exists {
+		return address
+	}
+	return name.Name
 }
 
 func intAbs(v int) int {
@@ -46,6 +60,7 @@ func main() {
 		if !exists {
 			b := &beacon{Address: a.Address().String(), RSSI: a.RSSI()}
 			b.Services = make(map[string]ble.UUID)
+			b.Name = getNameForBeacon(b.Address)
 			beacons[a.Address().String()] = b
 			return true
 		}
@@ -75,23 +90,23 @@ func main() {
 		b, _ := beacons[a.Address().String()]
 
 		if a.Connectable() {
-			fmt.Printf("[%s] C %3d:", a.Address(), intAbs(b.RSSI))
+			fmt.Printf("[%s] C %3d:", b.Name, intAbs(b.RSSI))
 		} else {
-			fmt.Printf("[%s] N %3d:", a.Address(), intAbs(b.RSSI))
+			fmt.Printf("[%s] N %3d:", b.Name, intAbs(b.RSSI))
 		}
-		comma := ""
+		//comma := ""
 		if len(a.LocalName()) > 0 {
 			fmt.Printf(" Name: %s", a.LocalName())
-			comma = ","
+			//comma = ","
 		}
-		if len(b.Services) > 0 {
-			fmt.Printf("%s Services: ", comma)
-			comma = ""
-			for _, srv := range b.Services {
-				fmt.Printf("%s %v", comma, srv.String())
-			}
-			comma = ","
-		}
+		//if len(b.Services) > 0 {
+		//	fmt.Printf("%s Services: ", comma)
+		//	comma = ""
+		//	for _, srv := range b.Services {
+		//		fmt.Printf("%s %v", comma, srv.String())
+		//	}
+		//	comma = ","
+		//}
 		fmt.Printf("\n")
 	}
 
