@@ -99,7 +99,6 @@ func main() {
 	advHandler := func(a ble.Advertisement) {
 		mux.Lock()
 		b, _ := beacons[a.Address().String()]
-		mux.Unlock()
 
 		if a.Connectable() {
 			fmt.Printf("[%s] C %3d:", b.Name, intAbs(b.RSSI))
@@ -127,6 +126,7 @@ func main() {
 			comma = ","
 		}
 		fmt.Printf("\n")
+		mux.Unlock()
 	}
 
 	// Scan for specified durantion, or until interrupted by user.
