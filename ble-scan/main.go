@@ -100,10 +100,11 @@ func main() {
 		mux.Lock()
 		b, _ := beacons[a.Address().String()]
 
+		now := time.Now()
 		if a.Connectable() {
-			fmt.Printf("[%s] C %3d:", b.Name, intAbs(b.RSSI))
+			fmt.Printf("[%s] %02d:%02d C %3d:", b.Name, now.Hour(), now.Minute(), intAbs(b.RSSI))
 		} else {
-			fmt.Printf("[%s] N %3d:", b.Name, intAbs(b.RSSI))
+			fmt.Printf("[%s] %02d:%02d N %3d:", b.Name, now.Hour(), now.Minute(), intAbs(b.RSSI))
 		}
 		comma := ""
 		if len(a.ManufacturerData()) > 0 {
