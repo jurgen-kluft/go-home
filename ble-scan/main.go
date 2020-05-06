@@ -107,8 +107,7 @@ func main() {
 		}
 		comma := ""
 		if len(a.ManufacturerData()) > 0 {
-			manufacturerstr := string(a.ManufacturerData())
-			fmt.Printf(" Manufacturer: %s", manufacturerstr)
+			fmt.Printf(" MD: %X", a.ManufacturerData())
 			comma = ","
 		}
 		if len(b.Services) > 0 {
