@@ -65,7 +65,7 @@ func main() {
 		mux.Lock()
 		b, exists := beacons[a.Address().String()]
 		if !exists {
-			b := &beacon{Address: a.Address().String(), RSSI: a.RSSI()}
+			b := &beacon{Address: a.Address().String(), RSSI: intAbs(a.RSSI())}
 			b.Services = make(map[string]ble.UUID)
 			b.Name = getNameForBeacon(b.Address)
 			beacons[a.Address().String()] = b
@@ -82,11 +82,7 @@ func main() {
 		}
 
 		if a.Connectable() {
-			rssi := a.RSSI()
-			if rssi > 0 {
-				rssi = -rssi
-			}
-
+			rssi := intAbs(a.RSSI())
 			if intAbs(b.RSSI-rssi) > 30 {
 				b.RSSI = (b.RSSI + rssi) / 2 // Take average
 				mux.Unlock()
