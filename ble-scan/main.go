@@ -83,7 +83,7 @@ func main() {
 
 		if a.Connectable() {
 			rssi := intAbs(a.RSSI())
-			if intAbs(b.RSSI-rssi) > 30 {
+			if intAbs(b.RSSI-rssi) > 40 {
 				b.RSSI = (b.RSSI + rssi) / 2 // Take average
 				mux.Unlock()
 				return true
