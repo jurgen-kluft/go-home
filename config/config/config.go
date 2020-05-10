@@ -164,7 +164,7 @@ func main() {
 	for {
 		connected := true
 		for connected {
-			register := []string{"config/config/", "config/request/", "config/presence/"}
+			register := []string{"config/config/", "config/request/", "config/presence/", "config/aqi/"}
 			subscribe := []string{"config/config/", "config/request/"}
 			err := ctx.pubsub.Connect("configs", register, subscribe)
 			if err == nil {
@@ -207,7 +207,7 @@ func main() {
 			}
 
 			if err != nil {
-				ctx.log.LogError("configs", err.Error())
+				ctx.log.LogError("config", err.Error())
 			}
 		}
 
