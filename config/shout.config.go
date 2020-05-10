@@ -8,12 +8,22 @@ type ShoutConfig struct {
 	Key CryptString `json:"key"`
 }
 
-func ShoutConfigFromJSON(jsonstr string) (*ShoutConfig, error) {
+// ShoutConfigFromJSON converts a json string to a ShoutConfig instance
+func ShoutConfigFromJSON(data []byte) (*ShoutConfig, error) {
 	config := &ShoutConfig{}
-	err := json.Unmarshal([]byte(jsonstr), config)
+	err := json.Unmarshal(data, config)
 	return config, err
 }
 
+// FromJSON converts a json string to a ShoutConfig instance
+func (m *ShoutConfig) FromJSON(data []byte) error {
+	c := ShoutConfig{}
+	err := json.Unmarshal(data, &c)
+	*m = c
+	return err
+}
+
+// ToJSON converts a ShoutConfig to a JSON string
 func (m *ShoutConfig) ToJSON() (data []byte, err error) {
 	data, err = json.Marshal(m)
 	return

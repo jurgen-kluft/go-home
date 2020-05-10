@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
-	"reflect"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
@@ -23,7 +23,7 @@ func newContext(emitter map[string]string) *context {
 	ctx := &context{}
 	ctx.log = logpkg.New("configs")
 	ctx.log.AddEntry("emitter")
-	ctx.log.AddEntry("configs")
+	ctx.log.AddEntry("config")
 	ctx.pubsub = pubsub.New(emitter)
 	ctx.watcher = newConfigFileWatcher()
 	return ctx
@@ -37,50 +37,51 @@ type configuration struct {
 	Name           string `json:"name"`
 	ConfigFilename string `json:"filename"`
 	ChannelName    string `json:"channel"`
-	ReflectType    reflect.Type
 }
 
-func configFromJSON(jsonstr string) (*configs, error) {
+func configFromJSON(data []byte) (*configs, error) {
 	c := &configs{}
-	err := json.Unmarshal([]byte(jsonstr), c)
+	err := json.Unmarshal(data, c)
 	return c, err
 }
 
-func (c *context) initializeReflectTypes() {
-	for name, configuration := range c.configs.Configurations {
-		switch name {
-		case "aqi":
-			configuration.ReflectType = reflect.TypeOf(config.AqiConfig{})
-		case "automation":
-			configuration.ReflectType = reflect.TypeOf(config.AutomationConfig{})
-		case "bravia.tv":
-			configuration.ReflectType = reflect.TypeOf(config.BraviaTVConfig{})
-		case "calendar":
-			configuration.ReflectType = reflect.TypeOf(config.CalendarConfig{})
-		case "flux":
-			configuration.ReflectType = reflect.TypeOf(config.FluxConfig{})
-		case "hue":
-			configuration.ReflectType = reflect.TypeOf(config.HueConfig{})
-		case "huebridge":
-			configuration.ReflectType = reflect.TypeOf(config.HueBridgeConfig{})
-		case "presence":
-			configuration.ReflectType = reflect.TypeOf(config.PresenceConfig{})
-		case "samsung.tv":
-			configuration.ReflectType = reflect.TypeOf(config.SamsungTVConfig{})
-		case "shout":
-			configuration.ReflectType = reflect.TypeOf(config.ShoutConfig{})
-		case "suncalc":
-			configuration.ReflectType = reflect.TypeOf(config.SuncalcConfig{})
-		case "weather":
-			configuration.ReflectType = reflect.TypeOf(config.WeatherConfig{})
-		case "wemo":
-			configuration.ReflectType = reflect.TypeOf(config.WemoConfig{})
-		case "xiaomi":
-			configuration.ReflectType = reflect.TypeOf(config.XiaomiConfig{})
-		case "yee":
-			configuration.ReflectType = reflect.TypeOf(config.YeeConfig{})
-		}
+func (c *context) configFromJSON(configname string, jsondata []byte) (config.Config, error) {
+	var ci config.Config
+	var err error
+	c.log.LogInfo("config", fmt.Sprintf("configuration %s, FromJSON", configname))
+	switch configname {
+	case "aqi":
+		ci, err = config.AqiConfigFromJSON(jsondata)
+	case "automation":
+		ci, err = config.AutomationConfigFromJSON(jsondata)
+	case "bravia.tv":
+		ci, err = config.BraviaTVConfigFromJSON(jsondata)
+	case "calendar":
+		ci, err = config.CalendarConfigFromJSON(jsondata)
+	case "flux":
+		ci, err = config.FluxConfigFromJSON(jsondata)
+	case "hue":
+		ci, err = config.HueConfigFromJSON(jsondata)
+	case "huebridge":
+		ci, err = config.HueBridgeConfigFromJSON(jsondata)
+	case "presence":
+		ci, err = config.PresenceConfigFromJSON(jsondata)
+	case "samsung.tv":
+		ci, err = config.SamsungTVConfigFromJSON(jsondata)
+	case "shout":
+		ci, err = config.ShoutConfigFromJSON(jsondata)
+	case "suncalc":
+		ci, err = config.SuncalcConfigFromJSON(jsondata)
+	case "weather":
+		ci, err = config.WeatherConfigFromJSON(jsondata)
+	case "wemo":
+		ci, err = config.WemoConfigFromJSON(jsondata)
+	case "xiaomi":
+		ci, err = config.XiaomiConfigFromJSON(jsondata)
+	case "yee":
+		ci, err = config.YeeConfigFromJSON(jsondata)
 	}
+	return ci, err
 }
 
 func (c *context) initializeConfigFileWatcher() {
@@ -102,22 +103,25 @@ func (c *context) updateConfigFileWatcher() {
 }
 
 func (c *context) checkAllConfigurationFiles() (err error) {
-	for _, configuration := range c.configs.Configurations {
+	for name, configuration := range c.configs.Configurations {
 		var data []byte
 		data, err = ioutil.ReadFile(configuration.ConfigFilename)
 		if err != nil {
 			c.log.LogError("config", err.Error())
-		}
-
-		v := reflect.New(configuration.ReflectType).Elem().Interface().(config.Config)
-		v, err = v.FromJSON(string(data))
-		if err == nil {
-			c.log.LogError("config", err.Error())
-		}
-
-		_, err := v.ToJSON()
-		if err != nil {
-			c.log.LogError("config", err.Error())
+		} else {
+			if data != nil {
+				v, err := c.configFromJSON(name, data)
+				if err != nil {
+					c.log.LogError("config", err.Error())
+				} else {
+					data, err = v.ToJSON()
+					if err != nil {
+						c.log.LogError("config", err.Error())
+					}
+				}
+			} else {
+				c.log.LogError("config", fmt.Sprintf("Configuration %s did not have a ReflectType", name))
+			}
 		}
 	}
 	return
@@ -125,32 +129,42 @@ func (c *context) checkAllConfigurationFiles() (err error) {
 
 // SendConfigOnChannel will load the JSON based config file and publish it onto pubsub
 func (c *context) sendConfigOnChannel(configtype string) (err error) {
-	configuration, exists := c.configs.Configurations[configtype]
-	if exists {
-		var data []byte
-		data, err = ioutil.ReadFile(configuration.ConfigFilename)
-		if err != nil {
-			return err
-		}
-		v := reflect.New(configuration.ReflectType).Elem().Interface().(config.Config)
-		v, err = v.FromJSON(string(data))
-		if err == nil {
-			jsonstr, err := v.ToJSON()
-			if err == nil {
-				err = c.pubsub.Publish(configuration.ChannelName, jsonstr)
+	if c.configs != nil {
+		configuration, exists := c.configs.Configurations[configtype]
+		if exists {
+			var configJSONData []byte
+			configJSONData, err = ioutil.ReadFile(configuration.ConfigFilename)
+			if err != nil {
+				return err
 			}
+			if configJSONData != nil {
+				v, err := c.configFromJSON(configtype, configJSONData)
+				if err == nil {
+					jsondata, err := v.ToJSON()
+					if err == nil {
+						c.log.LogInfo("config", fmt.Sprintf("Publish %s on channel %s", string(jsondata), configuration.ChannelName))
+						err = c.pubsub.Publish(configuration.ChannelName, string(jsondata))
+					}
+				}
+			} else {
+				err = fmt.Errorf("Configuration %s did not have JSON data or a ReflectType", configtype)
+			}
+		} else {
+			err = fmt.Errorf("Configuration %s does not exist", configtype)
 		}
+	} else {
+		err = fmt.Errorf("Haven't received configuration, so cannot send configuration requests")
 	}
 	return
 }
 
 func main() {
-	ctx := newContext(config.EmitterIOCfg)
+	ctx := newContext(config.PubSubCfg)
 
 	for {
 		connected := true
 		for connected {
-			register := []string{"config/config/", "config/request/"}
+			register := []string{"config/config/", "config/request/", "config/presence/"}
 			subscribe := []string{"config/config/", "config/request/"}
 			err := ctx.pubsub.Connect("configs", register, subscribe)
 			if err == nil {
@@ -164,20 +178,22 @@ func main() {
 							ctx.log.LogInfo("emitter", "disconnected")
 							connected = false
 						} else if topic == "config/config/" {
-							config, err := configFromJSON(string(msg.Payload()))
+							config, err := configFromJSON(msg.Payload())
 							if err == nil {
-								ctx.log.LogInfo("configs", "received configuration")
+								ctx.log.LogInfo("config", "received configuration")
 								ctx.configs = config
 								ctx.checkAllConfigurationFiles()
-								ctx.initializeReflectTypes()
 								ctx.initializeConfigFileWatcher()
 							} else {
-								ctx.log.LogError("configs", err.Error())
+								ctx.log.LogError("config", err.Error())
 							}
 						} else if topic == "config/request/" {
 							configname := string(msg.Payload())
-							ctx.log.LogInfo("configs", "requested configuration for '"+configname+"'.")
-							ctx.sendConfigOnChannel(configname)
+							ctx.log.LogInfo("config", "requested configuration for '"+configname+"'.")
+							err := ctx.sendConfigOnChannel(configname)
+							if err != nil {
+								ctx.log.LogError("config", err.Error())
+							}
 						}
 						break
 					case <-time.After(time.Second * 10):

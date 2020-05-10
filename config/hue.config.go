@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 )
 
+// Group defines
 const (
 	BedroomLights      = "Bedroom"
 	LivingroomLights   = "Living Room"
@@ -24,13 +25,23 @@ type HueConfig struct {
 	} `json:"groups"`
 }
 
-func HueConfigFromJSON(jsonstr string) (*HueConfig, error) {
+// HueConfigFromJSON converts a json string to a HueConfig instance
+func HueConfigFromJSON(data []byte) (*HueConfig, error) {
 	config := &HueConfig{}
-	err := json.Unmarshal([]byte(jsonstr), config)
+	err := json.Unmarshal(data, config)
 	return config, err
 }
 
-func (m *HueConfig) ToJSON() (data []byte, err error) {
-	data, err = json.Marshal(m)
+// FromJSON converts a json string to a HueConfig instance
+func (r *HueConfig) FromJSON(data []byte) error {
+	c := HueConfig{}
+	err := json.Unmarshal(data, &c)
+	*r = c
+	return err
+}
+
+// ToJSON converts a HueConfig to a JSON string
+func (r *HueConfig) ToJSON() (data []byte, err error) {
+	data, err = json.Marshal(r)
 	return
 }

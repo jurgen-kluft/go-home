@@ -86,7 +86,7 @@ func main() {
 	hue.log.AddEntry("hue")
 
 	for {
-		client := pubsub.New(config.EmitterIOCfg)
+		client := pubsub.New(config.PubSubCfg)
 		register := []string{"config/hue/", "state/sensor/hue/", "sensor/light/hue/"}
 		subscribe := []string{"config/hue/", "state/sensor/hue/", "sensor/light/hue/", "config/request/"}
 		err := client.Connect("hue", register, subscribe)
@@ -99,7 +99,7 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/hue/" {
-						config, err := config.HueConfigFromJSON(string(msg.Payload()))
+						config, err := config.HueConfigFromJSON(msg.Payload())
 						if err == nil {
 							hue.log.LogInfo("hue", "received configuration")
 							hue.config = config
@@ -114,7 +114,7 @@ func main() {
 						hue.log.LogInfo("emitter", "disconnected")
 						connected = false
 					} else if topic == "state/sensor/hue/" {
-						huesensor, err := config.SensorStateFromJSON(string(msg.Payload()))
+						huesensor, err := config.SensorStateFromJSON(msg.Payload())
 						if err == nil {
 							hue.log.LogInfo("hue", "received flux")
 							hue.CT = huesensor.GetFloatAttr("CT", 325.0)
@@ -124,7 +124,7 @@ func main() {
 						}
 					} else if topic == "state/light/hue/" {
 						if hue.config != nil {
-							huesensor, err := config.SensorStateFromJSON(string(msg.Payload()))
+							huesensor, err := config.SensorStateFromJSON(msg.Payload())
 							if err == nil {
 								hue.log.LogInfo("hue", "received state")
 								lightname := huesensor.GetValueAttr("name", "")

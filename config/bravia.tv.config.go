@@ -7,10 +7,18 @@ const (
 )
 
 // BraviaTVConfigFromJSON parser the incoming JSON string and returns an Config instance for Bravia.TV
-func BraviaTVConfigFromJSON(jsonstr string) (*BraviaTVConfig, error) {
+func BraviaTVConfigFromJSON(data []byte) (*BraviaTVConfig, error) {
 	r := &BraviaTVConfig{}
-	err := json.Unmarshal([]byte(jsonstr), r)
+	err := json.Unmarshal(data, r)
 	return r, err
+}
+
+// FromJSON converts a json string to a BraviaTVConfig instance
+func (r *BraviaTVConfig) FromJSON(data []byte) error {
+	c := BraviaTVConfig{}
+	err := json.Unmarshal(data, &c)
+	*r = c
+	return err
 }
 
 // ToJSON converts a AqiConfig to a JSON string

@@ -199,7 +199,7 @@ func main() {
 	logger.AddEntry(c.name)
 
 	for {
-		client := pubsub.New(config.EmitterIOCfg)
+		client := pubsub.New(config.PubSubCfg)
 		register := []string{"config/weather/", "state/sensor/weather/"}
 		subscribe := []string{"config/weather/", "config/request/"}
 		err := client.Connect(c.name, register, subscribe)
@@ -213,7 +213,7 @@ func main() {
 					topic := msg.Topic()
 					if topic == "config/weather/" {
 						logger.LogInfo(c.name, "received configuration")
-						weatherConfig, err := config.WeatherConfigFromJSON(string(msg.Payload()))
+						weatherConfig, err := config.WeatherConfigFromJSON(msg.Payload())
 						if err == nil {
 							c.initialize(weatherConfig)
 						} else {

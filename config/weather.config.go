@@ -5,10 +5,18 @@ import (
 	"time"
 )
 
-func WeatherConfigFromJSON(jsonstr string) (*WeatherConfig, error) {
+func WeatherConfigFromJSON(data []byte) (*WeatherConfig, error) {
 	r := &WeatherConfig{}
-	err := json.Unmarshal([]byte(jsonstr), r)
+	err := json.Unmarshal(data, r)
 	return r, err
+}
+
+// FromJSON converts a json string to a WeatherConfig instance
+func (r *WeatherConfig) FromJSON(data []byte) error {
+	c := WeatherConfig{}
+	err := json.Unmarshal(data, &c)
+	*r = c
+	return err
 }
 
 func (r *WeatherConfig) ToJSON() (data []byte, err error) {

@@ -3,10 +3,18 @@ package config
 import "encoding/json"
 
 // ConbeeConfigFromJSON parser the incoming JSON string and returns an Config instance for Aqi
-func ConbeeConfigFromJSON(jsonstr string) (*ConbeeConfig, error) {
+func ConbeeConfigFromJSON(data []byte) (*ConbeeConfig, error) {
 	r := &ConbeeConfig{}
-	err := json.Unmarshal([]byte(jsonstr), r)
+	err := json.Unmarshal(data, r)
 	return r, err
+}
+
+// FromJSON converts a json string to a ConbeeConfig instance
+func (r *ConbeeConfig) FromJSON(data []byte) error {
+	c := ConbeeConfig{}
+	err := json.Unmarshal(data, &c)
+	*r = c
+	return err
 }
 
 // ToJSON converts a ConbeeConfig to a JSON string

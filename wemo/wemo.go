@@ -36,7 +36,7 @@ func main() {
 	c := new()
 
 	for {
-		client := pubsub.New(config.EmitterIOCfg)
+		client := pubsub.New(config.PubSubCfg)
 		register := []string{"config/wemo/", "sensor/state/wemo/"}
 		subscribe := []string{"config/wemo/", "sensor/state/wemo/", "config/request/"}
 		err := client.Connect(c.name, register, subscribe)
@@ -50,15 +50,15 @@ func main() {
 					topic := msg.Topic()
 					if topic == "config/wemo/" {
 						c.log.LogInfo(c.name, "received configuration")
-						c.config, err = config.WemoConfigFromJSON(string(msg.Payload()))
+						c.config, err = config.WemoConfigFromJSON(msg.Payload())
 						c.devices = map[string]*Switch{}
 						for _, d := range c.config.Devices {
 							c.devices[d.Name] = NewSwitch(d.Name, d.IP+":"+d.Port)
 						}
 					} else if topic == "sensor/state/wemo/" {
-						sensor, err := config.SensorStateFromJSON(string(msg.Payload()))
+						sensor, err := config.SensorStateFromJSON(msg.Payload())
 						if err == nil {
-							c.log.LogInfo(c.name, "received configuration")
+							c.log.LogInfo(c.name, "received state")
 							devicename := sensor.GetValueAttr("name", "")
 							if devicename != "" {
 								device, exists := c.devices[devicename]

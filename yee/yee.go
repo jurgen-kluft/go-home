@@ -32,7 +32,7 @@ func new() *instance {
 	return c
 }
 
-func (c *instance) initialize(jsonstr string) error {
+func (c *instance) initialize(jsonstr []byte]) error {
 	var err error
 	c.config, err = config.YeeConfigFromJSON(jsonstr)
 	c.lamps = map[string]*yee.Yeelight{}
@@ -73,9 +73,9 @@ func main() {
 					topic := msg.Topic()
 					if topic == "config/yee/" {
 						c.logger.LogInfo(c.name, "received configuration")
-						c.initialize(string(msg.Payload()))
+						c.initialize(msg.Payload())
 					} else if topic == "state/light/yee/" {
-						yeesensor, err := config.SensorStateFromJSON(string(msg.Payload()))
+						yeesensor, err := config.SensorStateFromJSON(msg.Payload())
 						if err == nil {
 							c.logger.LogInfo(c.name, "received state")
 

@@ -35,8 +35,8 @@ func new() *Calendar {
 }
 
 // initialize  ... create a new Calendar from the given JSON configuration
-func (c *Calendar) initialize(jsonstr string) (err error) {
-	c.config, err = config.CalendarConfigFromJSON(jsonstr)
+func (c *Calendar) initialize(jsondata []byte) (err error) {
+	c.config, err = config.CalendarConfigFromJSON(jsondata)
 	if err != nil {
 		c.log.LogError(c.name, err.Error())
 	}
@@ -273,7 +273,7 @@ func main() {
 	c := new()
 
 	for {
-		client := pubsub.New(config.EmitterIOCfg)
+		client := pubsub.New(config.PubSubCfg)
 		register := []string{"config/calendar/"}
 		subscribe := []string{"config/calendar/", "config/request/"}
 		err := client.Connect(c.name, register, subscribe)
@@ -287,8 +287,7 @@ func main() {
 					topic := msg.Topic()
 					if topic == "config/calendar/" {
 						c.log.LogInfo(c.name, "received configuration")
-						jsonmsg := string(msg.Payload())
-						err = c.initialize(jsonmsg)
+						err = c.initialize(msg.Payload())
 						if err != nil {
 							c = nil
 							c.log.LogError(c.name, err.Error())

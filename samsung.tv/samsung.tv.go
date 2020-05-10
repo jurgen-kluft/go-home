@@ -58,7 +58,7 @@ func main() {
 	logger.AddEntry(c.name)
 
 	for {
-		client := pubsub.New(config.EmitterIOCfg)
+		client := pubsub.New(config.PubSubCfg)
 		register := []string{"config/samsung.tv/", "state/samsung.tv/"}
 		subscribe := []string{"config/samsung.tv/", "state/samsung.tv/", "config/request/"}
 		err := client.Connect(c.name, register, subscribe)
@@ -72,7 +72,7 @@ func main() {
 					topic := msg.Topic()
 					if topic == "config/samsung.tv/" {
 						logger.LogInfo(c.name, "received configuration")
-						c.config, err = config.SamsungTVConfigFromJSON(string(msg.Payload()))
+						c.config, err = config.SamsungTVConfigFromJSON(msg.Payload())
 						for _, tv := range c.config.Devices {
 							err = c.Add(tv.IP, tv.Name, tv.ID)
 							if err == nil {
@@ -83,7 +83,7 @@ func main() {
 						}
 					} else if topic == "state/samsung.tv/" {
 						logger.LogInfo(c.name, "received configuration")
-						state, err := config.SensorStateFromJSON(string(msg.Payload()))
+						state, err := config.SensorStateFromJSON(msg.Payload())
 						if err == nil {
 							power := state.GetValueAttr("power", "idle")
 							if power == "off" {

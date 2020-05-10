@@ -399,7 +399,7 @@ func new() *instance {
 	return s
 }
 
-func (s *instance) initialize(jsonstr string) error {
+func (s *instance) initialize(jsondata []byte) error {
 	config, err := config.SuncalcConfigFromJSON(jsonstr)
 	if err == nil {
 		s.config = config
@@ -439,7 +439,7 @@ func main() {
 	logger.AddEntry(suncalc.name)
 
 	for {
-		client := pubsub.New(config.EmitterIOCfg)
+		client := pubsub.New(config.PubSubCfg)
 		register := []string{"config/suncalc/", "state/sensor/sun/"}
 		subscribe := []string{"config/suncalc/", "config/request/"}
 		err := client.Connect(suncalc.name, register, subscribe)
@@ -453,7 +453,7 @@ func main() {
 					topic := msg.Topic()
 					if topic == "config/suncalc/" {
 						logger.LogInfo("suncalc", "received configuration")
-						err = suncalc.initialize(string(msg.Payload()))
+						err = suncalc.initialize(msg.Payload())
 						if err != nil {
 							logger.LogError(suncalc.name, err.Error())
 						}

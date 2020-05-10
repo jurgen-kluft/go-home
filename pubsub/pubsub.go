@@ -35,6 +35,23 @@ func New(emittercfg map[string]string) *Context {
 	return ctx
 }
 
+type PubsubMessage struct {
+	topic   string
+	payload []byte
+}
+
+func (p *PubsubMessage) Topic() string {
+	return p.topic
+}
+func (p *PubsubMessage) Payload() []byte {
+	return p.payload
+}
+
+func (ctx *Context) GetUpdateMsg(topic string, payload []byte) emitter.Message {
+	msg := &PubsubMessage{topic: topic, payload: payload}
+	return msg
+}
+
 func (ctx *Context) Connect(username string, register, subscribe []string) error {
 	// Create the options with default values
 	options := emitter.NewClientOptions()

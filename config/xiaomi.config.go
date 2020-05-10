@@ -49,10 +49,18 @@ type XiaomiConfig struct {
 	} `json:"magnet"`
 }
 
-func XiaomiConfigFromJSON(jsonstr string) (*XiaomiConfig, error) {
+func XiaomiConfigFromJSON(data []byte) (*XiaomiConfig, error) {
 	config := &XiaomiConfig{}
-	err := json.Unmarshal([]byte(jsonstr), config)
+	err := json.Unmarshal(data, config)
 	return config, err
+}
+
+// FromJSON converts a json string to a XiaomiConfig instance
+func (r *XiaomiConfig) FromJSON(data []byte) error {
+	c := XiaomiConfig{}
+	err := json.Unmarshal(data, &c)
+	*r = c
+	return err
 }
 
 func (m *XiaomiConfig) ToJSON() (data []byte, err error) {

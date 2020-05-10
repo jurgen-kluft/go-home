@@ -136,7 +136,7 @@ func main() {
 	c.log.AddEntry(c.name)
 
 	for {
-		client := pubsub.New(config.EmitterIOCfg)
+		client := pubsub.New(config.PubSubCfg)
 		register := c.getChannelsToRegister()
 		subscribe := c.getChannelsToSubscribe()
 		err := client.Connect(c.name, register, subscribe)
@@ -149,7 +149,7 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/"+c.name+"/" {
-						config, err := config.HueBridgeConfigFromJSON(string(msg.Payload()))
+						config, err := config.HueBridgeConfigFromJSON(msg.Payload())
 						if err == nil {
 							c.log.LogInfo(c.name, "received configuration")
 							c.config = config

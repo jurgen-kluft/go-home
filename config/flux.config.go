@@ -5,12 +5,22 @@ import (
 	"time"
 )
 
-func FluxConfigFromJSON(jsonstr string) (*FluxConfig, error) {
+// FluxConfigFromJSON converts a json string to a FluxConfig instance
+func FluxConfigFromJSON(data []byte) (*FluxConfig, error) {
 	r := &FluxConfig{}
-	err := json.Unmarshal([]byte(jsonstr), r)
+	err := json.Unmarshal(data, r)
 	return r, err
 }
 
+// FromJSON converts a json string to a FluxConfig instance
+func (r *FluxConfig) FromJSON(data []byte) error {
+	c := FluxConfig{}
+	err := json.Unmarshal(data, &c)
+	*r = c
+	return err
+}
+
+// ToJSON converts a FluxConfig to a JSON string
 func (r *FluxConfig) ToJSON() ([]byte, error) {
 	return json.Marshal(r)
 }

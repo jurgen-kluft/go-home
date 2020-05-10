@@ -7,10 +7,18 @@ const (
 )
 
 // SamsungTVConfigFromJSON parser the incoming JSON string and returns an Config instance for Samsung.TV
-func SamsungTVConfigFromJSON(jsonstr string) (*SamsungTVConfig, error) {
+func SamsungTVConfigFromJSON(data []byte) (*SamsungTVConfig, error) {
 	r := &SamsungTVConfig{}
-	err := json.Unmarshal([]byte(jsonstr), r)
+	err := json.Unmarshal(data, r)
 	return r, err
+}
+
+// FromJSON converts a json string to a SamsungTVConfig instance
+func (r *SamsungTVConfig) FromJSON(data []byte) error {
+	c := SamsungTVConfig{}
+	err := json.Unmarshal(data, &c)
+	*r = c
+	return err
 }
 
 // ToJSON converts a AqiConfig to a JSON string

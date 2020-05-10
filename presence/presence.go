@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	//"sync"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
@@ -88,8 +89,8 @@ type Presence struct {
 }
 
 // New will return an instance of presence.Home
-func New(configjson string) (presence *Presence, err error) {
-	config, err := config.PresenceConfigFromJSON(configjson)
+func New(configdata []byte) (presence *Presence, err error) {
+	presenceConfig, err := config.PresenceConfigFromJSON(configdata)
 	if err != nil {
 		return
 	}
@@ -101,7 +102,7 @@ func New(configjson string) (presence *Presence, err error) {
 	}
 
 	presence = &Presence{}
-	presence.config = config
+	presence.config = presenceConfig
 	presence.provider = newProvider(presence.config.Name, presence.config.Host, presence.config.User, presence.config.Password)
 	presence.macToIndex = map[string]int{}
 	presence.macToPresence = map[string]bool{}
@@ -187,7 +188,7 @@ func (p *Presence) publish(now time.Time, client *pubsub.Context) {
 	jsonstr, err := sensor.ToJSON()
 	if err == nil {
 		client.Publish("state/presence/", jsonstr)
-		//fmt.Println(jsonstr)
+		fmt.Println(jsonstr)
 	} else {
 		fmt.Println(err)
 	}
@@ -195,51 +196,63 @@ func (p *Presence) publish(now time.Time, client *pubsub.Context) {
 
 func main() {
 	var presence *Presence
+	var err error
+	//var lock sync.Mutex
 
 	logger := logpkg.New("presence")
 	logger.AddEntry("emitter")
 	logger.AddEntry("presence")
+	updateIntervalSec := (time.Duration(5) * time.Second)
 
-	updateIntervalSec := time.Second * time.Duration(10)
 	for {
-		client := pubsub.New(config.EmitterIOCfg)
-		register := []string{"config/presence/", "state/presence/"}
+		client := pubsub.New(config.PubSubCfg)
+		register := []string{"state/presence/", "config/presence/", "config/request/"}
 		subscribe := []string{"config/presence/", "config/request/"}
-		err := client.Connect("presence", register, subscribe)
+		err = client.Connect("presence", register, subscribe)
+		updateMsg := client.GetUpdateMsg("update", nil)
+
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
+			client.Publish("config/request/", "presence")
 			connected := true
+			go func() {
+				for connected {
+					time.Sleep(updateIntervalSec)
+					client.InMsgs <- updateMsg
+				}
+			}()
+
 			for connected {
 				select {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/presence/" {
 						logger.LogInfo("presence", "received configuration")
-						presence, err := New(string(msg.Payload()))
+						//lock.Lock()
+						presence, err = New(msg.Payload())
 						if err == nil {
-							updateIntervalSec = time.Second * time.Duration(presence.config.UpdateIntervalSec)
+							updateIntervalSec = (time.Duration(presence.config.UpdateIntervalSec) * time.Second)
 						} else {
 							logger.LogError("presence", err.Error())
+						}
+						//lock.Unlock()
+					} else if topic == "update" {
+						if presence != nil {
+							now := time.Now()
+							err = presence.presence(now)
+							logger.LogInfo("presence", "update")
+							if err == nil {
+								presence.publish(now, client)
+							} else {
+								logger.LogError("presence", err.Error())
+							}
+						} else {
+							logger.LogInfo("presence", "request configuration")
+							client.Publish("config/request/", "presence")
 						}
 					} else if topic == "client/disconnected/" {
 						logger.LogInfo("emitter", "disconnected")
 						connected = false
-					}
-
-				case <-time.After(updateIntervalSec):
-					if presence != nil {
-						now := time.Now()
-						err := presence.presence(now)
-						if err == nil {
-							presence.publish(now, client)
-						} else {
-							logger.LogError("presence", err.Error())
-						}
-					}
-
-				case <-time.After(time.Minute * 1): // Try and request our configuration
-					if presence == nil {
-						client.Publish("config/request/", "calendar")
 					}
 
 				}

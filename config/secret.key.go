@@ -15,7 +15,7 @@ var PubSubWork = map[string]string{
 	"secret":  "BQQ1M7WIVGhWzjEilfV5ENHwYekj3T2z",
 }
 
-var PubSubCfg = PubSubWork
+var PubSubCfg = PubSubHome
 
 var InfluxSecretsHome = map[string]string{
 	"host":     "http://10.0.0.22:8086",

@@ -1,80 +1,79 @@
 {
- 
-  "configurations": [
-    {
+  "configurations": {
+    "aqi": {
       "name": "aqi",
       "filename": "aqi.config.json",
       "channel": "config/aqi/"
     },
-    {
+    "automation": {
       "name": "automation",
       "filename": "automation.config.json",
       "channel": "config/automation/"
     },
-    {
+    "bravia.tv": {
       "name": "bravia.tv",
       "filename": "bravia.tv.config.json",
       "channel": "config/bravia.tv/"
     },
-    {
+    "calendar": {
       "name": "calendar",
       "filename": "calendar.config.json",
       "channel": "config/calendar/"
     },
-    {
+    "flux": {
       "name": "flux",
       "filename": "flux.config.json",
       "channel": "config/flux/"
     },
-    {
+    "hue": {
       "name": "hue",
       "filename": "hue.config.json",
       "channel": "config/hue/"
     },
-    {
+    "huebridge": {
       "name": "huebridge",
       "filename": "huebridge.config.json",
       "channel": "config/huebridge/"
     },
-    {
+    "presence": {
       "name": "presence",
       "filename": "presence.config.json",
       "channel": "config/presence/"
     },
-    {
+    "samsung.tv": {
       "name": "samsung.tv",
       "filename": "samsung.tv.config.json",
       "channel": "config/samsung.tv/"
     },
-    {
+    "shout": {
       "name": "shout",
       "filename": "shout.config.json",
       "channel": "config/shout/"
     },
-    {
+    "suncalc": {
       "name": "suncalc",
       "filename": "suncalc.config.json",
       "channel": "config/suncalc/"
     },
-    {
+    "weather": {
       "name": "weather",
       "filename": "weather.config.json",
       "channel": "config/weather/"
     },
-    {
+    "wemo": {
       "name": "wemo",
       "filename": "wemo.config.json",
       "channel": "config/wemo/"
     },
-    {
+    "xiaomi": {
       "name": "xiaomi",
       "filename": "xiaomi.config.json",
       "channel": "config/xiaomi/"
     },
-    {
+    "yee": {
       "name": "yee",
       "filename": "yee.config.json",
       "channel": "config/yee/"
-   }
-  ]
+    }
+  }
 }

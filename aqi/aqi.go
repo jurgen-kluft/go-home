@@ -114,7 +114,7 @@ func main() {
 	logger.AddEntry(c.name)
 
 	for {
-		client := pubsub.New(config.EmitterIOCfg)
+		client := pubsub.New(config.PubSubCfg)
 		register := []string{"config/aqi/", "state/sensor/aqi/"}
 		subscribe := []string{"config/aqi/", "config/request/"}
 		err := client.Connect(c.name, register, subscribe)
@@ -128,8 +128,7 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == "config/aqi/" {
-						jsonmsg := string(msg.Payload())
-						config, err := config.AqiConfigFromJSON(jsonmsg)
+						config, err := config.AqiConfigFromJSON(msg.Payload())
 						if err == nil {
 							logger.LogInfo(c.name, "received configuration")
 							c.config = config

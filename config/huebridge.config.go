@@ -21,14 +21,22 @@ type HueBridgeEmulatedDevice struct {
 }
 
 // HueBridgeConfigFromJSON will decode a JSON string to a HueBridgeConfig struct
-func HueBridgeConfigFromJSON(jsonstr string) (*HueBridgeConfig, error) {
+func HueBridgeConfigFromJSON(data []byte) (*HueBridgeConfig, error) {
 	config := &HueBridgeConfig{}
-	err := json.Unmarshal([]byte(jsonstr), config)
+	err := json.Unmarshal(data, config)
 	return config, err
 }
 
+// FromJSON converts a json string to a HueBridgeConfig instance
+func (r *HueBridgeConfig) FromJSON(data []byte) error {
+	c := HueBridgeConfig{}
+	err := json.Unmarshal(data, &c)
+	*r = c
+	return err
+}
+
 // ToJSON will encode a HueBridgeConfig struct to a JSON string
-func (m *HueBridgeConfig) ToJSON() (data []byte, err error) {
-	data, err = json.Marshal(m)
+func (r *HueBridgeConfig) ToJSON() (data []byte, err error) {
+	data, err = json.Marshal(r)
 	return
 }

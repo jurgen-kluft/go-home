@@ -4,11 +4,18 @@ import (
 	"encoding/json"
 )
 
-func SuncalcConfigFromJSON(jsonstr string) (*SuncalcConfig, error) {
-	data := []byte(jsonstr)
+func SuncalcConfigFromJSON(data []byte) (*SuncalcConfig, error) {
 	r := &SuncalcConfig{}
 	err := json.Unmarshal(data, r)
 	return r, err
+}
+
+// FromJSON converts a json string to a SuncalcConfig instance
+func (r *SuncalcConfig) FromJSON(data []byte) error {
+	c := SuncalcConfig{}
+	err := json.Unmarshal(data, &c)
+	*r = c
+	return err
 }
 
 func (r *SuncalcConfig) ToJSON() ([]byte, error) {

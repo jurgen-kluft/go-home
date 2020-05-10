@@ -249,7 +249,7 @@ func main() {
 	logger.AddEntry(c.name)
 
 	for {
-		client := pubsub.New(config.EmitterIOCfg)
+		client := pubsub.New(config.PubSubCfg)
 		register := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/", "state/light/hue/", "state/light/yee/"}
 		subscribe := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/", "config/request/"}
 		err := client.Connect(c.name, register, subscribe)
@@ -262,28 +262,28 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == c.cfgch {
-						c.config, err = config.FluxConfigFromJSON(string(msg.Payload()))
+						c.config, err = config.FluxConfigFromJSON(msg.Payload())
 						if err == nil {
 							logger.LogInfo(c.name, "received configuration")
 						} else {
 							logger.LogError(c.name, err.Error())
 						}
 					} else if topic == "state/sensor/weather/" {
-						c.weather, err = config.SensorStateFromJSON(string(msg.Payload()))
+						c.weather, err = config.SensorStateFromJSON(msg.Payload())
 						if err == nil {
 							logger.LogInfo(c.name, "received weather state")
 						} else {
 							logger.LogError(c.name, err.Error())
 						}
 					} else if topic == "state/sensor/sun/" {
-						c.suncalc, err = config.SensorStateFromJSON(string(msg.Payload()))
+						c.suncalc, err = config.SensorStateFromJSON(msg.Payload())
 						if err == nil {
 							logger.LogInfo(c.name, "received sun state")
 						} else {
 							logger.LogError(c.name, err.Error())
 						}
 					} else if topic == "state/sensor/season/" {
-						seasonSensorState, err := config.SensorStateFromJSON(string(msg.Payload()))
+						seasonSensorState, err := config.SensorStateFromJSON(msg.Payload())
 						if err == nil {
 							logger.LogInfo(c.name, "received season state")
 							c.seasonName = seasonSensorState.GetValueAttr("season", "winter")

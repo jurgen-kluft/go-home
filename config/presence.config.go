@@ -4,10 +4,19 @@ import (
 	"encoding/json"
 )
 
-func PresenceConfigFromJSON(jsonstr string) (*PresenceConfig, error) {
+func PresenceConfigFromJSON(data []byte) (*PresenceConfig, error) {
 	r := &PresenceConfig{}
-	err := json.Unmarshal([]byte(jsonstr), r)
+	err := json.Unmarshal(data, r)
 	return r, err
+}
+
+func (r *PresenceConfig) FromJSON(data []byte) error {
+	c := PresenceConfig{}
+	err := json.Unmarshal(data, &c)
+	if err == nil {
+		*r = c
+	}
+	return err
 }
 
 func (r *PresenceConfig) ToJSON() ([]byte, error) {

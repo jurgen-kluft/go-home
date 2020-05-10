@@ -17,10 +17,18 @@ type YeeConfig struct {
 	} `json:"lights"`
 }
 
-func YeeConfigFromJSON(jsonstr string) (*YeeConfig, error) {
+func YeeConfigFromJSON(data []byte) (*YeeConfig, error) {
 	config := &YeeConfig{}
-	err := json.Unmarshal([]byte(jsonstr), config)
+	err := json.Unmarshal(data, config)
 	return config, err
+}
+
+// FromJSON converts a json string to a YeeConfig instance
+func (r *YeeConfig) FromJSON(data []byte) error {
+	c := YeeConfig{}
+	err := json.Unmarshal(data, &c)
+	*r = c
+	return err
 }
 
 func (m *YeeConfig) ToJSON() (data []byte, err error) {

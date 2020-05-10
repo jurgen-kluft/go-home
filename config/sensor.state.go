@@ -18,10 +18,18 @@ type SensorState struct {
 }
 
 // SensorStateFromJSON deserializes a JSON string and returns a SensorState object
-func SensorStateFromJSON(jsonstr string) (*SensorState, error) {
+func SensorStateFromJSON(data []byte) (*SensorState, error) {
 	s := &SensorState{}
-	err := json.Unmarshal([]byte(jsonstr), s)
+	err := json.Unmarshal(data, s)
 	return s, err
+}
+
+// FromJSON converts a json string to a SensorState instance
+func (s *SensorState) FromJSON(data []byte) error {
+	c := SensorState{}
+	err := json.Unmarshal(data, &c)
+	*s = c
+	return err
 }
 
 // ToJSON serializes a SensorState object into a JSON string

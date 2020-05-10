@@ -13,10 +13,18 @@ type WemoConfig struct {
 	} `json:"devices"`
 }
 
-func WemoConfigFromJSON(jsonstr string) (*WemoConfig, error) {
+func WemoConfigFromJSON(data []byte) (*WemoConfig, error) {
 	config := &WemoConfig{}
-	err := json.Unmarshal([]byte(jsonstr), config)
+	err := json.Unmarshal(data, config)
 	return config, err
+}
+
+// FromJSON converts a json string to a WemoConfig instance
+func (r *WemoConfig) FromJSON(data []byte) error {
+	c := WemoConfig{}
+	err := json.Unmarshal(data, &c)
+	*r = c
+	return err
 }
 
 func (m *WemoConfig) ToJSON() (data []byte, err error) {

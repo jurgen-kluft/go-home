@@ -1,17 +1,16 @@
 {
-    "name": "Netgear Nighthawk R6900",
+	"name": "Netgear Nighthawk R6900",
 	"host": "10.0.0.1",
 	"port": 5000,
 	"user": "admin",
-	"password": "postulate518",
+	"password": "ng_postulate8008",
 	"update_history": 64,
-	"update_interval_sec": 10,
-	"devices": 
-	[
+	"update_interval_sec": 9,
+	"devices": [
 		{
 			"name": "Faith",
 			"mac": "70:F0:87:70:07:81"
-		}, 
+		},
 		{
 			"name": "Jurgen",
 			"mac": "B8:C1:11:82:E4:72"

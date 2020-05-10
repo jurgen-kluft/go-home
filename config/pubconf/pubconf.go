@@ -40,7 +40,7 @@ func main() {
 
 		running := true
 		for running {
-			client := pubsub.New(config.EmitterIOCfg)
+			client := pubsub.New(config.PubSubCfg)
 			channel := c.String("channel")
 			register := []string{channel}
 			subscribe := []string{}

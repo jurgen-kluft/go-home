@@ -23,9 +23,9 @@ func new() *instance {
 }
 
 // New creates a new instance of Slack
-func (s *instance) initialize(jsonstr string) error {
+func (s *instance) initialize(jsondata []byte) error {
 	s.name = "shout"
-	config, err := config.ShoutConfigFromJSON(jsonstr)
+	config, err := config.ShoutConfigFromJSON(jsondata)
 	if err == nil {
 		s.config = config
 		s.client = slack.New(config.Key.String)
@@ -34,7 +34,7 @@ func (s *instance) initialize(jsonstr string) error {
 }
 
 // postMessage posts a message to a channel
-func (s *instance) postMessage(jsonmsg string) (err error) {
+func (s *instance) postMessage(jsondata []byte) (err error) {
 	m, err := config.ShoutMsgFromJSON(jsonmsg)
 	if err == nil {
 		_, _, err = s.client.PostMessage(m.Channel, slack.MsgOptionText("Some text", false), slack.MsgOptionUsername("g0-h0m3"), slack.MsgOptionAsUser(true))
@@ -53,7 +53,7 @@ func main() {
 	for {
 		connected := true
 		for connected {
-			client := pubsub.New(config.EmitterIOCfg)
+			client := pubsub.New(config.PubSubCfg)
 			register := []string{"config/shout/", "shout/message/"}
 			subscribe := []string{"config/shout/", "shout/message/", "config/request/"}
 			err := client.Connect(c.name, register, subscribe)
@@ -66,7 +66,7 @@ func main() {
 						topic := msg.Topic()
 						if topic == "config/shout/" {
 							logger.LogInfo(c.name, "received configuration")
-							err = c.initialize(string(msg.Payload()))
+							err = c.initialize(msg.Payload())
 							if err != nil {
 								logger.LogError(c.name, err.Error())
 							}
@@ -77,7 +77,7 @@ func main() {
 							// Is this a message to send over slack ?
 							if c.client != nil {
 								logger.LogInfo(c.name, "message")
-								err = c.postMessage(string(msg.Payload()))
+								err = c.postMessage(msg.Payload())
 								if err != nil {
 									logger.LogError(c.name, err.Error())
 								}

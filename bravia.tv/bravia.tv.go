@@ -57,7 +57,7 @@ func main() {
 	logger.AddEntry(c.name)
 
 	for {
-		client := pubsub.New(config.EmitterIOCfg)
+		client := pubsub.New(config.PubSubCfg)
 		register := []string{c.ccfg, "state/bravia.tv/"}
 		subscribe := []string{c.ccfg, "state/bravia.tv/", "config/request/"}
 		err := client.Connect(c.name, register, subscribe)
@@ -70,7 +70,7 @@ func main() {
 				case msg := <-client.InMsgs:
 					topic := msg.Topic()
 					if topic == c.ccfg {
-						c.config, err = config.BraviaTVConfigFromJSON(string(msg.Payload()))
+						c.config, err = config.BraviaTVConfigFromJSON(msg.Payload())
 						logger.LogInfo(c.name, "received configuration")
 					} else if topic == "state/bravia.tv/" {
 						logger.LogInfo(c.name, "received state")

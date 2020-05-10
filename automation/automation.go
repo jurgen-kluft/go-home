@@ -38,7 +38,7 @@ func main() {
 					topic := msg.Topic()
 					if topic == "config/automation/" {
 						// Register used channels and subscribe to channels we are interested in
-						config, err := config.AutomationConfigFromJSON(string(msg.Payload()))
+						config, err := config.AutomationConfigFromJSON(msg.Payload())
 						if err == nil {
 							auto.config = config
 							// Register used channels
@@ -60,7 +60,7 @@ func main() {
 						connected = false
 						logger.LogInfo("emitter", "disconnected")
 					} else if strings.HasPrefix(topic, "state/") {
-						state, err := config.SensorStateFromJSON(string(msg.Payload()))
+						state, err := config.SensorStateFromJSON(msg.Payload())
 						if err == nil {
 							auto.handleEvent(topic, state)
 						} else {

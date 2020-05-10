@@ -3,25 +3,27 @@ package config
 import "encoding/json"
 
 // AutomationConfigFromJSON parser the incoming JSON string and returns an Config instance for Aqi
-func AutomationConfigFromJSON(jsonstr string) (*AutomationConfig, error) {
+func AutomationConfigFromJSON(data []byte) (*AutomationConfig, error) {
 	r := &AutomationConfig{}
-	err := json.Unmarshal([]byte(jsonstr), r)
+	err := json.Unmarshal(data, r)
 	return r, err
 }
 
 // FromJSON converts a json string to a AutomationConfig instance
-func (r *AutomationConfig) FromJSON(jsonstr string) (Config, error) {
-	err := json.Unmarshal([]byte(jsonstr), r)
-	return r, err
+func (r *AutomationConfig) FromJSON(data []byte) error {
+	c := AutomationConfig{}
+	err := json.Unmarshal(data, &c)
+	*r = c
+	return err
 }
 
 // ToJSON converts a AutomationConfig to a JSON string
-func (r *AutomationConfig) ToJSON() (string, error) {
+func (r *AutomationConfig) ToJSON() ([]byte, error) {
 	data, err := json.Marshal(r)
 	if err == nil {
-		return string(data), nil
+		return data, nil
 	}
-	return "", err
+	return nil, err
 }
 
 // AutomationConfig holds the configuration for automation

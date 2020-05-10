@@ -98,7 +98,7 @@ func main() {
 	logger.AddEntry("xiaomi")
 
 	for {
-		client := pubsub.New(config.EmitterIOCfg)
+		client := pubsub.New(config.PubSubCfg)
 		register := []string{"config/xiaomi/", "state/xiaomi/"}
 		subscribe := []string{"config/xiaomi/", "state/xiaomi/", "config/request/"}
 		err := client.Connect("xiaomi", register, subscribe)
@@ -111,7 +111,7 @@ func main() {
 					topic := msg.Topic()
 					if topic == "config/xiaomi/" {
 						logger.LogInfo("xiaomi", "received configuration")
-						xiaomi.config, err = config.XiaomiConfigFromJSON(string(msg.Payload()))
+						xiaomi.config, err = config.XiaomiConfigFromJSON(msg.Payload())
 						if err == nil {
 							err = xiaomi.aqara.Start(nil)
 							if err == nil {
@@ -124,7 +124,7 @@ func main() {
 						}
 					} else if topic == "state/xiaomi/" {
 						logger.LogInfo("xiaomi", "received state")
-						state, err := config.SensorStateFromJSON(string(msg.Payload()))
+						state, err := config.SensorStateFromJSON(msg.Payload())
 						if err == nil {
 							if state.Name == "gateway" {
 								if state.GetValueAttr("light", "none") == "on" {

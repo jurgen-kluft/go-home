@@ -10,12 +10,21 @@ import (
 	"fmt"
 )
 
-func CalendarConfigFromJSON(jsonstr string) (*CalendarConfig, error) {
+func CalendarConfigFromJSON(data []byte) (*CalendarConfig, error) {
 	r := &CalendarConfig{}
-	err := json.Unmarshal([]byte(jsonstr), &r)
+	err := json.Unmarshal(data, r)
 	return r, err
 }
 
+// FromJSON converts a json string to a CalendarConfig instance
+func (r *CalendarConfig) FromJSON(data []byte) error {
+	c := CalendarConfig{}
+	err := json.Unmarshal(data, &c)
+	*r = c
+	return err
+}
+
+// ToJSON converts a CalendarConfig to a JSON string
 func (r *CalendarConfig) ToJSON() ([]byte, error) {
 	return json.Marshal(r)
 }
