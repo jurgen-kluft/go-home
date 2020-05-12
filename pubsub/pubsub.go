@@ -2,16 +2,36 @@ package pubsub
 
 import (
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	emitter "github.com/emitter-io/go"
 )
+
+type AtomBool int32
+
+func (b *AtomBool) Set(value bool) {
+	var i int32 = 0
+	if value {
+		i = 1
+	}
+	atomic.StoreInt32((*int32)(b), int32(i))
+}
+
+func (b *AtomBool) IsTrue() bool {
+	if atomic.LoadInt32((*int32)(b)) != 0 {
+		return true
+	}
+	return false
+}
 
 type Context struct {
 	EmitterCfg  map[string]string
 	ChannelKeys map[string]string
 	InMsgs      chan emitter.Message
 	Client      emitter.Emitter
+	Connected   *AtomBool
+	TickMsg     emitter.Message
 	KeyRequest  chan bool
 }
 
@@ -31,8 +51,19 @@ func New(emittercfg map[string]string) *Context {
 	ctx.EmitterCfg = emittercfg
 	ctx.ChannelKeys = map[string]string{}
 	ctx.InMsgs = make(chan emitter.Message)
+	ctx.TickMsg = &TickMessage{}
 	ctx.KeyRequest = make(chan bool)
 	return ctx
+}
+
+type TickMessage struct {
+}
+
+func (p *TickMessage) Topic() string {
+	return "tick"
+}
+func (p *TickMessage) Payload() []byte {
+	return nil
 }
 
 type PubsubMessage struct {
@@ -47,11 +78,13 @@ func (p *PubsubMessage) Payload() []byte {
 	return p.payload
 }
 
-func (ctx *Context) GetUpdateMsg(topic string, payload []byte) emitter.Message {
-	msg := &PubsubMessage{topic: topic, payload: payload}
-	return msg
+func (ctx *Context) Topic(msg *emitter.Message) string {
+	return msg.Topic()
 }
 
+func (ctx *Context) Payload(msg *emitter.Message) []byte {
+	return msg.Payload()
+}
 func (ctx *Context) Connect(username string, register, subscribe []string) error {
 	// Create the options with default values
 	options := emitter.NewClientOptions()
@@ -113,6 +146,13 @@ func (ctx *Context) Connect(username string, register, subscribe []string) error
 			return err
 		}
 	}
+
+	go func() {
+		for ctx.Connected.IsTrue() {
+			time.Sleep(1)
+			ctx.InMsgs <- ctx.TickMsg
+		}
+	}()
 
 	return nil
 }

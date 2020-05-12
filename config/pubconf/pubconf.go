@@ -5,10 +5,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"time"
 
-	"github.com/jurgen-kluft/go-home/config"
-	"github.com/jurgen-kluft/go-home/pubsub"
+	"github.com/jurgen-kluft/go-home/micro-service"
 	"github.com/urfave/cli"
 )
 
@@ -38,38 +36,29 @@ func main() {
 		}
 		jsonstr := string(filedata)
 
-		running := true
-		for running {
-			client := pubsub.New(config.PubSubCfg)
-			channel := c.String("channel")
-			register := []string{channel}
-			subscribe := []string{}
-			err := client.Connect("pubconf", register, subscribe)
-			if err == nil {
-				connected := true
-				for connected {
-					select {
-					case msg := <-client.InMsgs:
-						fmt.Printf("Emitter message received, topic:'%s', msg:'%s'\n", msg.Topic(), string(msg.Payload()))
+		channel := c.String("channel")
+		register := []string{channel}
+		subscribe := []string{}
 
-					case <-time.After(time.Second * 1):
-						err = client.PublishTTL(channel, jsonstr, 5*60)
-						if err != nil {
-							fmt.Println(err)
-						}
-						connected = false
-						running = false
-					}
-				}
-			}
+		m := microservice.New("pubconf")
+		m.RegisterAndSubscribe(register, subscribe)
 
+		m.RegisterHandler("*", func(m *microservice.Service, topic string, msg []byte) bool {
+			fmt.Printf("message received, topic:'%s', msg:'%s'\n", topic, string(msg))
+			return true
+		})
+
+		m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+			err := m.Pubsub.PublishTTL(channel, jsonstr, 5*60)
 			if err != nil {
-				panic("Error: " + err.Error())
+				fmt.Println(err)
 			}
 
-			// Wait for 10 seconds before retrying
-			time.Sleep(5 * time.Second)
-		}
+			// Only do one tick
+			return false
+		})
+
+		m.Loop()
 
 		return nil
 	}

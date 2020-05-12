@@ -11,6 +11,9 @@
 		},
 		{
 			"path": "../go-conbee"
+		},
+		{
+			"path": "../../nats-io/nats.go"
 		}
 	],
 	"settings": {

@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
-	//"sync"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
-	logpkg "github.com/jurgen-kluft/go-home/logging"
 	"github.com/jurgen-kluft/go-home/metrics"
-	"github.com/jurgen-kluft/go-home/pubsub"
+	"github.com/jurgen-kluft/go-home/micro-service"
+	"github.com/jurgen-kluft/go-home/nats"
 )
 
 // AWAY    is a state that happens when   NOT_SEEN > N seconds
@@ -85,11 +84,12 @@ type Presence struct {
 	macToPresence     map[string]bool
 	members           []*Member
 	updateIntervalSec int
+	updateTimeStamp   time.Time
 	metrics           *metrics.Metrics
 }
 
 // New will return an instance of presence.Home
-func New(configdata []byte) (presence *Presence, err error) {
+func NewPresence(configdata []byte) (presence *Presence, err error) {
 	presenceConfig, err := config.PresenceConfigFromJSON(configdata)
 	if err != nil {
 		return
@@ -138,43 +138,62 @@ func New(configdata []byte) (presence *Presence, err error) {
 	return
 }
 
-func (p *Presence) presence(currentTime time.Time) error {
-	// First reset the presence of every entry in the 'macToPresence' map
-	for k := range p.macToPresence {
-		p.macToPresence[k] = false
+func (c *Presence) shouldTick(now time.Time, force bool) bool {
+	if force || (now.Unix() >= c.updateTimeStamp.Unix()) {
+		return true
 	}
-	// Ask the router to update the presence
-	result := p.provider.get(&p.macToPresence)
-	if result == nil {
-		// All members initialize detected presence state to 'away'
-		for _, m := range p.members {
-			m.detect[m.index] = Detect{Time: currentTime, State: away}
+	return false
+}
+
+func (c *Presence) computeNextTick(now time.Time, err error) {
+	if err != nil {
+		c.updateTimeStamp = now.Add(time.Duration(c.config.UpdateIntervalSec) * time.Second)
+	} else {
+		c.updateTimeStamp = now.Add(time.Duration(c.config.UpdateIntervalSec) * time.Second)
+	}
+}
+
+func (p *Presence) presence(now time.Time) (result error) {
+	if p.shouldTick(now, false) {
+
+		// First reset the presence of every entry in the 'macToPresence' map
+		for k := range p.macToPresence {
+			p.macToPresence[k] = false
 		}
-		// For any member registered at the Router mark them as 'home'
-		for mac, presence := range p.macToPresence {
-			mi, exists := p.macToIndex[mac]
-			if exists {
-				m := p.members[mi]
-				if presence {
-					m.detect[m.index] = Detect{Time: currentTime, State: home}
+		// Ask the router to update the presence
+		result = p.provider.get(&p.macToPresence)
+		if result == nil {
+			// All members initialize detected presence state to 'away'
+			for _, m := range p.members {
+				m.detect[m.index] = Detect{Time: now, State: away}
+			}
+			// For any member registered at the Router mark them as 'home'
+			for mac, presence := range p.macToPresence {
+				mi, exists := p.macToIndex[mac]
+				if exists {
+					m := p.members[mi]
+					if presence {
+						m.detect[m.index] = Detect{Time: now, State: home}
+					}
 				}
 			}
 		}
-	}
 
-	// Update final presence state for all members
-	for _, m := range p.members {
-		m.index = (m.index + 1) % len(m.detect)
-		m.updateState(currentTime)
-	}
+		// Update final presence state for all members
+		for _, m := range p.members {
+			m.index = (m.index + 1) % len(m.detect)
+			m.updateState(now)
+		}
 
-	// Report metrics
-	p.metrics.Begin("presence")
-	for _, m := range p.members {
-		p.metrics.Set("presence", m.name, float64(m.current.State))
-	}
-	p.metrics.Send("presence")
+		// Report metrics
+		p.metrics.Begin("presence")
+		for _, m := range p.members {
+			p.metrics.Set("presence", m.name, float64(m.current.State))
+		}
+		p.metrics.Send("presence")
 
+		p.computeNextTick(now, result)
+	}
 	return result
 }
 
@@ -197,73 +216,38 @@ func (p *Presence) publish(now time.Time, client *pubsub.Context) {
 func main() {
 	var presence *Presence
 	var err error
-	//var lock sync.Mutex
 
-	logger := logpkg.New("presence")
-	logger.AddEntry("emitter")
-	logger.AddEntry("presence")
-	updateIntervalSec := (time.Duration(5) * time.Second)
+	register := []string{"state/presence/", "config/presence/", "config/request/"}
+	subscribe := []string{"config/presence/", "config/request/"}
 
-	for {
-		client := pubsub.New(config.PubSubCfg)
-		register := []string{"state/presence/", "config/presence/", "config/request/"}
-		subscribe := []string{"config/presence/", "config/request/"}
-		err = client.Connect("presence", register, subscribe)
-		updateMsg := client.GetUpdateMsg("update", nil)
+	micro := microservice.New("presence")
+	micro.RegisterAndSubscribe(register, subscribe)
 
-		if err == nil {
-			logger.LogInfo("emitter", "connected")
-			client.Publish("config/request/", "presence")
-			connected := true
-			go func() {
-				for connected {
-					time.Sleep(updateIntervalSec)
-					client.InMsgs <- updateMsg
-				}
-			}()
-
-			for connected {
-				select {
-				case msg := <-client.InMsgs:
-					topic := msg.Topic()
-					if topic == "config/presence/" {
-						logger.LogInfo("presence", "received configuration")
-						//lock.Lock()
-						presence, err = New(msg.Payload())
-						if err == nil {
-							updateIntervalSec = (time.Duration(presence.config.UpdateIntervalSec) * time.Second)
-						} else {
-							logger.LogError("presence", err.Error())
-						}
-						//lock.Unlock()
-					} else if topic == "update" {
-						if presence != nil {
-							now := time.Now()
-							err = presence.presence(now)
-							logger.LogInfo("presence", "update")
-							if err == nil {
-								presence.publish(now, client)
-							} else {
-								logger.LogError("presence", err.Error())
-							}
-						} else {
-							logger.LogInfo("presence", "request configuration")
-							client.Publish("config/request/", "presence")
-						}
-					} else if topic == "client/disconnected/" {
-						logger.LogInfo("emitter", "disconnected")
-						connected = false
-					}
-
-				}
-			}
-		}
-
+	micro.RegisterHandler("config/presence/", func(m *microservice.Service, topic string, msg []byte) bool {
+		m.Logger.LogInfo(m.Name, "received configuration")
+		presence, err = NewPresence(msg)
 		if err != nil {
-			logger.LogError("presence", err.Error())
+			m.Logger.LogError(m.Name, err.Error())
 		}
+		return true
+	})
 
-		fmt.Println("Waiting 5 seconds before re-connecting to pubsub...")
-		time.Sleep(5 * time.Second)
-	}
+	micro.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+		if presence != nil {
+			now := time.Now()
+			err = presence.presence(now)
+			m.Logger.LogInfo(m.Name, "tick")
+			if err == nil {
+				presence.publish(now, m.Pubsub)
+			} else {
+				m.Logger.LogError(m.Name, err.Error())
+			}
+		} else {
+			m.Logger.LogInfo(m.Name, "request configuration")
+			m.Pubsub.Publish("config/request/", m.Name)
+		}
+		return true
+	})
+
+	micro.Loop()
 }

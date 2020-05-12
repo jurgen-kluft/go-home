@@ -4,27 +4,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
-	logpkg "github.com/jurgen-kluft/go-home/logging"
-	"github.com/jurgen-kluft/go-home/pubsub"
+	"github.com/jurgen-kluft/go-home/micro-service"
 )
 
 // Configs holds all the config objects that we can have
 type context struct {
-	log     *logpkg.Logger
-	pubsub  *pubsub.Context
 	configs *configs
 	watcher *configFileWatcher
+	micro   *microservice.Service
 }
 
-func newContext(emitter map[string]string) *context {
+func newContext() *context {
 	ctx := &context{}
-	ctx.log = logpkg.New("configs")
-	ctx.log.AddEntry("emitter")
-	ctx.log.AddEntry("config")
-	ctx.pubsub = pubsub.New(emitter)
 	ctx.watcher = newConfigFileWatcher()
 	return ctx
 }
@@ -48,7 +41,7 @@ func configFromJSON(data []byte) (*configs, error) {
 func (c *context) configFromJSON(configname string, jsondata []byte) (config.Config, error) {
 	var ci config.Config
 	var err error
-	c.log.LogInfo("config", fmt.Sprintf("configuration %s, FromJSON", configname))
+	c.micro.Logger.LogInfo(c.micro.Name, fmt.Sprintf("configuration %s, FromJSON", configname))
 	switch configname {
 	case "aqi":
 		ci, err = config.AqiConfigFromJSON(jsondata)
@@ -107,20 +100,20 @@ func (c *context) checkAllConfigurationFiles() (err error) {
 		var data []byte
 		data, err = ioutil.ReadFile(configuration.ConfigFilename)
 		if err != nil {
-			c.log.LogError("config", err.Error())
+			c.micro.Logger.LogError(c.micro.Name, err.Error())
 		} else {
 			if data != nil {
 				v, err := c.configFromJSON(name, data)
 				if err != nil {
-					c.log.LogError("config", err.Error())
+					c.micro.Logger.LogError(c.micro.Name, err.Error())
 				} else {
 					data, err = v.ToJSON()
 					if err != nil {
-						c.log.LogError("config", err.Error())
+						c.micro.Logger.LogError(c.micro.Name, err.Error())
 					}
 				}
 			} else {
-				c.log.LogError("config", fmt.Sprintf("Configuration %s did not have a ReflectType", name))
+				c.micro.Logger.LogError(c.micro.Name, fmt.Sprintf("Configuration %s did not have a ReflectType", name))
 			}
 		}
 	}
@@ -142,8 +135,8 @@ func (c *context) sendConfigOnChannel(configtype string) (err error) {
 				if err == nil {
 					jsondata, err := v.ToJSON()
 					if err == nil {
-						c.log.LogInfo("config", fmt.Sprintf("Publish %s on channel %s", string(jsondata), configuration.ChannelName))
-						err = c.pubsub.Publish(configuration.ChannelName, string(jsondata))
+						c.micro.Logger.LogInfo(c.micro.Name, fmt.Sprintf("Publish %s on channel %s", string(jsondata), configuration.ChannelName))
+						err = c.micro.Pubsub.Publish(configuration.ChannelName, string(jsondata))
 					}
 				}
 			} else {
@@ -159,58 +152,49 @@ func (c *context) sendConfigOnChannel(configtype string) (err error) {
 }
 
 func main() {
-	ctx := newContext(config.PubSubCfg)
+	register := []string{"config/config/", "config/request/", "config/presence/", "config/aqi/"}
+	subscribe := []string{"config/config/", "config/request/"}
 
-	for {
-		connected := true
-		for connected {
-			register := []string{"config/config/", "config/request/", "config/presence/", "config/aqi/"}
-			subscribe := []string{"config/config/", "config/request/"}
-			err := ctx.pubsub.Connect("configs", register, subscribe)
-			if err == nil {
-				ctx.log.LogInfo("emitter", "connected")
+	m := microservice.New("config")
+	m.RegisterAndSubscribe(register, subscribe)
 
-				for connected {
-					select {
-					case msg := <-ctx.pubsub.InMsgs:
-						topic := msg.Topic()
-						if topic == "client/disconnected/" {
-							ctx.log.LogInfo("emitter", "disconnected")
-							connected = false
-						} else if topic == "config/config/" {
-							config, err := configFromJSON(msg.Payload())
-							if err == nil {
-								ctx.log.LogInfo("config", "received configuration")
-								ctx.configs = config
-								ctx.checkAllConfigurationFiles()
-								ctx.initializeConfigFileWatcher()
-							} else {
-								ctx.log.LogError("config", err.Error())
-							}
-						} else if topic == "config/request/" {
-							configname := string(msg.Payload())
-							ctx.log.LogInfo("config", "requested configuration for '"+configname+"'.")
-							err := ctx.sendConfigOnChannel(configname)
-							if err != nil {
-								ctx.log.LogError("config", err.Error())
-							}
-						}
-						break
-					case <-time.After(time.Second * 10):
-						// Any config files updated ?
-						ctx.updateConfigFileWatcher()
-						break
-					}
-				}
-			} else {
-				connected = false
-			}
+	ctx := newContext()
+	ctx.micro = m
 
-			if err != nil {
-				ctx.log.LogError("config", err.Error())
-			}
+	m.RegisterHandler("config/config/", func(m *microservice.Service, topic string, msg []byte) bool {
+		config, err := configFromJSON(msg)
+		if err == nil {
+			m.Logger.LogInfo(m.Name, "received configuration")
+			ctx.configs = config
+			ctx.checkAllConfigurationFiles()
+			ctx.initializeConfigFileWatcher()
+		} else {
+			m.Logger.LogError(m.Name, err.Error())
 		}
+		return true
+	})
 
-		time.Sleep(5 * time.Second)
-	}
+	m.RegisterHandler("config/request/", func(m *microservice.Service, topic string, msg []byte) bool {
+		configname := string(msg)
+		m.Logger.LogInfo(m.Name, "requested configuration for '"+configname+"'.")
+		err := ctx.sendConfigOnChannel(configname)
+		if err != nil {
+			m.Logger.LogError(m.Name, err.Error())
+		}
+		return true
+	})
+
+	tickCount := 0
+	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+		if tickCount == 5 {
+			tickCount = 0
+			// Any config files updated ?
+			ctx.updateConfigFileWatcher()
+		} else {
+			tickCount += 1
+		}
+		return true
+	})
+
+	m.Loop()
 }

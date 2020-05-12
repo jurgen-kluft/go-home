@@ -112,6 +112,7 @@ func main() {
 	logger := logpkg.New(c.name)
 	logger.AddEntry("emitter")
 	logger.AddEntry(c.name)
+	updateIntervalSec := (time.Duration(10) * time.Second)
 
 	for {
 		client := pubsub.New(config.PubSubCfg)
@@ -120,9 +121,17 @@ func main() {
 		err := client.Connect(c.name, register, subscribe)
 		if err == nil {
 			logger.LogInfo("emitter", "connected")
+			updateMsg := client.GetUpdateMsg("update", nil)
 
 			pollCount := int64(0)
 			connected := true
+			go func() {
+				for connected {
+					time.Sleep(updateIntervalSec)
+					client.InMsgs <- updateMsg
+				}
+			}()
+
 			for connected {
 				select {
 				case msg := <-client.InMsgs:
@@ -136,29 +145,28 @@ func main() {
 						} else {
 							logger.LogError(c.name, "received bad configuration, "+err.Error())
 						}
+					} else if topic == "update" {
+						if c != nil && c.config != nil {
+							if c.shouldPoll(time.Now(), pollCount == 0) {
+								logger.LogInfo(c.name, "polling Aqi")
+								jsonstate, err := c.Poll()
+								if err == nil {
+									logger.LogInfo(c.name, "publish Aqi")
+									fmt.Println(jsonstate)
+									client.Publish("state/sensor/aqi/", jsonstate)
+								} else {
+									logger.LogError(c.name, err.Error())
+								}
+								pollCount++
+								c.computeNextPoll(time.Now(), err)
+							}
+						} else if c != nil && c.config == nil {
+							// Try and request our configuration
+							client.Publish("config/request/", "aqi")
+						}
 					} else if topic == "client/disconnected/" {
 						logger.LogInfo("emitter", "disconnected")
 						connected = false
-					}
-
-				case <-time.After(time.Second * 10):
-					if c != nil && c.config != nil {
-						if c.shouldPoll(time.Now(), pollCount == 0) {
-							logger.LogInfo(c.name, "polling Aqi")
-							jsonstate, err := c.Poll()
-							if err == nil {
-								logger.LogInfo(c.name, "publish Aqi")
-								fmt.Println(jsonstate)
-								client.PublishTTL("state/sensor/aqi/", jsonstate, 5*60)
-							} else {
-								logger.LogError(c.name, err.Error())
-							}
-							pollCount++
-							c.computeNextPoll(time.Now(), err)
-						}
-					} else if c != nil && c.config == nil {
-						// Try and request our configuration
-						client.Publish("config/request/", "aqi")
 					}
 				}
 			}
@@ -166,6 +174,6 @@ func main() {
 		if err != nil {
 			logger.LogError(c.name, err.Error())
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(15 * time.Second)
 	}
 }
