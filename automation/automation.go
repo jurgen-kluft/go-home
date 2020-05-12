@@ -13,81 +13,73 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
-	logpkg "github.com/jurgen-kluft/go-home/logging"
-	"github.com/jurgen-kluft/go-home/pubsub"
+	"github.com/jurgen-kluft/go-home/micro-service"
 )
 
 func main() {
+	register := []string{}
+	subscribe := []string{"config/automation/", "config/request/"}
+
+	m := microservice.New("automation")
+	m.RegisterAndSubscribe(register, subscribe)
+
 	auto := new()
+	auto.service = m
 
-	module := "automation"
-	logger := logpkg.New(module)
-	logger.AddEntry("emitter")
-	logger.AddEntry(module)
-
-	for {
-		auto.pubsub = pubsub.New(config.PubSubCfg)
-		err := auto.pubsub.Connect(module, []string{}, []string{"config/automation/", "config/request/"})
-
+	m.RegisterHandler("config/automation/", func(m *microservice.Service, topic string, msg []byte) bool {
+		// Register used channels and subscribe to channels we are interested in
+		config, err := config.AutomationConfigFromJSON(msg)
 		if err == nil {
-			logger.LogInfo("emitter", "connected")
-			connected := true
-			for connected {
-				select {
-				case msg := <-auto.pubsub.InMsgs:
-					topic := msg.Topic()
-					if topic == "config/automation/" {
-						// Register used channels and subscribe to channels we are interested in
-						config, err := config.AutomationConfigFromJSON(msg.Payload())
-						if err == nil {
-							auto.config = config
-							// Register used channels
-							for _, ss := range auto.config.ChannelsToRegister {
-								if err = auto.pubsub.Register(ss); err != nil {
-									logger.LogError(module, err.Error())
-								}
-							}
-							// Subscribe channels
-							for _, ss := range auto.config.SubChannels {
-								if err = auto.pubsub.Subscribe(ss); err != nil {
-									logger.LogError(module, err.Error())
-								}
-							}
-						} else {
-							logger.LogError(module, err.Error())
-						}
-					} else if topic == "client/disconnected/" {
-						connected = false
-						logger.LogInfo("emitter", "disconnected")
-					} else if strings.HasPrefix(topic, "state/") {
-						state, err := config.SensorStateFromJSON(msg.Payload())
-						if err == nil {
-							auto.handleEvent(topic, state)
-						} else {
-							logger.LogError(module, err.Error())
-						}
-					}
-				case <-time.After(time.Second * 5):
-					if auto.config != nil {
-						auto.now = time.Now()
-						auto.presenceDetection()
-						auto.updateTimedActions()
-					}
-
-				case <-time.After(time.Minute * 1): // Try and request our configuration
-					if auto.config == nil {
-						auto.pubsub.Publish("config/request/", "automation")
-					}
+			auto.config = config
+			// Register used channels
+			for _, ss := range auto.config.ChannelsToRegister {
+				if err = m.Pubsub.Register(ss); err != nil {
+					m.Logger.LogError(m.Name, err.Error())
 				}
 			}
+			// Subscribe channels
+			for _, ss := range auto.config.SubChannels {
+				if err = m.Pubsub.Subscribe(ss); err != nil {
+					m.Logger.LogError(m.Name, err.Error())
+				}
+			}
+		} else {
+			m.Logger.LogError(m.Name, err.Error())
 		}
-		if err != nil {
-			logger.LogError(module, err.Error())
-		}
+		return true
+	})
 
-		// Wait for 5 seconds before retrying
-		time.Sleep(5 * time.Second)
-	}
+	m.RegisterHandler("*", func(m *microservice.Service, topic string, msg []byte) bool {
+		if strings.HasPrefix(topic, "state") {
+			state, err := config.SensorStateFromJSON(msg)
+			if err == nil {
+				auto.handleEvent(topic, state)
+			} else {
+				m.Logger.LogError(m.Name, err.Error())
+			}
+		}
+		return true
+	})
+
+	tickCount := 0
+	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+		if (tickCount & 0x3) == 0 {
+			if auto.config != nil {
+				auto.now = time.Now()
+				auto.presenceDetection()
+				auto.updateTimedActions()
+			}
+		}
+		if (tickCount % 30) == 0 {
+			if auto.config == nil {
+				m.Pubsub.Publish("config/request/", m.Name)
+			}
+		}
+		tickCount++
+		return true
+	})
+
+	m.Loop()
 }
 
 type homePresence struct {
@@ -179,7 +171,6 @@ func (h *homePresence) report(now time.Time) {
 }
 
 type automation struct {
-	pubsub                      *pubsub.Context
 	config                      *config.AutomationConfig
 	sensors                     map[string]string
 	timeofday                   string
@@ -190,6 +181,7 @@ type automation struct {
 	timedActions                map[string]*timedAction
 	motionBasedActions          map[string]*motionBasedAction
 	presence                    *homePresence
+	service                     *microservice.Service
 }
 
 func new() *automation {
@@ -211,7 +203,7 @@ func (a *automation) sensorHasValue(name string, value string) bool {
 func (a *automation) turnOnDevice(name string) error {
 	dc, exists := a.config.DeviceControlCache["name"]
 	if exists {
-		err := a.pubsub.Publish(dc.Channel, dc.On)
+		err := a.service.Pubsub.Publish(dc.Channel, dc.On)
 		return err
 	}
 	return fmt.Errorf("device with name %s doesn't exist", name)
@@ -219,7 +211,7 @@ func (a *automation) turnOnDevice(name string) error {
 func (a *automation) turnOffDevice(name string) error {
 	dc, exists := a.config.DeviceControlCache["name"]
 	if exists {
-		err := a.pubsub.Publish(dc.Channel, dc.Off)
+		err := a.service.Pubsub.Publish(dc.Channel, dc.Off)
 		return err
 	}
 	return fmt.Errorf("device with name %s doesn't exist", name)
@@ -227,7 +219,7 @@ func (a *automation) turnOffDevice(name string) error {
 func (a *automation) toggleDevice(name string) error {
 	dc, exists := a.config.DeviceControlCache["name"]
 	if exists {
-		err := a.pubsub.Publish(dc.Channel, dc.Toggle)
+		err := a.service.Pubsub.Publish(dc.Channel, dc.Toggle)
 		return err
 	}
 	return fmt.Errorf("device with name %s doesn't exist", name)
@@ -487,7 +479,7 @@ func (a *automation) handleMagnetSensor(name string, state *config.SensorState) 
 }
 
 func (a *automation) sendNotification(message string) {
-	a.pubsub.Publish("shout/message/", message)
+	a.service.Pubsub.Publish("shout/message/", message)
 }
 
 func (a *automation) updatePresence(name string, presence bool) (current bool, previous bool) {

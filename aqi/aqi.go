@@ -8,9 +8,8 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
-	logpkg "github.com/jurgen-kluft/go-home/logging"
 	"github.com/jurgen-kluft/go-home/metrics"
-	"github.com/jurgen-kluft/go-home/pubsub"
+	"github.com/jurgen-kluft/go-home/micro-service"
 )
 
 type instance struct {
@@ -106,74 +105,48 @@ func (c *instance) Poll() (aqiStateJSON string, err error) {
 }
 
 func main() {
+	register := []string{"config/aqi/", "config/request/", "state/sensor/aqi/"}
+	subscribe := []string{"config/aqi/", "config/request/"}
 
 	c := construct()
+	m := microservice.New("aqi")
+	m.RegisterAndSubscribe(register, subscribe)
 
-	logger := logpkg.New(c.name)
-	logger.AddEntry("emitter")
-	logger.AddEntry(c.name)
-	updateIntervalSec := (time.Duration(10) * time.Second)
+	pollCount := int64(0)
 
-	for {
-		client := pubsub.New(config.PubSubCfg)
-		register := []string{"config/aqi/", "config/request/", "state/sensor/aqi/"}
-		subscribe := []string{"config/aqi/", "config/request/"}
-		err := client.Connect(c.name, register, subscribe)
+	m.RegisterHandler("config/aqi/", func(m *microservice.Service, topic string, msg []byte) bool {
+		config, err := config.AqiConfigFromJSON(msg)
 		if err == nil {
-			logger.LogInfo("emitter", "connected")
-			updateMsg := client.GetUpdateMsg("update", nil)
+			m.Logger.LogInfo(m.Name, "received configuration")
+			c.config = config
+			pollCount = 0
+		} else {
+			m.Logger.LogError(m.Name, "received bad configuration, "+err.Error())
+		}
+	})
 
-			pollCount := int64(0)
-			connected := true
-			go func() {
-				for connected {
-					time.Sleep(updateIntervalSec)
-					client.InMsgs <- updateMsg
+	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+		if c != nil && c.config != nil {
+			if pollCount == 150 {
+				pollCount = 0
+				m.Logger.LogInfo(m.Name, "polling Aqi")
+				jsonstate, err := c.Poll()
+				if err == nil {
+					m.Logger.LogInfo(m.Name, "publish Aqi")
+					m.Pubsub.Publish("state/sensor/aqi/", jsonstate)
+				} else {
+					m.Logger.LogError(m.Name, err.Error())
 				}
-			}()
-
-			for connected {
-				select {
-				case msg := <-client.InMsgs:
-					topic := msg.Topic()
-					if topic == "config/aqi/" {
-						config, err := config.AqiConfigFromJSON(msg.Payload())
-						if err == nil {
-							logger.LogInfo(c.name, "received configuration")
-							c.config = config
-							pollCount = 0
-						} else {
-							logger.LogError(c.name, "received bad configuration, "+err.Error())
-						}
-					} else if topic == "update" {
-						if c != nil && c.config != nil {
-							if c.shouldPoll(time.Now(), pollCount == 0) {
-								logger.LogInfo(c.name, "polling Aqi")
-								jsonstate, err := c.Poll()
-								if err == nil {
-									logger.LogInfo(c.name, "publish Aqi")
-									fmt.Println(jsonstate)
-									client.Publish("state/sensor/aqi/", jsonstate)
-								} else {
-									logger.LogError(c.name, err.Error())
-								}
-								pollCount++
-								c.computeNextPoll(time.Now(), err)
-							}
-						} else if c != nil && c.config == nil {
-							// Try and request our configuration
-							client.Publish("config/request/", "aqi")
-						}
-					} else if topic == "client/disconnected/" {
-						logger.LogInfo("emitter", "disconnected")
-						connected = false
-					}
-				}
+				pollCount++
+				c.computeNextPoll(time.Now(), err)
+			} else {
+				pollCount++
 			}
+		} else if c != nil && c.config == nil {
+			// Try and request our configuration
+			m.Pubsub.Publish("config/request/", "aqi")
 		}
-		if err != nil {
-			logger.LogError(c.name, err.Error())
-		}
-		time.Sleep(15 * time.Second)
-	}
+	})
+
+	m.Loop()
 }

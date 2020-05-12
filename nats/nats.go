@@ -109,7 +109,7 @@ func (ctx *Context) Close() {
 	time.Sleep(1)
 }
 
-func (ctx *Context) Register(channel string) {
+func (ctx *Context) Register(channel string) error {
 	_, exists := ctx.SubToIndex[channel]
 	if !exists {
 		subschannel := strings.Replace(channel, "/", ".", -1)
@@ -119,6 +119,7 @@ func (ctx *Context) Register(channel string) {
 		ctx.Subscriptions = append(ctx.Subscriptions, nil)
 		ctx.SubChannels = append(ctx.SubChannels, subschannel)
 	}
+	return nil
 }
 
 func (ctx *Context) Subscribe(channel string) (err error) {
