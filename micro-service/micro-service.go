@@ -56,7 +56,8 @@ func (m *Service) RegisterHandler(topic string, delegate Delegate) {
 }
 
 func (m *Service) Loop() {
-	for {
+	quit := false
+	for !quit {
 		m.Pubsub = pubsub.New(config.PubSubCfg)
 		err := m.Pubsub.Connect(m.Name, m.PubsubRegister, m.PubsubSubscribe)
 		if err == nil {
@@ -72,12 +73,14 @@ func (m *Service) Loop() {
 					if exists {
 						if !delegate(m, topic, m.Pubsub.Payload(msg)) {
 							connected = false
+							quit = true
 						}
 					} else {
 						delegate, exists := m.Handlers["*"]
 						if exists {
 							if !delegate(m, topic, m.Pubsub.Payload(msg)) {
 								connected = false
+								quit = true
 							}
 						}
 
@@ -88,6 +91,7 @@ func (m *Service) Loop() {
 					}
 				}
 			}
+			m.Pubsub.Close()
 		}
 
 		if err != nil {
