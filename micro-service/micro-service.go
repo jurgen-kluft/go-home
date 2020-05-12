@@ -39,9 +39,14 @@ func New(name string) *Service {
 	return service
 }
 
+func (m *Service) Register(r string) error {
+	m.PubsubRegister = append(m.PubsubRegister, r)
+	return nil
+}
+
 func (m *Service) RegisterAndSubscribe(register []string, subscribe []string) {
 	for _, r := range register {
-		m.PubsubRegister = append(m.PubsubRegister, r)
+		m.Register(r)
 	}
 	for _, r := range subscribe {
 		m.PubsubSubscribe = append(m.PubsubSubscribe, r)

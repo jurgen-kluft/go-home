@@ -7,8 +7,7 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
-	logpkg "github.com/jurgen-kluft/go-home/logging"
-	"github.com/jurgen-kluft/go-home/pubsub"
+	"github.com/jurgen-kluft/go-home/micro-service"
 	"github.com/jurgen-kluft/go-icloud-calendar"
 )
 
@@ -20,15 +19,12 @@ type Calendar struct {
 	sensorStates map[string]*config.SensorState
 	cals         []*icalendar.Calendar
 	update       time.Time
-	log          *logpkg.Logger
+	service      *microservice.Service
 }
 
 func new() *Calendar {
 	c := &Calendar{}
 	c.name = "calendar"
-	c.log = logpkg.New(c.name)
-	c.log.AddEntry("emitter")
-	c.log.AddEntry(c.name)
 	c.sensors = map[string]config.Csensor{}
 	c.sensorStates = map[string]*config.SensorState{}
 	return c
@@ -38,7 +34,7 @@ func new() *Calendar {
 func (c *Calendar) initialize(jsondata []byte) (err error) {
 	c.config, err = config.CalendarConfigFromJSON(jsondata)
 	if err != nil {
-		c.log.LogError(c.name, err.Error())
+		c.service.Logger.LogError(c.name, err.Error())
 	}
 	//c.ccal.print()
 	for _, sn := range c.config.Sensors {
@@ -63,7 +59,7 @@ func (c *Calendar) initialize(jsondata []byte) (err error) {
 		} else if strings.HasPrefix(cal.URL.String, "file") {
 			c.cals = append(c.cals, icalendar.NewFileCalendar(cal.URL.String))
 		} else {
-			c.log.LogError(c.name, fmt.Sprintf("Unknown calendar source '%s'", cal.URL))
+			c.service.Logger.LogError(c.name, fmt.Sprintf("Unknown calendar source '%s'", cal.URL))
 		}
 	}
 
@@ -204,20 +200,20 @@ func (c *Calendar) applyRulesToSensorStates() {
 						sensor.StringAttrs[0].Value = p.State
 					}
 				} else {
-					c.log.LogError(c.name, fmt.Sprintf("Logical error when applying rules to sensor states (%s)", p.Key+", "+p.State))
+					c.service.Logger.LogError(c.name, fmt.Sprintf("Logical error when applying rules to sensor states (%s)", p.Key+", "+p.State))
 				}
 			}
 		}
 	}
 }
 
-func publishSensorState(name string, sensorjson string, client *pubsub.Context) {
+func (c *Calendar) publishSensorState(name string, sensorjson string) {
 	fmt.Println(sensorjson)
-	client.Publish(fmt.Sprintf("state/sensor/%s/", name), string(sensorjson))
+	c.service.Pubsub.Publish(fmt.Sprintf("state/sensor/%s/", name), string(sensorjson))
 }
 
 // Process will update 'events' from the calendar
-func (c *Calendar) Process(client *pubsub.Context) {
+func (c *Calendar) Process() {
 	var err error
 	now := time.Now()
 
@@ -229,7 +225,7 @@ func (c *Calendar) Process(client *pubsub.Context) {
 		// fmt.Println("CALENDAR: LOAD")
 		err := c.load()
 		if err != nil {
-			c.log.LogError(c.name, err.Error())
+			c.service.Logger.LogError(c.name, err.Error())
 			return
 		}
 	}
@@ -242,9 +238,9 @@ func (c *Calendar) Process(client *pubsub.Context) {
 			weekendsensor.BoolAttrs[0].Value = weekend
 			sensorjson, err := weekendsensor.ToJSON()
 			if err == nil {
-				publishSensorState("weekend", sensorjson, client)
+				c.publishSensorState("weekend", sensorjson)
 			} else {
-				c.log.LogError(c.name, err.Error())
+				c.service.Logger.LogError(c.name, err.Error())
 			}
 		}
 	}
@@ -258,70 +254,59 @@ func (c *Calendar) Process(client *pubsub.Context) {
 		for _, ss := range c.sensorStates {
 			jsonstr, err := ss.ToJSON()
 			if err == nil {
-				publishSensorState(ss.Name, jsonstr, client)
+				c.publishSensorState(ss.Name, jsonstr)
 			} else {
-				c.log.LogError(c.name, err.Error())
+				c.service.Logger.LogError(c.name, err.Error())
 			}
 		}
 	} else {
-		c.log.LogError(c.name, err.Error())
+		c.service.Logger.LogError(c.name, err.Error())
 	}
 }
 
 func main() {
+	register := []string{"config/calendar/"}
+	subscribe := []string{"config/calendar/", "config/request/"}
+
+	m := microservice.New("calendar")
+	m.RegisterAndSubscribe(register, subscribe)
 
 	c := new()
+	c.service = m
 
-	for {
-		client := pubsub.New(config.PubSubCfg)
-		register := []string{"config/calendar/"}
-		subscribe := []string{"config/calendar/", "config/request/"}
-		err := client.Connect(c.name, register, subscribe)
-		if err == nil {
-			c.log.LogInfo("emitter", "connected")
-
-			connected := true
-			for connected {
-				select {
-				case msg := <-client.InMsgs:
-					topic := msg.Topic()
-					if topic == "config/calendar/" {
-						c.log.LogInfo(c.name, "received configuration")
-						err = c.initialize(msg.Payload())
-						if err != nil {
-							c = nil
-							c.log.LogError(c.name, err.Error())
-						} else {
-							// Register emitter channel for every sensor
-							for _, ss := range c.sensorStates {
-								if err = client.Register(fmt.Sprintf("state/sensor/%s/", ss.Name)); err != nil {
-									c.log.LogError("emitter", err.Error())
-								}
-							}
-						}
-					} else if topic == "client/disconnected/" {
-						c.log.LogInfo("emitter", "disconnected")
-						connected = false
-					}
-
-				case <-time.After(time.Second * 60):
-					if c != nil && c.config != nil {
-						c.Process(client)
-					}
-
-				case <-time.After(time.Minute * 1): // Try and request our configuration
-					if c.config == nil {
-						client.Publish("config/request/", "calendar")
-					}
-
+	m.RegisterHandler("config/calendar/", func(m *microservice.Service, topic string, msg []byte) bool {
+		m.Logger.LogInfo(m.Name, "received configuration")
+		err := c.initialize(msg)
+		if err != nil {
+			c = nil
+			m.Logger.LogError(c.name, err.Error())
+		} else {
+			// Register emitter channel for every sensor
+			for _, ss := range c.sensorStates {
+				if err = m.Register(fmt.Sprintf("state/sensor/%s/", ss.Name)); err != nil {
+					m.Logger.LogError("pubsub", err.Error())
 				}
 			}
 		}
+		return true
+	})
 
-		if err != nil {
-			c.log.LogError(c.name, err.Error())
+	tickCount := 0
+	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+		if tickCount == 30 {
+			tickCount = 0
+			if c != nil {
+				if c.config != nil {
+					c.Process()
+				} else if c.config == nil {
+					m.Pubsub.Publish("config/request/", m.Name)
+				}
+			}
+		} else {
+			tickCount++
 		}
-		time.Sleep(5 * time.Second)
-	}
+		return true
+	})
 
+	m.Loop()
 }

@@ -6,12 +6,9 @@ package main
 // - Sony Bravia TVs: Turn On/Off
 
 import (
-	"time"
-
 	"github.com/czerwe/gobravia"
 	"github.com/jurgen-kluft/go-home/config"
-	logpkg "github.com/jurgen-kluft/go-home/logging"
-	"github.com/jurgen-kluft/go-home/pubsub"
+	"github.com/jurgen-kluft/go-home/micro-service"
 )
 
 type instance struct {
@@ -52,54 +49,48 @@ func (c *instance) poweroff(name string) {
 func main() {
 	c := new()
 
-	logger := logpkg.New(c.name)
-	logger.AddEntry("emitter")
-	logger.AddEntry(c.name)
+	register := []string{c.ccfg, "state/bravia.tv/"}
+	subscribe := []string{c.ccfg, "state/bravia.tv/", "config/request/"}
 
-	for {
-		client := pubsub.New(config.PubSubCfg)
-		register := []string{c.ccfg, "state/bravia.tv/"}
-		subscribe := []string{c.ccfg, "state/bravia.tv/", "config/request/"}
-		err := client.Connect(c.name, register, subscribe)
+	m := microservice.New("bravia.tv")
+	m.RegisterAndSubscribe(register, subscribe)
+
+	m.RegisterHandler("config/bravia.tv/", func(m *microservice.Service, topic string, msg []byte) bool {
+		var err error
+		c.config, err = config.BraviaTVConfigFromJSON(msg)
+		m.Logger.LogInfo(m.Name, "received configuration")
+		if err != nil {
+			m.Logger.LogError(m.Name, err.Error())
+		}
+		return true
+	})
+
+	m.RegisterHandler("state/bravia.tv/", func(m *microservice.Service, topic string, msg []byte) bool {
+		m.Logger.LogInfo(m.Name, "received state")
+		state, err := config.SensorStateFromJSON(msg)
 		if err == nil {
-			logger.LogInfo("emitter", "connected")
-
-			connected := true
-			for connected {
-				select {
-				case msg := <-client.InMsgs:
-					topic := msg.Topic()
-					if topic == c.ccfg {
-						c.config, err = config.BraviaTVConfigFromJSON(msg.Payload())
-						logger.LogInfo(c.name, "received configuration")
-					} else if topic == "state/bravia.tv/" {
-						logger.LogInfo(c.name, "received state")
-						state, err := config.SensorStateFromJSON(string(msg.Payload()))
-						if err == nil {
-							power := state.GetValueAttr("power", "idle")
-							if power == "off" {
-								c.poweroff(state.Name)
-							} else if power == "on" {
-								c.poweron(state.Name)
-							}
-						}
-					} else if topic == "client/disconnected/" {
-						connected = false
-					}
-
-				case <-time.After(time.Minute * 1): // Try and request our configuration
-					if c.config == nil {
-						client.Publish("config/request/", "bravia.tv")
-					}
-
-				}
+			power := state.GetValueAttr("power", "idle")
+			if power == "off" {
+				c.poweroff(state.Name)
+			} else if power == "on" {
+				c.poweron(state.Name)
 			}
 		}
+		return true
+	})
 
-		if err != nil {
-			logger.LogError(c.name, err.Error())
+	tickCount := 0
+	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+		if tickCount == 29 {
+			tickCount = 0
+			if c.config == nil {
+				m.Pubsub.Publish("config/request/", m.Name)
+			}
+		} else {
+			tickCount++
 		}
-		time.Sleep(5 * time.Second)
+		return true
+	})
 
-	}
+	m.Loop()
 }
