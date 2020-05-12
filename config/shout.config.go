@@ -37,16 +37,25 @@ type ShoutMsg struct {
 	Prebody  string `json:"prebody"`
 }
 
-func ShoutMsgFromJSON(jsonstr string) (ShoutMsg, error) {
+func ShoutMsgFromJSON(jsondata []byte) (ShoutMsg, error) {
 	var msg ShoutMsg
-	err := json.Unmarshal([]byte(jsonstr), &msg)
+	err := json.Unmarshal(jsondata, &msg)
 	return msg, err
 }
 
-func (m *ShoutMsg) ToJSON() string {
+func (m *ShoutMsg) FromJSON(data []byte) error {
+	c := ShoutMsg{}
+	err := json.Unmarshal(data, &c)
+	if err == nil {
+		*m = c
+	}
+	return err
+}
+
+func (m *ShoutMsg) ToJSON() []byte {
 	data, err := json.Marshal(m)
 	if err == nil {
-		return string(data)
+		return data
 	}
-	return ""
+	return nil
 }
