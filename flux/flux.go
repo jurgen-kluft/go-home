@@ -6,9 +6,8 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
-	logpkg "github.com/jurgen-kluft/go-home/logging"
 	"github.com/jurgen-kluft/go-home/metrics"
-	"github.com/jurgen-kluft/go-home/pubsub"
+	"github.com/jurgen-kluft/go-home/micro-service"
 )
 
 // Color Temperature
@@ -75,11 +74,12 @@ type context struct {
 	weather    *config.SensorState
 	averageCT  *MovingAverage
 	averageBRI *MovingAverage
+	service    *microservice.Service
 }
 
 func new() *context {
 	c := &context{}
-	c.name = c.name
+	c.name = "flux"
 	c.cfgch = "config/flux/"
 	c.metrics, _ = metrics.New()
 	c.metrics.Register("hue", map[string]string{"CT": "Color Temperature", "BRI": "Brightness"}, map[string]interface{}{"CT": 200.0, "BRI": 200.0})
@@ -103,7 +103,7 @@ func (c *context) updateSeasonFromName(season string) {
 // States are both input and output, for example as input
 // there are Season/Weather states like 'Season':'Winter'
 // and 'Clouds':0.5
-func (c *context) Process(client *pubsub.Context) {
+func (c *context) Process() {
 	if c.config == nil || c.suncalc == nil {
 		return
 	}
@@ -226,90 +226,87 @@ func (c *context) Process(client *pubsub.Context) {
 
 		jsonstr, err := sensor.ToJSON()
 		if err == nil {
-			publishSensor(fmt.Sprintf("state/sensor/%s/", ltype.Name), jsonstr, client)
+			c.publishSensor(fmt.Sprintf("state/sensor/%s/", ltype.Name), jsonstr)
 		}
 	}
 
 	sensorDOL, err := config.StringAttrAsJSON("darkorlight", "DarkOrLight", string(current.Darkorlight))
 	if err == nil {
-		publishSensor("state/sensor/darkorlight/", sensorDOL, client)
+		c.publishSensor("state/sensor/darkorlight/", sensorDOL)
 	}
 }
 
-func publishSensor(channel string, sensorjson string, client *pubsub.Context) {
-	fmt.Println("Publish at", channel, "JSON [", sensorjson, "]")
-	client.Publish(channel, sensorjson)
+func (c *context) publishSensor(channel string, sensorjson string) {
+	c.service.Logger.LogInfo(c.service.Name, "Publish at '"+channel+"' JSON ["+sensorjson+"]")
+	c.service.Pubsub.Publish(channel, sensorjson)
 }
 
 func main() {
+	register := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/", "state/light/hue/", "state/light/yee/"}
+	subscribe := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/", "config/request/"}
+
+	m := microservice.New("flux")
+	m.RegisterAndSubscribe(register, subscribe)
+
 	c := new()
+	c.service = m
 
-	logger := logpkg.New(c.name)
-	logger.AddEntry("emitter")
-	logger.AddEntry(c.name)
-
-	for {
-		client := pubsub.New(config.PubSubCfg)
-		register := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/", "state/light/hue/", "state/light/yee/"}
-		subscribe := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/", "config/request/"}
-		err := client.Connect(c.name, register, subscribe)
+	m.RegisterHandler("config/flux/", func(m *microservice.Service, topic string, msg []byte) bool {
+		var err error
+		c.config, err = config.FluxConfigFromJSON(msg)
 		if err == nil {
-			logger.LogInfo("emitter", "connected")
+			m.Logger.LogInfo(m.Name, "received configuration")
+		} else {
+			m.Logger.LogError(m.Name, err.Error())
+		}
+		return true
+	})
 
-			connected := true
-			for connected {
-				select {
-				case msg := <-client.InMsgs:
-					topic := msg.Topic()
-					if topic == c.cfgch {
-						c.config, err = config.FluxConfigFromJSON(msg.Payload())
-						if err == nil {
-							logger.LogInfo(c.name, "received configuration")
-						} else {
-							logger.LogError(c.name, err.Error())
-						}
-					} else if topic == "state/sensor/weather/" {
-						c.weather, err = config.SensorStateFromJSON(msg.Payload())
-						if err == nil {
-							logger.LogInfo(c.name, "received weather state")
-						} else {
-							logger.LogError(c.name, err.Error())
-						}
-					} else if topic == "state/sensor/sun/" {
-						c.suncalc, err = config.SensorStateFromJSON(msg.Payload())
-						if err == nil {
-							logger.LogInfo(c.name, "received sun state")
-						} else {
-							logger.LogError(c.name, err.Error())
-						}
-					} else if topic == "state/sensor/season/" {
-						seasonSensorState, err := config.SensorStateFromJSON(msg.Payload())
-						if err == nil {
-							logger.LogInfo(c.name, "received season state")
-							c.seasonName = seasonSensorState.GetValueAttr("season", "winter")
-						} else {
-							logger.LogError(c.name, err.Error())
-						}
-					} else if topic == "client/disconnected/" {
-						logger.LogInfo("emitter", "disconnected")
-						connected = false
-					}
-				case <-time.After(time.Second * 10):
-					c.Process(client)
+	m.RegisterHandler("state/sensor/weather/", func(m *microservice.Service, topic string, msg []byte) bool {
+		var err error
+		c.weather, err = config.SensorStateFromJSON(msg)
+		if err == nil {
+			m.Logger.LogInfo(c.name, "received weather state")
+		} else {
+			m.Logger.LogError(c.name, err.Error())
+		}
+		return true
+	})
 
-				case <-time.After(time.Minute * 1): // Try and request our configuration
-					if c.config == nil {
-						client.Publish("config/request/", "flux")
-					}
+	m.RegisterHandler("state/sensor/sun/", func(m *microservice.Service, topic string, msg []byte) bool {
+		var err error
+		c.suncalc, err = config.SensorStateFromJSON(msg)
+		if err == nil {
+			m.Logger.LogInfo(c.name, "received sun state")
+		} else {
+			m.Logger.LogError(c.name, err.Error())
+		}
+		return true
+	})
 
-				}
+	m.RegisterHandler("state/sensor/season/", func(m *microservice.Service, topic string, msg []byte) bool {
+		seasonSensorState, err := config.SensorStateFromJSON(msg)
+		if err == nil {
+			m.Logger.LogInfo(c.name, "received season state")
+			c.seasonName = seasonSensorState.GetValueAttr("season", "winter")
+		} else {
+			m.Logger.LogError(c.name, err.Error())
+		}
+		return true
+	})
 
+	tickCount := 0
+	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+		if (tickCount % 5) == 0 {
+			c.Process()
+		} else if (tickCount % 30) == 0 {
+			if c.config == nil {
+				m.Pubsub.Publish("config/request/", m.Name)
 			}
 		}
+		tickCount++
+		return true
+	})
 
-		if err != nil {
-			logger.LogError(c.name, err.Error())
-		}
-		time.Sleep(5 * time.Second)
-	}
+	m.Loop()
 }
