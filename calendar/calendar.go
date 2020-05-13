@@ -34,7 +34,7 @@ func new() *Calendar {
 func (c *Calendar) initialize(jsondata []byte) (err error) {
 	c.config, err = config.CalendarConfigFromJSON(jsondata)
 	if err != nil {
-		c.service.Logger.LogError(c.name, err.Error())
+		return err
 	}
 	//c.ccal.print()
 	for _, sn := range c.config.Sensors {
@@ -65,8 +65,7 @@ func (c *Calendar) initialize(jsondata []byte) (err error) {
 	}
 
 	c.update = time.Now()
-
-	return err
+	return c.load()
 }
 
 func (c *Calendar) updateSensorStates(when time.Time) error {
@@ -74,16 +73,21 @@ func (c *Calendar) updateSensorStates(when time.Time) error {
 
 	for _, cal := range c.cals {
 		fmt.Printf("Update calendar events: '%s'\n", cal.Name)
-
 		eventsForDay := cal.GetEventsByDate(when)
-		for _, e := range eventsForDay {
+
+		if len(eventsForDay) == 0 {
+			fmt.Printf("Calendar '%s' has no events\n", cal.Name)
+		}
+
+		for _, ei := range eventsForDay {
 			var dname string
 			var dstate string
-			title := strings.Replace(e.Summary, ":", ".", 3)
+			event, err := cal.GetEventByIndex(ei)
+			title := strings.Replace(event.Summary, ":", ".", 3)
 			title = strings.Replace(title, "=", " = ", 1)
 			n, err := fmt.Sscanf(title, "%s = %s", &dname, &dstate)
+			fmt.Printf("Parsed: '%s' - '%s' - '%s' - '%s'\n", event.Summary, title, dname, dstate)
 			if n == 2 && err == nil {
-				fmt.Printf("Parsed: '%s' - '%s' - '%s' - '%s'\n", e.Summary, title, dname, dstate)
 				dname = strings.ToLower(strings.Trim(dname, " "))
 				dstate = strings.ToLower(strings.Trim(dstate, " "))
 				ekey := dname
@@ -213,22 +217,8 @@ func (c *Calendar) publishSensorState(name string, sensorjsonbytes []byte) {
 }
 
 // Process will update 'events' from the calendar
-func (c *Calendar) Process() {
-	var err error
+func (c *Calendar) process() (err error) {
 	now := time.Now()
-
-	if now.Unix() >= c.update.Unix() {
-		// Download again after 15 minutes
-		c.update = time.Unix(now.Unix()+1*60, 0)
-
-		// Download calendars
-		fmt.Println("CALENDAR: LOAD")
-		err := c.load()
-		if err != nil {
-			c.service.Logger.LogError(c.name, err.Error())
-			return
-		}
-	}
 
 	// Other general states
 	weekendsensor, exists := c.sensorStates["weekend"]
@@ -240,7 +230,7 @@ func (c *Calendar) Process() {
 			if err == nil {
 				c.publishSensorState("weekend", sensorjsonbytes)
 			} else {
-				c.service.Logger.LogError(c.name, err.Error())
+				return err
 			}
 		}
 	}
@@ -259,9 +249,9 @@ func (c *Calendar) Process() {
 				c.service.Logger.LogError(c.name, err.Error())
 			}
 		}
-	} else {
-		c.service.Logger.LogError(c.name, err.Error())
 	}
+
+	return err
 }
 
 func main() {
@@ -298,9 +288,20 @@ func main() {
 				m.Pubsub.PublishStr("config/request/", m.Name)
 			}
 		}
+		if tickCount%150 == 0 {
+			if c != nil && c.config != nil {
+				if err := c.load(); err != nil {
+					m.Logger.LogError(m.Name, err.Error())
+				} else {
+					m.Logger.LogInfo(m.Name, "(re)loading calendars succesfully")
+				}
+			}
+		}
 		if tickCount%5 == 0 {
 			if c != nil && c.config != nil {
-				c.Process()
+				if err := c.process(); err != nil {
+					m.Logger.LogError(m.Name, err.Error())
+				}
 			}
 		}
 		tickCount++
