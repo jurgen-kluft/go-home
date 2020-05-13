@@ -3,7 +3,6 @@ package main
 // sun calculations are based on http://aa.quae.nl/en/reken/zonpositie.html formulas
 
 import (
-	"fmt"
 	"math"
 	"time"
 
@@ -387,14 +386,11 @@ func getMoonTimes(date time.Time, lat float64, lng float64, inUTC bool) (moonris
 }
 
 type instance struct {
-	name   string
 	config *config.SuncalcConfig
 }
 
 func new() *instance {
-	var s *instance
-	s = &instance{}
-	s.name = "suncalc"
+	s := &instance{}
 	return s
 }
 
@@ -406,7 +402,7 @@ func (s *instance) initialize(jsondata []byte) error {
 	return err
 }
 
-func (s *instance) buildJSONMessage() (string, error) {
+func (s *instance) buildJSONMessage() ([]byte, error) {
 	now := time.Now()
 	now = time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, time.Local)
 
@@ -423,8 +419,8 @@ func (s *instance) buildJSONMessage() (string, error) {
 	_, moonPhase, _ := getMoonIllumination(now)
 	sunstate.AddFloatAttr("moon.illumination", moonPhase)
 
-	jsonstr, err := sunstate.ToJSON()
-	return jsonstr, err
+	jsonbytes, err := sunstate.ToJSON()
+	return jsonbytes, err
 }
 
 func main() {
@@ -437,30 +433,29 @@ func main() {
 	m.RegisterAndSubscribe(register, subscribe)
 
 	m.RegisterHandler("config/suncalc/", func(m *microservice.Service, topic string, msg []byte) bool {
-		m.Logger.LogInfo("suncalc", "received configuration")
+		m.Logger.LogInfo(m.Name, "received configuration")
 		err := suncalc.initialize(msg)
 		if err != nil {
-			m.Logger.LogError(suncalc.name, err.Error())
+			m.Logger.LogError(m.Name, err.Error())
 		}
 		return true
 	})
 
 	tickCount := 0
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
-		if tickCount%30 == 0 {
+		if tickCount%5 == 0 {
 			if suncalc.config == nil {
-				m.Pubsub.Publish("config/request/", "suncalc")
+				m.Pubsub.PublishStr("config/request/", m.Name)
 			} else {
-				jsonmsg, err := suncalc.buildJSONMessage(client)
+				jsonbytes, err := suncalc.buildJSONMessage()
 				if err == nil {
-					m.Pubsub.Publish("state/sensor/sun/", jsonstr)
+					m.Pubsub.Publish("state/sensor/sun/", jsonbytes)
 				} else {
-					m.Logger.LogError(suncalc.name, err.Error())
+					m.Logger.LogError(m.Name, err.Error())
 				}
 			}
-		} else {
-			tickCount++
 		}
+		tickCount++
 		return true
 	})
 
