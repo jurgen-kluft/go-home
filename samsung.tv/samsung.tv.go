@@ -4,11 +4,8 @@ package main
 // - Samsung TV: Turn On/Off
 
 import (
-	"time"
-
 	"github.com/jurgen-kluft/go-home/config"
-	logpkg "github.com/jurgen-kluft/go-home/logging"
-	"github.com/jurgen-kluft/go-home/pubsub"
+	"github.com/jurgen-kluft/go-home/micro-service"
 	"github.com/saljam/samote"
 )
 
@@ -51,64 +48,57 @@ func (c *instance) poweroff(name string) {
 }
 
 func main() {
+	register := []string{"config/samsung.tv/", "state/samsung.tv/"}
+	subscribe := []string{"config/samsung.tv/", "state/samsung.tv/", "config/request/"}
+
 	c := new()
 
-	logger := logpkg.New(c.name)
-	logger.AddEntry("emitter")
-	logger.AddEntry(c.name)
+	m := microservice.New("samsung.tv")
+	m.RegisterAndSubscribe(register, subscribe)
 
-	for {
-		client := pubsub.New(config.PubSubCfg)
-		register := []string{"config/samsung.tv/", "state/samsung.tv/"}
-		subscribe := []string{"config/samsung.tv/", "state/samsung.tv/", "config/request/"}
-		err := client.Connect(c.name, register, subscribe)
-		if err == nil {
-			logger.LogInfo("emitter", "connected")
-
-			connected := true
-			for connected {
-				select {
-				case msg := <-client.InMsgs:
-					topic := msg.Topic()
-					if topic == "config/samsung.tv/" {
-						logger.LogInfo(c.name, "received configuration")
-						c.config, err = config.SamsungTVConfigFromJSON(msg.Payload())
-						for _, tv := range c.config.Devices {
-							err = c.Add(tv.IP, tv.Name, tv.ID)
-							if err == nil {
-								logger.LogInfo(c.name, "registered TV with name "+tv.Name)
-							} else {
-								logger.LogError(c.name, err.Error())
-							}
-						}
-					} else if topic == "state/samsung.tv/" {
-						logger.LogInfo(c.name, "received configuration")
-						state, err := config.SensorStateFromJSON(msg.Payload())
-						if err == nil {
-							power := state.GetValueAttr("power", "idle")
-							if power == "off" {
-								c.poweroff(state.Name)
-							} else if power == "on" {
-								c.poweron(state.Name)
-							}
-						}
-					} else if topic == "client/disconnected/" {
-						logger.LogInfo("emitter", "disconnected")
-						connected = false
-					}
-
-				case <-time.After(time.Minute * 1): // Try and request our configuration
-					if c.config == nil {
-						client.Publish("config/request/", "samsung.tv")
-					}
-
-				}
+	m.RegisterHandler("config/samsung.tv/", func(m *microservice.Service, topic string, msg []byte) bool {
+		m.Logger.LogInfo(m.Name, "received configuration")
+		var err error
+		c.config, err = config.SamsungTVConfigFromJSON(msg)
+		for _, tv := range c.config.Devices {
+			err = c.Add(tv.IP, tv.Name, tv.ID)
+			if err == nil {
+				m.Logger.LogInfo(m.Name, "registered TV with name "+tv.Name)
+			} else {
+				m.Logger.LogError(m.Name, err.Error())
 			}
 		}
+		return true
+	})
 
-		if err != nil {
-			logger.LogError(c.name, err.Error())
+	m.RegisterHandler("state/samsung.tv/", func(m *microservice.Service, topic string, msg []byte) bool {
+		m.Logger.LogInfo(m.Name, "received configuration")
+		state, err := config.SensorStateFromJSON(msg)
+		if err == nil {
+			power := state.GetValueAttr("power", "idle")
+			if power == "off" {
+				c.poweroff(state.Name)
+			} else if power == "on" {
+				c.poweron(state.Name)
+			}
+		} else {
+			m.Logger.LogError(m.Name, err.Error())
 		}
-		time.Sleep(5 * time.Second)
-	}
+		return true
+	})
+
+	tickCount := 0
+	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+		if tickCount%30 == 0 {
+			if c.config == nil {
+				m.Pubsub.Publish("config/request/", m.Name)
+			}
+		} else {
+			tickCount++
+		}
+		return true
+	})
+
+	m.Loop()
+
 }

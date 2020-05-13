@@ -42,9 +42,9 @@ func Get(url string) []byte {
 
 func (s *Switch) Status() int {
 	var binaryState BinaryState
-	reqXml := `<?xml version="1.0" encoding="utf-8"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"><s:Body><u:GetBinaryState xmlns:u="urn:Belkin:service:basicevent:1"></u:GetBinaryState></s:Body></s:Envelope>`
+	reqXML := `<?xml version="1.0" encoding="utf-8"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"><s:Body><u:GetBinaryState xmlns:u="urn:Belkin:service:basicevent:1"></u:GetBinaryState></s:Body></s:Envelope>`
 	url := "http://" + s.Host + "/upnp/control/basicevent1"
-	req, _ := http.NewRequest("POST", url, strings.NewReader(reqXml))
+	req, _ := http.NewRequest("POST", url, strings.NewReader(reqXML))
 	req.Header.Add("SOAPACTION", `"urn:Belkin:service:basicevent:1#GetBinaryState"`)
 	req.Header.Add("Content-type", `text/xml; charset="utf-8"`)
 	client := http.Client{}

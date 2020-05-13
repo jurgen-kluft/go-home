@@ -13,7 +13,7 @@ import (
 type context struct {
 	configs *configs
 	watcher *configFileWatcher
-	micro   *microservice.Service
+	service *microservice.Service
 }
 
 func newContext() *context {
@@ -41,7 +41,7 @@ func configFromJSON(data []byte) (*configs, error) {
 func (c *context) configFromJSON(configname string, jsondata []byte) (config.Config, error) {
 	var ci config.Config
 	var err error
-	c.micro.Logger.LogInfo(c.micro.Name, fmt.Sprintf("configuration %s, FromJSON", configname))
+	c.service.Logger.LogInfo(c.service.Name, fmt.Sprintf("configuration %s, FromJSON", configname))
 	switch configname {
 	case "aqi":
 		ci, err = config.AqiConfigFromJSON(jsondata)
@@ -100,22 +100,30 @@ func (c *context) checkAllConfigurationFiles() (err error) {
 		var data []byte
 		data, err = ioutil.ReadFile(configuration.ConfigFilename)
 		if err != nil {
-			c.micro.Logger.LogError(c.micro.Name, err.Error())
+			c.service.Logger.LogError(c.service.Name, err.Error())
 		} else {
 			if data != nil {
 				v, err := c.configFromJSON(name, data)
 				if err != nil {
-					c.micro.Logger.LogError(c.micro.Name, err.Error())
+					c.service.Logger.LogError(c.service.Name, err.Error())
 				} else {
 					data, err = v.ToJSON()
 					if err != nil {
-						c.micro.Logger.LogError(c.micro.Name, err.Error())
+						c.service.Logger.LogError(c.service.Name, err.Error())
 					}
 				}
 			} else {
-				c.micro.Logger.LogError(c.micro.Name, fmt.Sprintf("Configuration %s did not have a ReflectType", name))
+				c.service.Logger.LogError(c.service.Name, fmt.Sprintf("Configuration %s did not have a ReflectType", name))
 			}
 		}
+	}
+	return
+}
+
+func (c *context) registerAllConfigurationChannels() (err error) {
+	for name, configuration := range c.configs.Configurations {
+		c.service.Logger.LogInfo(c.service.Name, fmt.Sprintf("Register pubsub channel %s for %s", configuration.ChannelName, name))
+		err = c.service.Register(configuration.ChannelName)
 	}
 	return
 }
@@ -135,12 +143,12 @@ func (c *context) sendConfigOnChannel(configtype string) (err error) {
 				if err == nil {
 					jsondata, err := v.ToJSON()
 					if err == nil {
-						c.micro.Logger.LogInfo(c.micro.Name, fmt.Sprintf("Publish %s on channel %s", string(jsondata), configuration.ChannelName))
-						err = c.micro.Pubsub.Publish(configuration.ChannelName, string(jsondata))
+						c.service.Logger.LogInfo(c.service.Name, fmt.Sprintf("Publish %s on channel %s", string(jsondata), configuration.ChannelName))
+						err = c.service.Pubsub.Publish(configuration.ChannelName, jsondata)
 					}
 				}
 			} else {
-				err = fmt.Errorf("Configuration %s did not have JSON data or a ReflectType", configtype)
+				err = fmt.Errorf("Configuration %s did not have JSON data", configtype)
 			}
 		} else {
 			err = fmt.Errorf("Configuration %s does not exist", configtype)
@@ -152,14 +160,14 @@ func (c *context) sendConfigOnChannel(configtype string) (err error) {
 }
 
 func main() {
-	register := []string{"config/config/", "config/request/", "config/presence/", "config/aqi/"}
+	register := []string{"config/config/", "config/request/"}
 	subscribe := []string{"config/config/", "config/request/"}
 
 	m := microservice.New("config")
 	m.RegisterAndSubscribe(register, subscribe)
 
 	ctx := newContext()
-	ctx.micro = m
+	ctx.service = m
 
 	m.RegisterHandler("config/config/", func(m *microservice.Service, topic string, msg []byte) bool {
 		config, err := configFromJSON(msg)
@@ -167,6 +175,7 @@ func main() {
 			m.Logger.LogInfo(m.Name, "received configuration")
 			ctx.configs = config
 			ctx.checkAllConfigurationFiles()
+			ctx.registerAllConfigurationChannels()
 			ctx.initializeConfigFileWatcher()
 		} else {
 			m.Logger.LogError(m.Name, err.Error())

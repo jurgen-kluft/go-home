@@ -33,12 +33,12 @@ func (s *SensorState) FromJSON(data []byte) error {
 }
 
 // ToJSON serializes a SensorState object into a JSON string
-func (s *SensorState) ToJSON() (string, error) {
+func (s *SensorState) ToJSON() ([]byte, error) {
 	data, err := json.Marshal(s)
 	if err == nil {
-		return string(data), err
+		return data, err
 	}
-	return "", err
+	return nil, err
 }
 
 // GetBoolAttr returns the value of a FloatAttr with name 'name'
@@ -157,8 +157,8 @@ type TimeWndAttr struct {
 func FloatAttrAsJSON(sensorname string, name string, value float64) (string, error) {
 	sensorstate := NewSensorState(sensorname)
 	sensorstate.FloatAttrs = []FloatAttr{FloatAttr{Name: name, Value: value}}
-	jsonstr, err := sensorstate.ToJSON()
-	return jsonstr, err
+	jsonbytes, err := sensorstate.ToJSON()
+	return string(jsonbytes), err
 }
 
 // StringAttrAsJSON can be called as StringAttrAsJSON("state.sensor.motion", "motion_ba9825ae", "on") and
@@ -166,8 +166,8 @@ func FloatAttrAsJSON(sensorname string, name string, value float64) (string, err
 func StringAttrAsJSON(sensorname string, name string, value string) (string, error) {
 	sensorstate := NewSensorState(sensorname)
 	sensorstate.StringAttrs = []StringAttr{StringAttr{Name: name, Value: value}}
-	jsonstr, err := sensorstate.ToJSON()
-	return jsonstr, err
+	jsonbytes, err := sensorstate.ToJSON()
+	return string(jsonbytes), err
 }
 
 // IntAttrAsJSON can be called as IntAttrAsJSON("state.sensor.aqi", "aqi", 120) and
@@ -175,8 +175,8 @@ func StringAttrAsJSON(sensorname string, name string, value string) (string, err
 func IntAttrAsJSON(sensorname string, name string, value int64) (string, error) {
 	sensorstate := NewSensorState(sensorname)
 	sensorstate.AddIntAttr(name, value)
-	jsonstr, err := sensorstate.ToJSON()
-	return jsonstr, err
+	jsonbytes, err := sensorstate.ToJSON()
+	return string(jsonbytes), err
 }
 
 // BoolAttrAsJSON can be called as BoolAttrAsJSON("state.sensor.motion", "motion_98AE7", true) and
@@ -184,8 +184,8 @@ func IntAttrAsJSON(sensorname string, name string, value int64) (string, error) 
 func BoolAttrAsJSON(sensorname string, name string, value bool) (string, error) {
 	sensorstate := NewSensorState(sensorname)
 	sensorstate.AddBoolAttr(name, value)
-	jsonstr, err := sensorstate.ToJSON()
-	return jsonstr, err
+	jsonbytes, err := sensorstate.ToJSON()
+	return string(jsonbytes), err
 }
 
 // TimeWndAttrAsJSON can be called as TimeWndAttrAsJSON("state.sensor.sun", "sun.rise", sunrise_begin, sunrise_end) and
@@ -193,8 +193,8 @@ func BoolAttrAsJSON(sensorname string, name string, value bool) (string, error) 
 func TimeWndAttrAsJSON(sensorname string, name string, begin time.Time, end time.Time) (string, error) {
 	sensorstate := NewSensorState(sensorname)
 	sensorstate.AddTimeWndAttr(name, begin, end)
-	jsonstr, err := sensorstate.ToJSON()
-	return jsonstr, err
+	jsonbytes, err := sensorstate.ToJSON()
+	return string(jsonbytes), err
 }
 
 // NewSensorState returns a SensorState object initialized with 'name' and time.Now()

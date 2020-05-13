@@ -34,7 +34,7 @@ func main() {
 		if err != nil {
 			return err
 		}
-		jsonstr := string(filedata)
+		jsonbytes := filedata
 
 		channel := c.String("channel")
 		register := []string{channel}
@@ -49,7 +49,7 @@ func main() {
 		})
 
 		m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
-			err := m.Pubsub.PublishTTL(channel, jsonstr, 5*60)
+			err := m.Pubsub.PublishTTL(channel, jsonbytes, 5*60)
 			if err != nil {
 				fmt.Println(err)
 			}

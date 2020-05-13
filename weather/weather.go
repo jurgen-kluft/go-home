@@ -6,8 +6,7 @@ import (
 
 	"github.com/adlio/darksky"
 	"github.com/jurgen-kluft/go-home/config"
-	logpkg "github.com/jurgen-kluft/go-home/logging"
-	"github.com/jurgen-kluft/go-home/pubsub"
+	"github.com/jurgen-kluft/go-home/micro-service"
 )
 
 func converFToC(fahrenheit float64) float64 {
@@ -15,7 +14,6 @@ func converFToC(fahrenheit float64) float64 {
 }
 
 type instance struct {
-	name      string
 	config    *config.WeatherConfig
 	location  *time.Location
 	darksky   *darksky.Client
@@ -27,7 +25,6 @@ type instance struct {
 
 func new() *instance {
 	c := &instance{}
-	c.name = "weather"
 	c.darkargs = map[string]string{}
 	c.darksky = nil
 	c.darkargs = map[string]string{}
@@ -128,17 +125,17 @@ func chanceOfRain(from time.Time, until time.Time, hourly *darksky.DataBlock) (c
 	// Finished the sentence:
 	// "The chance of rain is " +
 	if precipProbability < 0.1 {
-		chanceOfRain = "as likely as seeing a dinosaur alive."
+		chanceOfRain = "none, as likely as seeing a dinosaur alive."
 	} else if precipProbability < 0.3 {
-		chanceOfRain = "likely but probably not."
+		chanceOfRain = "unlikely, but probably."
 	} else if precipProbability >= 0.3 && precipProbability < 0.5 {
-		chanceOfRain = "possible but you can risk it."
+		chanceOfRain = "possible, you can risk it."
 	} else if precipProbability >= 0.5 && precipProbability < 0.7 {
-		chanceOfRain = "likely and you may want to bring an umbrella."
+		chanceOfRain = "likely, you may want to bring an umbrella."
 	} else if precipProbability >= 0.7 && precipProbability < 0.9 {
-		chanceOfRain = "definitely so have an umbrella ready."
+		chanceOfRain = "definitely, so have an umbrella ready."
 	} else {
-		chanceOfRain = "for sure so open your umbrella and hold it up."
+		chanceOfRain = "for sure, so open your umbrella and hold it up."
 	}
 
 	return
@@ -157,14 +154,14 @@ func atHour(date time.Time, h int, m int) time.Time {
 	return now
 }
 
-func (c *instance) process(client *pubsub.Context) {
+func (c *instance) process(name string) ([]byte, error) {
 	now := time.Now()
-
-	state := config.NewSensorState(c.name)
 
 	// Weather update every 5 minutes
 	if now.Unix() >= c.update.Unix() {
 		c.update = time.Unix(now.Unix()+5*60, 0)
+
+		state := config.NewSensorState(name)
 
 		lat := c.latitude
 		lng := c.longitude
@@ -182,63 +179,55 @@ func (c *instance) process(client *pubsub.Context) {
 
 			//			c.addHourly(atHour(now, 6, 0), atHour(now, 20, 0), forecast.Hourly, state)
 		}
-		jsonstr, err := state.ToJSON()
-		if err == nil {
-			fmt.Println(jsonstr)
-			client.Publish("state/sensor/weather/", jsonstr)
-		}
+		jsonbytes, err := state.ToJSON()
+		return jsonbytes, err
 	}
-
+	return nil, nil
 }
 
 func main() {
 	c := new()
+	register := []string{"config/weather/", "config/request/", "state/sensor/weather/"}
+	subscribe := []string{"config/weather/"}
 
-	logger := logpkg.New(c.name)
-	logger.AddEntry("emitter")
-	logger.AddEntry(c.name)
+	m := microservice.New("weather")
+	m.RegisterAndSubscribe(register, subscribe)
 
-	for {
-		client := pubsub.New(config.PubSubCfg)
-		register := []string{"config/weather/", "state/sensor/weather/"}
-		subscribe := []string{"config/weather/", "config/request/"}
-		err := client.Connect(c.name, register, subscribe)
+	m.RegisterHandler("config/weather/", func(m *microservice.Service, topic string, msg []byte) bool {
+		m.Logger.LogInfo(m.Name, "received configuration")
+		weatherConfig, err := config.WeatherConfigFromJSON(msg)
 		if err == nil {
-			logger.LogInfo("emitter", "connected")
+			c.initialize(weatherConfig)
+		} else {
+			m.Logger.LogError(m.Name, err.Error())
+		}
+		return true
+	})
 
-			connected := true
-			for connected {
-				select {
-				case msg := <-client.InMsgs:
-					topic := msg.Topic()
-					if topic == "config/weather/" {
-						logger.LogInfo(c.name, "received configuration")
-						weatherConfig, err := config.WeatherConfigFromJSON(msg.Payload())
-						if err == nil {
-							c.initialize(weatherConfig)
-						} else {
-							logger.LogError(c.name, err.Error())
-						}
-					} else if topic == "client/disconnected/" {
-						logger.LogInfo("emitter", "disconnected")
-						connected = false
-					}
+	m.RegisterHandler("*", func(m *microservice.Service, topic string, msg []byte) bool {
+		fmt.Printf("message received, topic:'%s', msg:'%s'\n", topic, string(msg))
+		return true
+	})
 
-				case <-time.After(time.Minute * 1):
-					if c.darksky != nil {
-						c.process(client)
-					} else {
-						client.Publish("config/request/", "weather")
+	tickCount := 0
+	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+		if tickCount%5 == 0 {
+			if c.darksky != nil {
+				jsonbytes, err := c.process(m.Name)
+				if err == nil {
+					if jsonbytes != nil {
+						m.Pubsub.Publish("state/sensor/weather/", jsonbytes)
 					}
+				} else {
+					m.Logger.LogError(m.Name, err.Error())
 				}
+			} else {
+				m.Pubsub.PublishStr("config/request/", m.Name)
 			}
 		}
+		tickCount++
+		return true
+	})
 
-		if err != nil {
-			logger.LogError(c.name, err.Error())
-		}
-
-		time.Sleep(5 * time.Second)
-	}
-
+	m.Loop()
 }

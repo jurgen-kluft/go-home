@@ -11,17 +11,21 @@ import (
 // Delegate is a handler that the user can register on a certain received topic
 type Delegate func(m *Service, topic string, message []byte) bool
 
+type Message struct {
+	Topic   string
+	Payload []byte
+}
+
 // Service is a convenience setup to implement a micro-service
 type Service struct {
-	Name              string
-	UpdateIntervalSec int
-	UpdateTimeStamp   time.Time
-	Logger            *logpkg.Logger
-	PubsubRegister    []string
-	PubsubSubscribe   []string
-	Pubsub            *pubsub.Context
-	Handlers          map[string]Delegate
-	CatchHandler      Delegate
+	Name            string
+	Logger          *logpkg.Logger
+	PubsubRegister  []string
+	PubsubSubscribe []string
+	Pubsub          *pubsub.Context
+	Handlers        map[string]Delegate
+	CatchHandler    Delegate
+	ProcessMessages chan *Message
 }
 
 func New(name string) *Service {
@@ -36,11 +40,31 @@ func New(name string) *Service {
 	service.PubsubSubscribe = make([]string, 0, 10)
 	service.Handlers = make(map[string]Delegate)
 
+	service.ProcessMessages = make(chan *Message, 128)
 	return service
 }
 
 func (m *Service) Register(r string) error {
-	m.PubsubRegister = append(m.PubsubRegister, r)
+	if m.Pubsub == nil {
+		// Not connected yet, just add it to the list
+		m.PubsubRegister = append(m.PubsubRegister, r)
+	} else {
+		// We are connected, also call Register on pubsub
+		m.PubsubRegister = append(m.PubsubRegister, r)
+		m.Pubsub.Register(r)
+	}
+	return nil
+}
+
+func (m *Service) Subscribe(r string) error {
+	if m.Pubsub == nil {
+		// Not connected yet, just add it to the list
+		m.PubsubSubscribe = append(m.PubsubSubscribe, r)
+	} else {
+		// We are connected, also call Subscribe on pubsub
+		m.PubsubSubscribe = append(m.PubsubSubscribe, r)
+		m.Pubsub.Subscribe(r)
+	}
 	return nil
 }
 
@@ -49,7 +73,7 @@ func (m *Service) RegisterAndSubscribe(register []string, subscribe []string) {
 		m.Register(r)
 	}
 	for _, r := range subscribe {
-		m.PubsubSubscribe = append(m.PubsubSubscribe, r)
+		m.Subscribe(r)
 	}
 }
 
@@ -67,11 +91,21 @@ func (m *Service) Loop() {
 		err := m.Pubsub.Connect(m.Name, m.PubsubRegister, m.PubsubSubscribe)
 		if err == nil {
 			m.Logger.LogInfo("pubsub", "connected")
-			m.Pubsub.Publish("config/request/", m.Name)
+			m.Pubsub.PublishStr("config/request/", m.Name)
 
 			connected := true
 			for connected {
 				select {
+				case msg := <-m.ProcessMessages:
+					topic := msg.Topic
+					delegate, exists := m.Handlers[topic]
+					if exists {
+						if !delegate(m, topic, msg.Payload) {
+							connected = false
+							quit = true
+						}
+					}
+
 				case msg := <-m.Pubsub.InMsgs:
 					topic := m.Pubsub.Topic(msg)
 					delegate, exists := m.Handlers[topic]

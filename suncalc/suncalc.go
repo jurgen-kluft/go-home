@@ -8,8 +8,7 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
-	logpkg "github.com/jurgen-kluft/go-home/logging"
-	"github.com/jurgen-kluft/go-home/pubsub"
+	"github.com/jurgen-kluft/go-home/micro-service"
 )
 
 const (
@@ -400,14 +399,14 @@ func new() *instance {
 }
 
 func (s *instance) initialize(jsondata []byte) error {
-	config, err := config.SuncalcConfigFromJSON(jsonstr)
+	config, err := config.SuncalcConfigFromJSON(jsondata)
 	if err == nil {
 		s.config = config
 	}
 	return err
 }
 
-func (s *instance) process(client *pubsub.Context) {
+func (s *instance) buildJSONMessage() (string, error) {
 	now := time.Now()
 	now = time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, time.Local)
 
@@ -425,57 +424,45 @@ func (s *instance) process(client *pubsub.Context) {
 	sunstate.AddFloatAttr("moon.illumination", moonPhase)
 
 	jsonstr, err := sunstate.ToJSON()
-	if err == nil {
-		fmt.Println(jsonstr)
-		client.Publish("state/sensor/sun/", jsonstr)
-	}
+	return jsonstr, err
 }
 
 func main() {
 	suncalc := new()
 
-	logger := logpkg.New(suncalc.name)
-	logger.AddEntry("emitter")
-	logger.AddEntry(suncalc.name)
+	register := []string{"config/suncalc/", "state/sensor/sun/"}
+	subscribe := []string{"config/suncalc/", "config/request/"}
 
-	for {
-		client := pubsub.New(config.PubSubCfg)
-		register := []string{"config/suncalc/", "state/sensor/sun/"}
-		subscribe := []string{"config/suncalc/", "config/request/"}
-		err := client.Connect(suncalc.name, register, subscribe)
-		if err == nil {
-			logger.LogInfo("emitter", "connected")
+	m := microservice.New("suncalc")
+	m.RegisterAndSubscribe(register, subscribe)
 
-			connected := true
-			for connected {
-				select {
-				case msg := <-client.InMsgs:
-					topic := msg.Topic()
-					if topic == "config/suncalc/" {
-						logger.LogInfo("suncalc", "received configuration")
-						err = suncalc.initialize(msg.Payload())
-						if err != nil {
-							logger.LogError(suncalc.name, err.Error())
-						}
-					} else if topic == "client/disconnected/" {
-						logger.LogInfo("emitter", "disconnected")
-						connected = false
-					}
+	m.RegisterHandler("config/suncalc/", func(m *microservice.Service, topic string, msg []byte) bool {
+		m.Logger.LogInfo("suncalc", "received configuration")
+		err := suncalc.initialize(msg)
+		if err != nil {
+			m.Logger.LogError(suncalc.name, err.Error())
+		}
+		return true
+	})
 
-				case <-time.After(time.Minute * 1):
-					if suncalc.config == nil {
-						client.Publish("config/request/", "suncalc")
-					} else {
-						suncalc.process(client)
-					}
+	tickCount := 0
+	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+		if tickCount%30 == 0 {
+			if suncalc.config == nil {
+				m.Pubsub.Publish("config/request/", "suncalc")
+			} else {
+				jsonmsg, err := suncalc.buildJSONMessage(client)
+				if err == nil {
+					m.Pubsub.Publish("state/sensor/sun/", jsonstr)
+				} else {
+					m.Logger.LogError(suncalc.name, err.Error())
 				}
 			}
+		} else {
+			tickCount++
 		}
+		return true
+	})
 
-		if err != nil {
-			logger.LogError(suncalc.name, err.Error())
-		}
-
-		time.Sleep(5 * time.Second)
-	}
+	m.Loop()
 }

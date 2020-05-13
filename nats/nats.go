@@ -137,7 +137,7 @@ func (ctx *Context) Subscribe(channel string) (err error) {
 	return fmt.Errorf("PubSub.Subscribe failed for channel %s", channel)
 }
 
-func (ctx *Context) Publish(channel string, message string) error {
+func (ctx *Context) PublishStr(channel string, message string) error {
 	index, exists := ctx.SubToIndex[channel]
 	if exists {
 		ctx.Client.Publish(ctx.SubChannels[index], []byte(message))
@@ -146,10 +146,28 @@ func (ctx *Context) Publish(channel string, message string) error {
 	return fmt.Errorf("PubSub.Publish failed for channel %s", channel)
 }
 
-func (ctx *Context) PublishTTL(channel string, message string, ttl int) error {
+func (ctx *Context) Publish(channel string, message []byte) error {
+	index, exists := ctx.SubToIndex[channel]
+	if exists {
+		ctx.Client.Publish(ctx.SubChannels[index], message)
+		return nil
+	}
+	return fmt.Errorf("PubSub.Publish failed for channel %s", channel)
+}
+
+func (ctx *Context) PublishTTLStr(channel string, message string, ttl int) error {
 	index, exists := ctx.SubToIndex[channel]
 	if exists {
 		ctx.Client.Publish(ctx.SubChannels[index], []byte(message))
+		return nil
+	}
+	return fmt.Errorf("PubSub.PublishTTL failed for channel %s", channel)
+}
+
+func (ctx *Context) PublishTTL(channel string, message []byte, ttl int) error {
+	index, exists := ctx.SubToIndex[channel]
+	if exists {
+		ctx.Client.Publish(ctx.SubChannels[index], message)
 		return nil
 	}
 	return fmt.Errorf("PubSub.PublishTTL failed for channel %s", channel)
