@@ -70,10 +70,10 @@ func (c *Calendar) initialize(jsondata []byte) (err error) {
 }
 
 func (c *Calendar) updateSensorStates(when time.Time) error {
-	//fmt.Printf("Update calendar events: '%d'\n", len(c.cals))
+	fmt.Printf("Update calendar events: '%d'\n", len(c.cals))
 
 	for _, cal := range c.cals {
-		//fmt.Printf("Update calendar events: '%s'\n", cal.Name)
+		fmt.Printf("Update calendar events: '%s'\n", cal.Name)
 
 		eventsForDay := cal.GetEventsByDate(when)
 		for _, e := range eventsForDay {
@@ -83,7 +83,7 @@ func (c *Calendar) updateSensorStates(when time.Time) error {
 			title = strings.Replace(title, "=", " = ", 1)
 			n, err := fmt.Sscanf(title, "%s = %s", &dname, &dstate)
 			if n == 2 && err == nil {
-				//fmt.Printf("Parsed: '%s' - '%s' - '%s' - '%s'\n", domain, dproduct, dname, dstate)
+				fmt.Printf("Parsed: '%s' - '%s' - '%s' - '%s'\n", domain, dproduct, dname, dstate)
 				dname = strings.ToLower(strings.Trim(dname, " "))
 				dstate = strings.ToLower(strings.Trim(dstate, " "))
 				ekey := dname
@@ -222,7 +222,7 @@ func (c *Calendar) Process() {
 		c.update = time.Unix(now.Unix()+1*60, 0)
 
 		// Download calendars
-		// fmt.Println("CALENDAR: LOAD")
+		fmt.Println("CALENDAR: LOAD")
 		err := c.load()
 		if err != nil {
 			c.service.Logger.LogError(c.name, err.Error())
