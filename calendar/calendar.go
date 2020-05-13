@@ -83,7 +83,7 @@ func (c *Calendar) updateSensorStates(when time.Time) error {
 			title = strings.Replace(title, "=", " = ", 1)
 			n, err := fmt.Sscanf(title, "%s = %s", &dname, &dstate)
 			if n == 2 && err == nil {
-				fmt.Printf("Parsed: '%s' - '%s' - '%s' - '%s'\n", domain, dproduct, dname, dstate)
+				fmt.Printf("Parsed: '%s' - '%s' - '%s' - '%s'\n", e.Summary, title, dname, dstate)
 				dname = strings.ToLower(strings.Trim(dname, " "))
 				dstate = strings.ToLower(strings.Trim(dstate, " "))
 				ekey := dname
@@ -298,7 +298,7 @@ func main() {
 				m.Pubsub.PublishStr("config/request/", m.Name)
 			}
 		}
-		if tickCount%30 == 0 {
+		if tickCount%5 == 0 {
 			if c != nil && c.config != nil {
 				c.Process()
 			}
