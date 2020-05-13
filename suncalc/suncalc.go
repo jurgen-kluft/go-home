@@ -443,10 +443,13 @@ func main() {
 
 	tickCount := 0
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
-		if tickCount%5 == 0 {
+		if tickCount%5 == 0 {	// every 10 seconds
 			if suncalc.config == nil {
 				m.Pubsub.PublishStr("config/request/", m.Name)
-			} else {
+			}
+		}
+		if tickCount%30 == 0 {		// every 1 minute
+			if suncalc.config != nil {
 				jsonbytes, err := suncalc.buildJSONMessage()
 				if err == nil {
 					m.Pubsub.Publish("state/sensor/sun/", jsonbytes)

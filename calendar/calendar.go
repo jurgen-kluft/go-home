@@ -61,6 +61,7 @@ func (c *Calendar) initialize(jsondata []byte) (err error) {
 		} else {
 			c.service.Logger.LogError(c.name, fmt.Sprintf("Unknown calendar source '%s'", cal.URL))
 		}
+		c.service.Logger.LogInfo(c.name, cal.URL.String)
 	}
 
 	c.update = time.Now()
@@ -207,9 +208,8 @@ func (c *Calendar) applyRulesToSensorStates() {
 	}
 }
 
-func (c *Calendar) publishSensorState(name string, sensorjson string) {
-	fmt.Println(sensorjson)
-	c.service.Pubsub.Publish(fmt.Sprintf("state/sensor/%s/", name), string(sensorjson))
+func (c *Calendar) publishSensorState(name string, sensorjsonbytes []byte) {
+	c.service.Pubsub.Publish(fmt.Sprintf("state/sensor/%s/", name), sensorjsonbytes)
 }
 
 // Process will update 'events' from the calendar
@@ -236,9 +236,9 @@ func (c *Calendar) Process() {
 		if weekendsensor.BoolAttrs != nil {
 			weekend, _, _, _, _ := weekOrWeekEndStartEnd(now)
 			weekendsensor.BoolAttrs[0].Value = weekend
-			sensorjson, err := weekendsensor.ToJSON()
+			sensorjsonbytes, err := weekendsensor.ToJSON()
 			if err == nil {
-				c.publishSensorState("weekend", sensorjson)
+				c.publishSensorState("weekend", sensorjsonbytes)
 			} else {
 				c.service.Logger.LogError(c.name, err.Error())
 			}
@@ -252,9 +252,9 @@ func (c *Calendar) Process() {
 
 		// Publish sensor states
 		for _, ss := range c.sensorStates {
-			jsonstr, err := ss.ToJSON()
+			sensorjsonbytes, err := ss.ToJSON()
 			if err == nil {
-				c.publishSensorState(ss.Name, jsonstr)
+				c.publishSensorState(ss.Name, sensorjsonbytes)
 			} else {
 				c.service.Logger.LogError(c.name, err.Error())
 			}
@@ -293,18 +293,17 @@ func main() {
 
 	tickCount := 0
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
-		if tickCount == 30 {
-			tickCount = 0
-			if c != nil {
-				if c.config != nil {
-					c.Process()
-				} else if c.config == nil {
-					m.Pubsub.Publish("config/request/", m.Name)
-				}
+		if tickCount%5 == 0 {
+			if c != nil && c.config == nil {
+				m.Pubsub.PublishStr("config/request/", m.Name)
 			}
-		} else {
-			tickCount++
 		}
+		if tickCount%30 == 0 {
+			if c != nil && c.config != nil {
+				c.Process()
+			}
+		}
+		tickCount++
 		return true
 	})
 
