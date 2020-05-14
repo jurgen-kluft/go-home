@@ -18,6 +18,7 @@ type Calendar struct {
 	sensors      map[string]config.Csensor
 	sensorStates map[string]*config.SensorState
 	cals         []*icalendar.Calendar
+	timelines    []*icalendar.Timeline
 	update       time.Time
 	service      *microservice.Service
 }
@@ -55,7 +56,9 @@ func (c *Calendar) initialize(jsondata []byte) (err error) {
 
 	for _, cal := range c.config.Calendars {
 		if strings.HasPrefix(cal.URL.String, "http") {
-			c.cals = append(c.cals, icalendar.NewURLCalendar(cal.URL.String))
+			ical := icalendar.NewURLCalendar(cal.URL.String)
+			c.cals = append(c.cals, ical)
+			c.timelines = append(c.timelines, ical.GetTimeline(time.Now(), 2))
 		} else if strings.HasPrefix(cal.URL.String, "file") {
 			c.cals = append(c.cals, icalendar.NewFileCalendar(cal.URL.String))
 		} else {
@@ -73,11 +76,13 @@ func (c *Calendar) updateSensorStates(when time.Time) error {
 
 	for _, cal := range c.cals {
 		fmt.Printf("Update calendar events: '%s'\n", cal.Name)
-		eventsForDay := cal.GetEventsByDate(when)
+		eventsForDay := cal.GetEventIndicesByDate(when)
 
 		if len(eventsForDay) == 0 {
 			fmt.Printf("Calendar '%s' has no events\n", cal.Name)
 		}
+
+		// Get events from timeline
 
 		for _, ei := range eventsForDay {
 			var dname string
@@ -115,8 +120,12 @@ func (c *Calendar) updateSensorStates(when time.Time) error {
 }
 
 func (c *Calendar) load() (err error) {
-	for _, cal := range c.cals {
+	now := time.Now()
+	for i, cal := range c.cals {
 		err = cal.Load()
+		if err == nil {
+			c.timelines[i] = cal.GetTimeline(now, 2)
+		}
 	}
 	return err
 }
