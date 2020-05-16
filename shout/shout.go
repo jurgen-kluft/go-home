@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/jurgen-kluft/go-home/config"
 	"github.com/jurgen-kluft/go-home/micro-service"
 	"github.com/nlopes/slack"
@@ -32,12 +33,18 @@ func (s *instance) initialize(jsondata []byte) error {
 }
 
 // postMessage posts a message to a channel
-func (s *instance) postMessage(jsondata []byte) (err error) {
-	m, err := config.ShoutMsgFromJSON(jsondata)
-	if err == nil {
-		_, _, err = s.client.PostMessage(m.Channel, slack.MsgOptionText("Some text", false), slack.MsgOptionUsername("g0-h0m3"), slack.MsgOptionAsUser(true))
+func (s *instance) postMessage(jsondata []byte) {
+	if s.client != nil {
+		channelID, timestamp, err := s.client.PostMessage(s.config.Channel, slack.MsgOptionText(string(jsondata), false), slack.MsgOptionUsername("g0-h0m3"), slack.MsgOptionAsUser(true))
+		if err == nil {
+			s.service.Logger.LogInfo(s.name, fmt.Sprintf("message '%s' send (%s, %s)", string(jsondata), channelID, timestamp))
+		} else {
+			s.service.Logger.LogError(s.name, fmt.Sprintf("message '%s' not send (%s, %s)", string(jsondata), s.config.Channel, timestamp))
+			s.service.Logger.LogError(s.name, err.Error())
+		}
+	} else {
+		s.service.Logger.LogError(s.name, "service not connected")
 	}
-	return err
 }
 
 func main() {
@@ -55,6 +62,8 @@ func main() {
 		err := c.initialize(msg)
 		if err != nil {
 			m.Logger.LogError(m.Name, err.Error())
+		} else {
+			c.postMessage([]byte("service connected"))
 		}
 		return true
 	})
@@ -63,10 +72,7 @@ func main() {
 		// Is this a message to send over slack ?
 		if c.client != nil {
 			m.Logger.LogInfo(m.Name, "message")
-			err := c.postMessage(msg)
-			if err != nil {
-				m.Logger.LogError(c.name, err.Error())
-			}
+			c.postMessage(msg)
 		}
 		return true
 	})
@@ -75,7 +81,7 @@ func main() {
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
 		if (tickCount % 30) == 0 {
 			if c.config == nil {
-				m.Pubsub.Publish("config/request/", m.Name)
+				m.Pubsub.Publish("config/request/", []byte(m.Name))
 			}
 		}
 		tickCount++

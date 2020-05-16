@@ -5,7 +5,8 @@ import (
 )
 
 type ShoutConfig struct {
-	Key CryptString `json:"key"`
+	Key     CryptString `json:"key"`
+	Channel string      `json:"channel"`
 }
 
 // ShoutConfigFromJSON converts a json string to a ShoutConfig instance
