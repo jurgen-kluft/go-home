@@ -3,7 +3,7 @@ package event
 import (
 	"errors"
 	"fmt"
-	"log"
+	//"log"
 
 	"github.com/gorilla/websocket"
 )
@@ -16,14 +16,13 @@ type Reader struct {
 	conn          *websocket.Conn
 }
 
-
 type EventError interface {
 	error
 	Recoverable() bool
 }
 
 type EventErrorImpl struct {
-	errStr string
+	errStr      string
 	recoverable bool
 }
 
@@ -62,7 +61,7 @@ func (r *Reader) ReadEvent() (*Event, error) {
 		return nil, fmt.Errorf("event read error: %s", err)
 	}
 
-	log.Printf("recv: %s", message)
+	//log.Printf("recv: %s", message)
 
 	e, err := r.decoder.Parse(message)
 	if err != nil {

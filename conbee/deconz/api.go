@@ -16,16 +16,23 @@ type API struct {
 
 // Sensors returns a map of sensors
 func (a *API) Sensors() (*Sensors, error) {
-
 	url := fmt.Sprintf("%s/%s/sensors", a.Config.Addr, a.Config.APIKey)
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get %s: %s", url, err)
+		return nil, fmt.Errorf("Sensors() unable to get %s: %s", url, err)
 	}
 
 	defer resp.Body.Close()
 
 	var sensors Sensors
+
+	// To print the json response (all sensors)
+	//bodyBytes, err := ioutil.ReadAll(resp.Body)
+	//if err != nil {
+	//	return nil, fmt.Errorf("unable to decode deCONZ response: %s", err)
+	//}
+	//jsonstr := string(bodyBytes)
+	//fmt.Println(jsonstr)
 
 	dec := json.NewDecoder(resp.Body)
 	err = dec.Decode(&sensors)

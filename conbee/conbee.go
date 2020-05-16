@@ -4,6 +4,7 @@ import (
 	"github.com/jurgen-kluft/go-home/conbee/deconz"
 	"github.com/jurgen-kluft/go-home/config"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -26,16 +27,21 @@ func main() {
 
 		select {
 		case sensorEvent := <-sensorChan:
-			tags, fields, err := sensorEvent.Timeseries()
+			_, fields, err := sensorEvent.Timeseries()
+
 			if err != nil {
-				log.Printf("skip event: '%s'", err)
+				//log.Printf("skip event: '%s'", err)
 				continue
 			}
-			for k, v := range tags {
-				log.Printf("T('%s')='%s',", k, v)
-			}
+
 			for k, v := range fields {
-				log.Printf("F('%s')='%v',", k, v)
+				if strings.HasPrefix(k, "presence") {
+					log.Printf("motion:  %s -> %s = %v (uuid: %d)", sensorEvent.Name, k, v, sensorEvent.ID)
+				} else if strings.HasPrefix(k, "open") {
+					log.Printf("magnet:  %s -> %s = %v (uuid: %d)", sensorEvent.Name, k, v, sensorEvent.ID)
+				} else if strings.HasPrefix(k, "button") {
+					log.Printf("switch:  %s -> %s = %v (uuid: %d)", sensorEvent.Name, k, v, sensorEvent.ID)
+				}
 			}
 
 			timeout.Reset(1 * time.Second)

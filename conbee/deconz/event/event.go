@@ -94,6 +94,11 @@ func (e *Event) ParseState(tl TypeLookuper) error {
 		err = json.Unmarshal(e.RawState, &s)
 		e.State = &s
 		break
+	case "ZHAOpenClose":
+		var s ZHAOpenClose
+		err = json.Unmarshal(e.RawState, &s)
+		e.State = &s
+		break
 	case "CLIPPresence":
 		var s ZHAPresence
 		err = json.Unmarshal(e.RawState, &s)
@@ -216,6 +221,19 @@ type ZHAPresence struct {
 func (z *ZHAPresence) Fields() map[string]interface{} {
 	return map[string]interface{}{
 		"presence": z.Presence,
+	}
+}
+
+// ZHAOpenClose represents a door/window sensor that can have 2 states, open or close
+type ZHAOpenClose struct {
+	State
+	Open bool
+}
+
+// Fields returns timeseries data for influxdb
+func (z *ZHAOpenClose) Fields() map[string]interface{} {
+	return map[string]interface{}{
+		"open": z.Open,
 	}
 }
 

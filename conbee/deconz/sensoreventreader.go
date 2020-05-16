@@ -69,7 +69,7 @@ func (r *SensorEventReader) Start(out chan *SensorEvent) error {
 				}
 				// we only care about sensor events
 				if e.Resource != "sensors" {
-					log.Printf("Dropping non-sensor event type %s", e.Resource)
+					//log.Printf("Dropping non-sensor event type %s", e.Resource)
 					continue
 				}
 
