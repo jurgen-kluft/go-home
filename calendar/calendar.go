@@ -66,18 +66,19 @@ func (c *Calendar) initialize(jsondata []byte) (err error) {
 	}
 
 	c.update = time.Now()
-	return c.load()
+	c.load()
+	return nil
 }
 
 func (c *Calendar) updateSensorStates(when time.Time) error {
-	fmt.Printf("Update calendar events: '%d'\n", len(c.cals))
+	//fmt.Printf("Update %d calendars\n", len(c.cals))
 
 	for _, cal := range c.cals {
-		fmt.Printf("Update calendar events: '%s'\n", cal.Name)
+		//fmt.Printf("Update calendar '%s'\n", cal.Name)
 		eventsForDay := cal.GetEventsFor(when)
 
 		if len(eventsForDay) == 0 {
-			fmt.Printf("Calendar '%s' has no events\n", cal.Name)
+			//fmt.Printf("Calendar '%s' has no events\n", cal.Name)
 		}
 
 		for _, event := range eventsForDay {
@@ -86,7 +87,7 @@ func (c *Calendar) updateSensorStates(when time.Time) error {
 			title := strings.Replace(event.Summary, ":", ".", 3)
 			title = strings.Replace(title, "=", " = ", 1)
 			n, err := fmt.Sscanf(title, "%s = %s", &dname, &dstate)
-			fmt.Printf("Parsed: '%s' - '%s' - '%s' - '%s'\n", event.Summary, title, dname, dstate)
+			fmt.Printf("Parsed: '%s' = '%s''\n", dname, dstate)
 			if n == 2 && err == nil {
 				dname = strings.ToLower(strings.Trim(dname, " "))
 				dstate = strings.ToLower(strings.Trim(dstate, " "))
@@ -114,11 +115,13 @@ func (c *Calendar) updateSensorStates(when time.Time) error {
 	return nil
 }
 
-func (c *Calendar) load() (err error) {
+func (c *Calendar) load() {
 	for _, cal := range c.cals {
-		err = cal.Load()
+		err := cal.Load()
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
-	return err
 }
 
 func timeInRange(when time.Time, rangeBegin time.Time, rangeEnd time.Time) bool {
@@ -290,14 +293,11 @@ func main() {
 		}
 		if tickCount%150 == 0 {
 			if c != nil && c.config != nil {
-				if err := c.load(); err != nil {
-					m.Logger.LogError(m.Name, err.Error())
-				} else {
-					m.Logger.LogInfo(m.Name, "(re)loading calendars succesfully")
-				}
+				c.load()
+				m.Logger.LogInfo(m.Name, "(re)loaded calendars")
 			}
 		}
-		if tickCount%5 == 0 {
+		if tickCount%30 == 0 {
 			if c != nil && c.config != nil {
 				if err := c.process(); err != nil {
 					m.Logger.LogError(m.Name, err.Error())

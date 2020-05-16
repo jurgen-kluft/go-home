@@ -224,9 +224,9 @@ func (c *context) Process() {
 
 		c.metrics.Send(ltype.Name)
 
-		jsonstr, err := sensor.ToJSON()
+		jsonbytes, err := sensor.ToJSON()
 		if err == nil {
-			c.publishSensor(fmt.Sprintf("state/sensor/%s/", ltype.Name), jsonstr)
+			c.publishSensor(fmt.Sprintf("state/sensor/%s/", ltype.Name), string(jsonbytes))
 		}
 	}
 
@@ -236,9 +236,9 @@ func (c *context) Process() {
 	}
 }
 
-func (c *context) publishSensor(channel string, sensorjson string) {
-	c.service.Logger.LogInfo(c.service.Name, "Publish at '"+channel+"' JSON ["+sensorjson+"]")
-	c.service.Pubsub.Publish(channel, sensorjson)
+func (c *context) publishSensor(channel string, json string) {
+	c.service.Logger.LogInfo(c.service.Name, "Publish at '"+channel+"' JSON ["+json+"]")
+	c.service.Pubsub.Publish(channel, []byte(json))
 }
 
 func main() {
@@ -301,7 +301,7 @@ func main() {
 			c.Process()
 		} else if (tickCount % 30) == 0 {
 			if c.config == nil {
-				m.Pubsub.Publish("config/request/", m.Name)
+				m.Pubsub.PublishStr("config/request/", m.Name)
 			}
 		}
 		tickCount++
