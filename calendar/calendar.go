@@ -239,9 +239,9 @@ func (c *Calendar) process() (err error) {
 	}
 
 	// Update sensors and apply configured rules to sensors
-	err = c.updateSensorStates(now)
+	c.applyRulesToSensorStates()    // First apply default rules
+	err = c.updateSensorStates(now) // Calendar is overriding any default rules
 	if err == nil {
-		c.applyRulesToSensorStates()
 
 		// Publish sensor states
 		for _, ss := range c.sensorStates {

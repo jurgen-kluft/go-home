@@ -48,9 +48,10 @@ type TaggedTimeSlot struct {
 }
 
 type Lighttype struct {
-	Name string `json:"name"`
-	CT   MinMax `json:"ct"`
-	BRI  MinMax `json:"bri"`
+	Name    string `json:"name"`
+	Channel string `json:"channel"`
+	CT      MinMax `json:"ct"`
+	BRI     MinMax `json:"bri"`
 }
 
 type FromTo struct {

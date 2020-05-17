@@ -13,26 +13,22 @@ import (
 // Color Temperature
 // URL: https://panasonic.net/es/solution-works/jiyugaoka/
 
-func inTimeSpan(start, end, t time.Time) bool {
-	sh, sm, sc := start.Clock()
-	sx := float64(sh*60*60) + float64(sm*60) + float64(sc)
-	eh, em, ec := end.Clock()
-	ex := float64(eh*60*60) + float64(em*60) + float64(ec) + 1.0
-	th, tm, tc := t.Clock()
-	tx := float64(th*60*60) + float64(tm*60) + float64(tc)
-	return tx >= sx && tx < ex
+func clockToSeconds(t time.Time) float64 {
+	sh, sm, sc := t.Clock()
+	return float64(sh*60*60) + float64(sm*60) + float64(sc)
 }
 
 // Return the factor 0.0 - 1.0 that indicates where we are in between start - end
 func computeTimeSpanX(start, end, t time.Time) float64 {
-	sh, sm, sc := start.Clock()
-	sx := float64(sh*60*60) + float64(sm*60) + float64(sc)
-	eh, em, ec := end.Clock()
-	ex := float64(eh*60*60) + float64(em*60) + float64(ec) + 1.0
-	th, tm, tc := t.Clock()
-	tx := float64(th*60*60) + float64(tm*60) + float64(tc)
-	x := (tx - sx) / (ex - sx)
-	return x
+	sx := clockToSeconds(start)
+	ex := clockToSeconds(end)
+	tx := clockToSeconds(t)
+	return (tx - sx) / (ex - sx)
+}
+
+func inTimeSpan(start, end, t time.Time) bool {
+	in := computeTimeSpanX(start, end, t)
+	return in >= 0.0 && in <= 1.0
 }
 
 type MovingAverage struct {
@@ -85,8 +81,8 @@ func new() *context {
 	c.metrics.Register("hue", map[string]string{"CT": "Color Temperature", "BRI": "Brightness"}, map[string]interface{}{"CT": 200.0, "BRI": 200.0})
 	c.metrics.Register("yee", map[string]string{"CT": "Color Temperature", "BRI": "Brightness"}, map[string]interface{}{"CT": 200.0, "BRI": 200.0})
 	c.seasonName = "spring"
-	c.averageCT = NewFilter(30)
-	c.averageBRI = NewFilter(30)
+	c.averageCT = NewFilter(8)
+	c.averageBRI = NewFilter(8)
 	return c
 }
 
@@ -103,9 +99,9 @@ func (c *context) updateSeasonFromName(season string) {
 // States are both input and output, for example as input
 // there are Season/Weather states like 'Season':'Winter'
 // and 'Clouds':0.5
-func (c *context) Process() {
+func (c *context) Process() error {
 	if c.config == nil || c.suncalc == nil {
-		return
+		return fmt.Errorf("No configuration or no suncalc information received")
 	}
 
 	now := time.Now()
@@ -142,6 +138,7 @@ func (c *context) Process() {
 	}
 
 	// Figure out in which light time moment we are now
+	bcurrent := false
 	current := config.Lighttime{}
 	for _, sm := range c.config.Lighttime {
 		t0 := sm.TimeSlot.StartTime
@@ -149,8 +146,12 @@ func (c *context) Process() {
 		if inTimeSpan(t0, t1, now) {
 			fmt.Println("Current light time from", sm.TimeSlot.StartMoment, "to", sm.TimeSlot.EndMoment)
 			current = sm
+			bcurrent = true
 			break
 		}
+	}
+	if !bcurrent {
+		return fmt.Errorf("Unable to identify the current light time window")
 	}
 
 	// Time interpolation factor, where are we between startMoment - endMoment
@@ -226,7 +227,7 @@ func (c *context) Process() {
 
 		jsonbytes, err := sensor.ToJSON()
 		if err == nil {
-			c.publishSensor(fmt.Sprintf("state/sensor/%s/", ltype.Name), string(jsonbytes))
+			c.publishSensor(ltype.Channel, string(jsonbytes))
 		}
 	}
 
@@ -234,6 +235,8 @@ func (c *context) Process() {
 	if err == nil {
 		c.publishSensor("state/sensor/darkorlight/", sensorDOL)
 	}
+
+	return nil
 }
 
 func (c *context) publishSensor(channel string, json string) {
@@ -242,7 +245,7 @@ func (c *context) publishSensor(channel string, json string) {
 }
 
 func main() {
-	register := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/", "state/light/hue/", "state/light/yee/"}
+	register := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/"}
 	subscribe := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/", "config/request/"}
 
 	m := microservice.New("flux")
@@ -256,6 +259,14 @@ func main() {
 		c.config, err = config.FluxConfigFromJSON(msg)
 		if err == nil {
 			m.Logger.LogInfo(m.Name, "received configuration")
+			for _, ltype := range c.config.Lighttype {
+				m.Register(ltype.Channel)
+				if err == nil {
+					m.Logger.LogInfo(c.name, fmt.Sprintf("registered pubsub channel %s for lighttype %s", ltype.Channel, ltype.Name))
+				} else {
+					m.Logger.LogError(c.name, err.Error())
+				}
+			}
 		} else {
 			m.Logger.LogError(m.Name, err.Error())
 		}
@@ -298,7 +309,10 @@ func main() {
 	tickCount := 0
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
 		if (tickCount % 5) == 0 {
-			c.Process()
+			err := c.Process()
+			if err != nil {
+				m.Logger.LogError(c.name, err.Error())
+			}
 		} else if (tickCount % 30) == 0 {
 			if c.config == nil {
 				m.Pubsub.PublishStr("config/request/", m.Name)
