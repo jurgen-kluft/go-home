@@ -3,7 +3,6 @@ package event
 import (
 	"errors"
 	"fmt"
-	//"log"
 
 	"github.com/gorilla/websocket"
 )
