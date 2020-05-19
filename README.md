@@ -1,6 +1,6 @@
 # go-home
 
-Automated home using Go (krazygo.org, Go only OS for Raspberry PI)
+Automated home using Go (gokrazy.org, Go only OS for Raspberry PI)
 
 Devices/Hardware:
 
@@ -13,6 +13,7 @@ Devices/Hardware:
   - Button Switch
   - Power Switch
   - Sensors (Motion, Magnet)
+- IKEA lights, switch and sensor
 - Wemo switch
 - Amazon Alexa
 - Samsung TV
@@ -29,22 +30,24 @@ App Structure:
   - NATS Server (Pub/Sub server where you can subscribe to channel(s))
 
 - Following sub-processes:
-  - Presence            (Connects to Netgear Router to obtain list of devices present on the network)
-  - Flux                (Calculates Color-Temperature and Brightness per day for Hue and Yee lights)
-  - AQI                 (Air Quality Index)
-  - Suncalc             (Computes sun-rise, sun-set etc..)
-  - Weather             (Darksky)
-  - Calendar            ()
-  - Shout               (Has Slack as the back-end to send messages)
-  - Wemo                (Wemo devices)
-  - Conbee II DECONZ    (Philips HUE / IKEA / Xiaomi Aqara; lights, switches, sensors)
-  - Hue Emulator        (Philips HUE lighting emulator, turn on/off)
-  - Yee                 (Xiaomi Yee lighting, turn on/off, change CT and BRI)
-  - Sony Bravia Remote  (Turn on/off Sony Bravia TV(s))
-  - Samsung TV Remote   (Turn on/off Samsung TV(s))
-  - Automation; reacting to all events and executing automation rules
+  - Config              Ok, (A service that is the provider of configurations for all other services)
+  - Presence            Ok, (Connects to Netgear Router to obtain list of devices present on the network)
+  - Flux                Ok, (Calculates Color-Temperature and Brightness per day for Hue and Yee lights)
+  - AQI                 Ok, (Air Quality Index)
+  - Suncalc             Ok, (Computes sun-rise, sun-set etc..)
+  - Weather             Ok, (Darksky)
+  - Calendar            Ok, (Reads calendars from icloud and determines active events and makes sensors out of them)
+  - Shout               Ok, (Has Slack as the back-end to send messages)
+  - Wemo                Untested, (Wemo devices)
+  - Conbee II DECONZ    WIP, (Philips HUE / IKEA / Xiaomi Aqara; lights, switches, sensors)
+  - Apple HomeKit       WIP, (Apple Home Kit accessory emulator)
+  - Yee                 Ok, (Xiaomi Yee lighting, turn on/off, change CT and BRI)
+  - Sony Bravia Remote  Ok, (Turn on/off Sony Bravia TV(s))
+  - Samsung TV Remote   Ok, (Turn on/off Samsung TV(s))
+  
+  - Automation; reacting to all events and executing automation rules (all written in Go)
 
 Status:
 
-I am currently not yet running this, however i have tested all sub-processes and they all function. The only one not
-tested yet is 'automation'.
+I am currently not yet running this, however i have tested (nearly) all sub-processes and they all function. 
+The only one not fully tested yet is 'automation'.
