@@ -1,42 +1,49 @@
 {
   "pin": "53664337",
-  "colored-lightbulbs": [
+  "lightbulbs": [
     {
       "name": "Kitchen",
+      "type": "colored",
       "id": 101
     },
     {
       "name": "Livingroom Stand",
+      "type": "colored",
       "id": 201
     },
     {
       "name": "Jennifer Main",
+      "type": "colored",
       "id": 301
     },
     {
       "name": "Sophia Stand",
+      "type": "colored",
       "id": 401
     },
     {
       "name": "Bedroom Stand",
+      "type": "colored",
       "id": 501
     },
     {
       "name": "Bedroom Main",
+      "type": "colored",
       "id": 502
-    }
-  ],
-  "lightbulbs": [
+    },
     {
       "name": "Sophia Main",
+      "type": "white",
       "id": 402
     },
     {
       "name": "Livingroom Main",
+      "type": "white",
       "id": 202
     },
     {
       "name": "Livingroom Dinner",
+      "type": "white",
       "id": 203
     }
   ],
@@ -50,7 +57,7 @@
       "id": 942
     },
     {
-      "name": "FLUX",
+      "name": "Flux",
       "id": 943
     }
   ],
