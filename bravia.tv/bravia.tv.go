@@ -1,6 +1,9 @@
 package main
 
-// https://github.com/czerwe/gobravia
+// Currently: https://github.com/czerwe/gobravia
+// Better ? : https://github.com/szatmary/bravia
+
+// https://pro-bravia.sony.net/develop/integrate/ssip/overview/index.html
 
 // Features:
 // - Sony Bravia TVs: Turn On/Off
