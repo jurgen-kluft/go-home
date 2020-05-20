@@ -1,0 +1,99 @@
+{
+  "pin": "53664337",
+  "colored-lightbulbs": [
+    {
+      "name": "Kitchen",
+      "id": 101
+    },
+    {
+      "name": "Livingroom Stand",
+      "id": 201
+    },
+    {
+      "name": "Jennifer Main",
+      "id": 301
+    },
+    {
+      "name": "Sophia Stand",
+      "id": 401
+    },
+    {
+      "name": "Bedroom Stand",
+      "id": 501
+    },
+    {
+      "name": "Bedroom Main",
+      "id": 502
+    }
+  ],
+  "lightbulbs": [
+    {
+      "name": "Sophia Main",
+      "id": 402
+    },
+    {
+      "name": "Livingroom Main",
+      "id": 202
+    },
+    {
+      "name": "Livingroom Dinner",
+      "id": 203
+    }
+  ],
+  "switches": [
+    {
+      "name": "Meeting",
+      "id": 941
+    },
+    {
+      "name": "Reading",
+      "id": 942
+    },
+    {
+      "name": "FLUX",
+      "id": 943
+    }
+  ],
+  "sensors": [
+    {
+      "name": "Livingroom",
+      "type": "motion",
+      "id": 281
+    },
+    {
+      "name": "Piano",
+      "type": "motion",
+      "id": 282
+    },
+    {
+      "name": "Livingroom",
+      "type": "light",
+      "id": 283
+    },
+    {
+      "name": "Kitchen",
+      "type": "motion",
+      "id": 181
+    },
+    {
+      "name": "Bedroom",
+      "type": "motion",
+      "id": 581
+    },
+    {
+      "name": "Frontdoor",
+      "type": "contact",
+      "id": 681
+    },
+    {
+      "name": "AQI",
+      "type": "air-quality",
+      "id": 981
+    },
+    {
+      "name": "Occupancy",
+      "type": "occupancy",
+      "id": 982
+    }
+  ]
+}

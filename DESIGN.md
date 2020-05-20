@@ -1,12 +1,10 @@
 # NATS
 
-NOTE: Currently emitter.io is integrated but we will move to using NATS
-
 ## NATS Messaging
 
-Listen to presence messages, when a subscriber registers we can send him the configuration.
+Listen to config/request/ messages, when a subscriber registers we can send him the configuration.
 Also when we detect that the configuration on disk has changed, we can hot-load it and send
-it to the associated channel.
+it to the associated channel. (This part of the config service and is working)
 
 ## Azure IoT Devkit - MXCHIP
 
