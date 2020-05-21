@@ -82,8 +82,8 @@ func (c *instance) computeNextPoll(now time.Time, err error) {
 }
 
 // Poll will get AQI information and returns a JSON string
-func (c *instance) Poll() (aqiStateJSON string, err error) {
-	aqiStateJSON = ""
+func (c *instance) Poll() (aqiStateJSON []byte, err error) {
+	aqiStateJSON = []byte{}
 	aqi, err := c.getResponse()
 	if err == nil {
 
@@ -123,6 +123,7 @@ func main() {
 		} else {
 			m.Logger.LogError(m.Name, "received bad configuration, "+err.Error())
 		}
+		return true
 	})
 
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
@@ -144,8 +145,9 @@ func main() {
 			}
 		} else if c != nil && c.config == nil {
 			// Try and request our configuration
-			m.Pubsub.Publish("config/request/", "aqi")
+			m.Pubsub.PublishStr("config/request/", "aqi")
 		}
+		return true
 	})
 
 	m.Loop()
