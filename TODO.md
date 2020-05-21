@@ -1,17 +1,10 @@
 # TODO
 
-## Commute tracking
-
 ## Integration
-
-Still need to integrate the following:
-
-* metrics
-* logging
 
 Setup the following on my Mac Mini:
 
-* Emitter.IO [DONE]
+* NATS       [DONE]
 * Influx DB  [DONE]
 * Grafana    [WIP]
 
@@ -19,9 +12,9 @@ Setup the following on my Mac Mini:
 
 Still need to test the following processes:
 
-* hue           [Basics are tested, can connect to bridge, can retrieve list of lights]
-* hue-bridge    [Basics are tested, alexa can see the emulated bridge, variables can be set on/off]
-* wemo          [READY]
+* ahk
+* conbee
+* wemo
 
 ## Tested
 

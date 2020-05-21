@@ -5,7 +5,7 @@ Automated home using Go (gokrazy.org, Go only OS for Raspberry PI)
 Devices/Hardware:
 
 - Netgear R6900
-- Conbee DECONZ
+- Conbee II DECONZ
 - Philips HUE lights
 - Xiaomi Yee lights
 - Xiaomi Aqara
@@ -42,7 +42,7 @@ App Structure:
   - Conbee II DECONZ    WIP, (Philips HUE / IKEA / Xiaomi Aqara; lights, switches, sensors)
   - Apple HomeKit       WIP, (Apple Home Kit accessory emulator)
   - Yee                 Ok, (Xiaomi Yee lighting, turn on/off, change CT and BRI)
-  - Sony Bravia Remote  Ok, (Turn on/off Sony Bravia TV(s))
+  - Sony Bravia Remote  Ok, (Turn on/off, HDMI Input, Volume for Sony Bravia TV(s))
   - Samsung TV Remote   Ok, (Turn on/off Samsung TV(s))
   
   - Automation; reacting to all events and executing automation rules (all written in Go)
