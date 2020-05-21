@@ -1,9 +1,9 @@
 {
   "devices": [
-	  {
+    {
       "name": "Livingroom Sony Bravia-TV",
-      "ip": "10.0.0.77", 
-      "mac": "C4:3A:BE:95:0C:1E"
+      "ip": "10.0.0.77",
+      "mac": "38:18:4C:6A:60:C6"
     }
   ]
 }

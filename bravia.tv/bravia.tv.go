@@ -9,16 +9,17 @@ package main
 // - Sony Bravia TVs: Turn On/Off
 
 import (
-	"github.com/czerwe/gobravia"
+	"fmt"
 	"github.com/jurgen-kluft/go-home/config"
 	"github.com/jurgen-kluft/go-home/micro-service"
+	"github.com/szatmary/bravia"
 )
 
 type instance struct {
 	name   string
 	ccfg   string
 	config *config.BraviaTVConfig
-	tvs    map[string]*gobravia.BraviaTV
+	tvs    map[string]*bravia.Bravia
 }
 
 // New ...
@@ -26,31 +27,57 @@ func new() *instance {
 	c := &instance{}
 	c.name = "bravia.tv"
 	c.ccfg = "config/bravia.tv/"
-	c.tvs = map[string]*gobravia.BraviaTV{}
+	c.tvs = make(map[string]*bravia.Bravia)
 	return c
 }
 
+func (c *instance) Close() {
+	for _, tv := range c.tvs {
+		tv.Close()
+	}
+}
+
 func (c *instance) AddTV(host string, mac string, name string) {
-	tv := gobravia.GetBravia(host, "0000", mac)
-	tv.GetCommands()
+	tv := bravia.NewBravia(host + ":20060")
 	c.tvs[name] = tv
 }
 
-func (c *instance) poweron(name string) {
+func (c *instance) changePower(name string, power string) {
+	if power == "none" {
+		return
+	}
+
 	tv, exists := c.tvs[name]
 	if exists {
-		tv.Poweron("10.0.0.255")
+		if power == "on" {
+			tv.SetPowerStatus(true)
+		} else if power == "off" {
+			tv.SetPowerStatus(false)
+		}
 	}
 }
-func (c *instance) poweroff(name string) {
+func (c *instance) changeInput(name string, input string) {
+	if input == "none" {
+		return
+	}
+
 	tv, exists := c.tvs[name]
 	if exists {
-		tv.SendAlias("poweroff")
+		if input == "1" {
+			tv.SetInput(bravia.HDMI, 1)
+		} else if input == "2" {
+			tv.SetInput(bravia.HDMI, 2)
+		} else if input == "3" {
+			tv.SetInput(bravia.HDMI, 3)
+		} else if input == "4" {
+			tv.SetInput(bravia.HDMI, 4)
+		}
 	}
 }
 
 func main() {
 	c := new()
+	defer c.Close()
 
 	register := []string{c.ccfg, "state/bravia.tv/"}
 	subscribe := []string{c.ccfg, "state/bravia.tv/", "config/request/"}
@@ -64,6 +91,11 @@ func main() {
 		m.Logger.LogInfo(m.Name, "received configuration")
 		if err != nil {
 			m.Logger.LogError(m.Name, err.Error())
+		} else {
+			for _, tv := range c.config.Devices {
+				c.AddTV(tv.IP, tv.MAC, tv.Name)
+				m.Logger.LogInfo(m.Name, fmt.Sprintf("Added TV '%s' with IP '%s' (MAC: %s)", tv.Name, tv.IP, tv.MAC))
+			}
 		}
 		return true
 	})
@@ -72,12 +104,19 @@ func main() {
 		m.Logger.LogInfo(m.Name, "received state")
 		state, err := config.SensorStateFromJSON(msg)
 		if err == nil {
-			power := state.GetValueAttr("power", "idle")
-			if power == "off" {
-				c.poweroff(state.Name)
-			} else if power == "on" {
-				c.poweron(state.Name)
+			power := state.GetValueAttr("power", "none")
+			c.changePower(state.Name, power)
+			if power != "none" {
+				m.Logger.LogInfo(m.Name, fmt.Sprintf("TV '%s'; power -> '%s'", state.Name, power))
 			}
+
+			input := state.GetValueAttr("input", "none")
+			c.changeInput(state.Name, input)
+			if input != "none" {
+				m.Logger.LogInfo(m.Name, fmt.Sprintf("TV '%s'; input -> '%s'", state.Name, input))
+			}
+		} else {
+			m.Logger.LogError(m.Name, err.Error())
 		}
 		return true
 	})
@@ -87,7 +126,7 @@ func main() {
 		if tickCount == 29 {
 			tickCount = 0
 			if c.config == nil {
-				m.Pubsub.Publish("config/request/", m.Name)
+				m.Pubsub.PublishStr("config/request/", m.Name)
 			}
 		} else {
 			tickCount++
