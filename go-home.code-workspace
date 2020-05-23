@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../go-icloud-calendar"
+		},
+		{
+			"path": "../../brutella/dnssd"
 		}
 	],
 	"settings": {
