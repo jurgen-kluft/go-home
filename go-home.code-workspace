@@ -7,7 +7,7 @@
 			"path": "../go-icloud-calendar"
 		},
 		{
-			"path": "../../brutella/dnssd"
+			"path": "../../grandcat/zeroconf"
 		}
 	],
 	"settings": {

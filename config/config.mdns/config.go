@@ -17,7 +17,7 @@ func launchConfigService() {
 		Name:   "Go Home",
 		Type:   "_http._tcp",
 		Domain: "local",
-		Port:   12345,
+		Port:   12347,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
