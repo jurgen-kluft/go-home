@@ -4,9 +4,6 @@
 			"path": "."
 		},
 		{
-			"path": "../go-icloud-calendar"
-		},
-		{
 			"path": "../../grandcat/zeroconf"
 		}
 	],

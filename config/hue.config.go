@@ -6,11 +6,15 @@ import (
 
 // Group defines
 const (
-	BedroomLights      = "Bedroom"
-	LivingroomLights   = "Living Room"
-	KitchenLights      = "Kitchen"
-	SophiaRoomLights   = "Sophia"
-	JenniferRoomLights = "Jennifer"
+	BedroomLightStand         = "Bedroom Light Stand"
+	BedroomLightMain          = "Bedroom Light Main"
+	LivingroomLightStand      = "Living Room Stand"
+	LivingroomLightMain       = "Living Room Main"
+	LivingroomLightChandelier = "Living Room Chandelier"
+	KitchenLights             = "Kitchen"
+	SophiaRoomLightStand      = "Sophia Stand"
+	SophiaRoomLightMain       = "Sophia Main"
+	JenniferRoomLightMain     = "Jennifer"
 )
 
 type HueConfig struct {

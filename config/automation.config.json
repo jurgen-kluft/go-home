@@ -1,45 +1,65 @@
 {
     "subscribing_channels": [
-        "state/presence/", 
-        "state/sensor/timeofday/", 
-        "state/sensor/sophia/", 
-        "state/sensor/jennifer/", 
+        "state/presence/",
+        "state/sensor/timeofday/",
+        "state/sensor/sophia/",
+        "state/sensor/jennifer/",
         "state/sensor/parents/",
         "state/xiaomi/"
     ],
     "register_channels": [
-        "state/presence/", 
-        "state/sensor/timeofday/", 
-        "state/sensor/sophia/", 
-        "state/sensor/jennifer/", 
+        "state/presence/",
+        "state/sensor/timeofday/",
+        "state/sensor/sophia/",
+        "state/sensor/jennifer/",
         "state/sensor/parents/",
         "shout/message/",
-        "state/xiaomi/", 
-        "state/light/hue/", 
-        "state/light/yee/", 
-        "state/bravia.tv/", 
+        "state/xiaomi/",
+        "state/light/hue/",
+        "state/light/yee/",
+        "state/bravia.tv/",
         "state/samsung.tv/"
     ],
     "device_control_json_cache": {
-        "Living Room": {
+        "Living Room Stand": {
             "channel": "state/light/hue/",
-            "on": "{\"name\": \"Living Room\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
-            "off": "{\"name\": \"Living Room\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+            "on": "{\"name\": \"Living Room Stand\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Living Room Stand\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+        },
+        "Living Room Main": {
+            "channel": "state/light/hue/",
+            "on": "{\"name\": \"Living Room Main\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Living Room Main\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+        },
+        "Living Room Chandelier": {
+            "channel": "state/light/hue/",
+            "on": "{\"name\": \"Living Room Chandelier\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Living Room Chandelier\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
         "Kitchen": {
             "channel": "state/light/hue/",
             "on": "{\"name\": \"Kitchen\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Kitchen\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
-        "Bedroom": {
+        "Bedroom Main": {
             "channel": "state/light/hue/",
-            "on": "{\"name\": \"Bedroom\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
-            "off": "{\"name\": \"Bedroom\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+            "on": "{\"name\": \"Bedroom Main\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Bedroom Main\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
-        "Sophia": {
+        "Bedroom Stand": {
             "channel": "state/light/hue/",
-            "on": "{\"name\": \"Sophia\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
-            "off": "{\"name\": \"Sophia\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+            "on": "{\"name\": \"Bedroom Stand\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Bedroom Stand\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+        },
+        "Sophia Stand": {
+            "channel": "state/light/hue/",
+            "on": "{\"name\": \"Sophia Stand\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Sophia Stand\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
+        },
+        "Sophia Main": {
+            "channel": "state/light/hue/",
+            "on": "{\"name\": \"Sophia Main\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
+            "off": "{\"name\": \"Sophia Main\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
         "Jennifer": {
             "channel": "state/light/hue/",

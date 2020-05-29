@@ -1,12 +1,43 @@
 package main
 
 import (
-	"github.com/jurgen-kluft/go-home/conbee/deconz"
-	"github.com/jurgen-kluft/go-home/config"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/jurgen-kluft/go-home/conbee/deconz"
+	"github.com/jurgen-kluft/go-home/config"
 )
+
+/*
+STATE
+
+State {Read-Only} [
+Bedroom Motion Sensor
+Kitchen Motion Sensor
+Livingroom Motion Sensor 1
+Livingroom Motion Sensor 2
+Frontdoor Magnet Sensor
+]
+
+State {Read/Write} [
+Bedroom Light Stand
+Bedroom Light Main
+Kitchen Light Main
+Jennifer Light Main
+Sophia Light Main
+Sophia Light Stand
+Livingroom Light Main
+Livingroom Light Stand
+Livingroom Light Chandelier
+]
+
+When turning ON a light from automation logic we modify the state but we do keep
+reading the state which will take higher priority.
+
+
+*/
+
 
 func main() {
 	config := defaultConfiguration()
