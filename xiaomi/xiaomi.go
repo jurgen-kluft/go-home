@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
-	"github.com/jurgen-kluft/go-home/micro-service"
+	microservice "github.com/jurgen-kluft/go-home/micro-service"
 	"github.com/jurgen-kluft/migateway"
 )
 
@@ -156,7 +156,7 @@ func main() {
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
 		if tickCount%5 == 0 {
 			if xiaomi.config == nil {
-				m.Pubsub.Publish("config/request/", m.Name)
+				m.Pubsub.PublishStr("config/request/", m.Name)
 			}
 		}
 		tickCount++

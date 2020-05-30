@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
-	"github.com/jurgen-kluft/go-home/hue-bridge/hue-bridgex"
+	huebridgex "github.com/jurgen-kluft/go-home/hue-bridge/hue-bridgex"
 	logpkg "github.com/jurgen-kluft/go-home/logging"
 	"github.com/jurgen-kluft/go-home/pubsub"
 )
@@ -118,7 +118,7 @@ func (c *context) process(client *pubsub.Context) {
 
 		jsonstr, err := vars.ToJSON()
 		if err == nil {
-			client.Publish("state/sensor/vars/", jsonstr)
+			client.Publish("state/sensor/vars/", string(jsonstr))
 		}
 		fmt.Println(jsonstr)
 

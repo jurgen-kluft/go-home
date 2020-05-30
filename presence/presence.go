@@ -6,8 +6,8 @@ import (
 
 	"github.com/jurgen-kluft/go-home/config"
 	"github.com/jurgen-kluft/go-home/metrics"
-	"github.com/jurgen-kluft/go-home/micro-service"
-	"github.com/jurgen-kluft/go-home/nats"
+	microservice "github.com/jurgen-kluft/go-home/micro-service"
+	pubsub "github.com/jurgen-kluft/go-home/nats"
 )
 
 // AWAY    is a state that happens when   NOT_SEEN > N seconds
@@ -244,7 +244,7 @@ func main() {
 			}
 		} else {
 			m.Logger.LogInfo(m.Name, "request configuration")
-			m.Pubsub.Publish("config/request/", m.Name)
+			m.Pubsub.PublishStr("config/request/", m.Name)
 		}
 		return true
 	})

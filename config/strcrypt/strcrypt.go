@@ -13,15 +13,15 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "Encrypt or decrypt a string"
 	app.Flags = []cli.Flag{
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "encrypt, e",
 			Usage: "The flag to indicate if we have to encrypt",
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "decrypt, d",
 			Usage: "The flag to indicate if we have to decrypt",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "string, s",
 			Usage: "The string to encrypt or decrypt",
 		},

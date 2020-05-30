@@ -440,7 +440,7 @@ func (a *automation) handleMotionSensor(name string, state *config.SensorState) 
 			a.lastseenMotionInHouse = now // Update the time we last detected motion
 			if name == config.KitchenMotionSensor {
 				a.lastseenMotionInKitchenArea = now
-				a.setDelayTimeAction("Turnoff front door hall light", 4*time.Minute, func(ta *timedBasedAction, a *automation) { a.turnOffDevice("Front door hall light") })
+				a.setDelayTimeAction("Turnoff front door hall light", 4*time.Minute, func(ta *timedBasedAction, a *automation) { a.turnOffDevice(config.FrontdoorHallLight) })
 			}
 			if a.timeofday == "breakfast" {
 				a.turnOnDevice(config.KitchenLights)
@@ -489,12 +489,12 @@ func (a *automation) handleMagnetSensor(name string, state *config.SensorState) 
 		if value == "open" {
 			a.sendNotification("Front door opened")
 			a.turnOnDevice(config.FrontdoorHallLight)
-			a.setDelayTimeAction("Turnoff front door hall light", 10*time.Minute, func(ta *timedBasedAction, a *automation) { a.turnOffDevice("Front door hall light") })
+			a.setDelayTimeAction("Turnoff front door hall light", 10*time.Minute, func(ta *timedBasedAction, a *automation) { a.turnOffDevice(config.FrontdoorHallLight) })
 			a.presence.frontDoorOpenClosed()
 			a.lastseenMotionInKitchenArea = time.Now()
 		} else if value == "close" {
 			a.sendNotification("Front door closed")
-			a.setDelayTimeAction("Turnoff front door hall light", 5*time.Minute, func(ta *timedBasedAction, a *automation) { a.turnOffDevice("Front door hall light") })
+			a.setDelayTimeAction("Turnoff front door hall light", 5*time.Minute, func(ta *timedBasedAction, a *automation) { a.turnOffDevice(config.FrontdoorHallLight) })
 			a.presence.frontDoorOpenClosed()
 			a.lastseenMotionInKitchenArea = time.Now()
 		}

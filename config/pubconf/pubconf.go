@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/jurgen-kluft/go-home/micro-service"
+	microservice "github.com/jurgen-kluft/go-home/micro-service"
 	"github.com/urfave/cli"
 )
 
@@ -14,12 +14,12 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "Publish a config to emitter broker"
 	app.Flags = []cli.Flag{
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "file",
 			Value: "flux.config.json",
 			Usage: "The JSON configuration file to read and publish",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "channel",
 			Value: "config/flux/",
 			Usage: "The channel to publish to",

@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
-	"github.com/jurgen-kluft/go-home/micro-service"
+	microservice "github.com/jurgen-kluft/go-home/micro-service"
 	yee "github.com/nunows/goyeelight"
 )
 
@@ -19,15 +18,10 @@ type instance struct {
 func new() *instance {
 	c := &instance{}
 	c.lamps = map[string]*yee.Yeelight{}
-
-	c.logger = logpkg.New(c.name)
-	c.logger.AddEntry("emitter")
-	c.logger.AddEntry(c.name)
-
 	return c
 }
 
-func (c *instance) initialize(jsonstr []byte]) error {
+func (c *instance) initialize(jsonstr []byte) error {
 	var err error
 	c.config, err = config.YeeConfigFromJSON(jsonstr)
 	c.lamps = map[string]*yee.Yeelight{}
@@ -105,7 +99,7 @@ func main() {
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
 		if tickCount%30 == 0 {
 			if c.config == nil {
-				m.Pubsub.Publish("config/request/", m.Name)
+				m.Pubsub.PublishStr("config/request/", m.Name)
 			}
 		}
 		return true

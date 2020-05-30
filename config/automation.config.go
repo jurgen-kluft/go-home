@@ -2,6 +2,18 @@ package config
 
 import "encoding/json"
 
+const (
+	BedroomLightStand         = "Bedroom Light Stand"
+	BedroomLightMain          = "Bedroom Light Main"
+	LivingroomLightStand      = "Living Room Stand"
+	LivingroomLightMain       = "Living Room Main"
+	LivingroomLightChandelier = "Living Room Chandelier"
+	KitchenLights             = "Kitchen"
+	SophiaRoomLightStand      = "Sophia Stand"
+	SophiaRoomLightMain       = "Sophia Main"
+	JenniferRoomLightMain     = "Jennifer"
+)
+
 // AutomationConfigFromJSON parser the incoming JSON string and returns an Config instance for Aqi
 func AutomationConfigFromJSON(data []byte) (*AutomationConfig, error) {
 	r := &AutomationConfig{}

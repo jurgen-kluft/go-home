@@ -6,7 +6,7 @@ package main
 
 import (
 	"github.com/jurgen-kluft/go-home/config"
-	"github.com/jurgen-kluft/go-home/micro-service"
+	microservice "github.com/jurgen-kluft/go-home/micro-service"
 )
 
 type instance struct {
@@ -31,8 +31,7 @@ func main() {
 
 	m.RegisterHandler("config/wemo/", func(m *microservice.Service, topic string, msg []byte) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")
-		var err error
-		c.config, err = config.WemoConfigFromJSON(msg)
+		c.config, _ = config.WemoConfigFromJSON(msg)
 		c.devices = map[string]*Switch{}
 		for _, d := range c.config.Devices {
 			c.devices[d.Name] = NewSwitch(d.Name, d.IP+":"+d.Port)
@@ -68,7 +67,7 @@ func main() {
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
 		if tickCount%5 == 0 {
 			if c.config == nil {
-				m.Pubsub.Publish("config/request/", m.Name)
+				m.Pubsub.PublishStr("config/request/", m.Name)
 			}
 		}
 		tickCount++
