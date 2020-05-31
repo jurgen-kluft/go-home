@@ -1,0 +1,9 @@
+{
+	"name": "Frontdoor hall light",
+	"valueattrs": [
+		{
+			"name": "power",
+			"value": "on"
+		}
+	]
+}

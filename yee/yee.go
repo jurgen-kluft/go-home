@@ -63,14 +63,16 @@ func main() {
 		yeesensor, err := config.SensorStateFromJSON(msg)
 		if err == nil {
 			m.Logger.LogInfo(m.Name, "received state")
-			lampname := yeesensor.GetValueAttr("name", "")
+			lampname := yeesensor.Name
 			if lampname != "" {
 				lamp, exists := c.lamps[lampname]
 				if exists {
 					yeesensor.ExecValueAttr("power", func(power string) {
 						if power == "on" {
+							fmt.Println(lampname + " turning On")
 							lamp.On()
 						} else if power == "off" {
+							fmt.Println(lampname + " turning Off")
 							lamp.Off()
 						}
 					})
@@ -80,6 +82,8 @@ func main() {
 					yeesensor.ExecFloatAttr("bri", func(bri float64) {
 						lamp.SetBright(fmt.Sprintf("%f", bri), "smooth", "500")
 					})
+				} else {
+					fmt.Println(lampname + " doesn't exist")
 				}
 			} else if lampname == "all" {
 				for _, lamp := range c.lamps {
@@ -90,6 +94,8 @@ func main() {
 						lamp.SetBright(fmt.Sprintf("%f", bri), "smooth", "500")
 					})
 				}
+			} else {
+				fmt.Println(lampname + " doesn't exist")
 			}
 		}
 		return true
@@ -102,6 +108,7 @@ func main() {
 				m.Pubsub.PublishStr("config/request/", m.Name)
 			}
 		}
+		tickCount++
 		return true
 	})
 

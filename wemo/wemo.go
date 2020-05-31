@@ -43,7 +43,7 @@ func main() {
 		sensor, err := config.SensorStateFromJSON(msg)
 		if err == nil {
 			m.Logger.LogInfo(m.Name, "received state")
-			devicename := sensor.GetValueAttr("name", "")
+			devicename := sensor.Name
 			if devicename != "" {
 				device, exists := c.devices[devicename]
 				if exists {

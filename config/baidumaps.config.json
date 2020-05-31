@@ -1,9 +1,28 @@
 {
-    "markers" : {
-        "home" : [31.1975,121.412],
-        "jurgen.work": [31.21599,121.43185]
+    "markers": {
+        "home": [
+            31.1975,
+            121.412
+        ],
+        "jurgen.work": [
+            31.21599,
+            121.43185
+        ],
+        "faith.work": [
+            31.21599,
+            121.43185
+        ]
     },
-    "commute" : {
-        "jurgen": "https://api.map.baidu.com/direction/v2/driving?origin=31.1975,121.412&destination=31.21599,121.43185&tactics=5&ak=TMzlZXetCzK9t9fSdKO7v35T"
-    }
+    "URI": "https://api.map.baidu.com/direction/v2/$TYPE?origin=$OLAT,$OLNG&destination=$DLAT,$DLNG&ak=&AK$EXTRA",
+    "commute": [
+        {
+            "name": "jurgen",
+            "AK": "TMzlZXetCzK9t9fSdKO7v35T",
+            "OLAT": "31.1975",
+            "OLNG": "121.412",
+            "DLAT": "31.21599",
+            "DLNG": "121.43185",
+            "EXTRA": "&riding_type=1"
+        }
+    ]
 }

@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../../grandcat/zeroconf"
+		},
+		{
+			"path": "../go-conbee"
 		}
 	],
 	"settings": {

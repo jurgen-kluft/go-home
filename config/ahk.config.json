@@ -49,51 +49,59 @@
   ],
   "switches": [
     {
+      "name": "Holiday",
+      "channel": "state/sensor/holiday",
+      "id": 942
+    },
+    {
       "name": "Meeting",
+      "channel": "state/sensor/meeting",
       "id": 941
     },
     {
       "name": "Reading",
+      "channel": "state/sensor/reading",
       "id": 942
     },
     {
       "name": "Flux",
+      "channel": "state/sensor/flux",
       "id": 943
     }
   ],
   "sensors": [
     {
-      "name": "Livingroom",
+      "name": "MotionInLivingroom",
       "type": "motion",
       "id": 281
     },
     {
-      "name": "Piano",
+      "name": "MotionNearPiano",
       "type": "motion",
       "id": 282
     },
     {
-      "name": "Livingroom",
+      "name": "LivingroomLightIntensity",
       "type": "light",
       "id": 283
     },
     {
-      "name": "Kitchen",
+      "name": "MotionInKitchen",
       "type": "motion",
       "id": 181
     },
     {
-      "name": "Bedroom",
+      "name": "MotionInBedroom",
       "type": "motion",
       "id": 581
     },
     {
-      "name": "Frontdoor",
+      "name": "FrontdoorOpenOrClosed",
       "type": "contact",
       "id": 681
     },
     {
-      "name": "AQI",
+      "name": "AirQuality",
       "type": "air-quality",
       "id": 981
     },

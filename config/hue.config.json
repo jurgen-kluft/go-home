@@ -1,50 +1,199 @@
 {
-    "name": "Philips HUE",
+	"name": "Philips HUE",
 	"host": "10.0.0.72",
 	"key": "4bWTg3R8JKwNDhMwZ8d6G4O9symsSi4iASzIJNgQ",
-	"lights": 
-	[
+	"lights": [
 		{
-			"name": "Living Room Stand 1"
-		}, 
+			"name": "Living Room Stand 1",
+			"device": "light_hue_lr_st1"
+		},
 		{
-			"name": "Living Room Stand 2"
-		}, 
+			"name": "Living Room Stand 2",
+			"device": "light_hue_lr_st1"
+		},
 		{
-			"name": "Kitchen Lamp 1"
-		}, 
+			"name": "Living Room Main 1",
+			"device": "light_hue_lr_mn_1"
+		},
 		{
-			"name": "Kitchen Lamp 2"
-		}, 
+			"name": "Living Room Main 2",
+			"device": "light_hue_lr_mn_2"
+		},
 		{
-			"name": "Bedroom Light 1"
-		}, 
+			"name": "Living Room Main 3",
+			"device": "light_hue_lr_mn_3"
+		},
 		{
-			"name": "Bedroom Light 2"
-		}, 
+			"name": "Living Room Main 4",
+			"device": "light_hue_lr_mn_4"
+		},
 		{
-			"name": "Sophia stand"
-		}, 
+			"name": "Living Room Main 5",
+			"device": "light_hue_lr_mn_5"
+		},
 		{
-			"name": "Jennifer main light"
-		} 
+			"name": "Living Room Main 6",
+			"device": "light_hue_lr_mn_6"
+		},
+		{
+			"name": "Living Room Chandelier 1",
+			"device": "light_hue_lr_ch_1"
+		},
+		{
+			"name": "Living Room Chandelier 2",
+			"device": "light_hue_lr_ch_2"
+		},
+		{
+			"name": "Living Room Chandelier 3",
+			"device": "light_hue_lr_ch_3"
+		},
+		{
+			"name": "Living Room Chandelier 4",
+			"device": "light_hue_lr_ch_4"
+		},
+		{
+			"name": "Living Room Chandelier 5",
+			"device": "light_hue_lr_ch_5"
+		},
+		{
+			"name": "Living Room Chandelier 6",
+			"device": "light_hue_lr_ch_6"
+		},
+		{
+			"name": "Kitchen Lamp 1",
+			"device": "light_hue_kitchen_1"
+		},
+		{
+			"name": "Kitchen Lamp 2",
+			"device": "light_hue_kitchen_2"
+		},
+		{
+			"name": "Bedroom Stand J",
+			"device": "light_hue_br_stand_j"
+		},
+		{
+			"name": "Bedroom Stand F",
+			"device": "light_hue_br_stand_f"
+		},
+		{
+			"name": "Bedroom Main 1",
+			"device": "light_hue_br_main_1"
+		},
+		{
+			"name": "Bedroom Main 2",
+			"device": "light_hue_br_main_2"
+		},
+		{
+			"name": "Bedroom Main 3",
+			"device": "light_hue_br_main_3"
+		},
+		{
+			"name": "Bedroom Main 4",
+			"device": "light_hue_br_main_4"
+		},
+		{
+			"name": "Sophia Stand",
+			"device": "light_hue_so_stand_1"
+		},
+		{
+			"name": "Sophia Main 1",
+			"device": "light_hue_so_main_1"
+		},
+		{
+			"name": "Sophia Main 2",
+			"device": "light_hue_so_main_2"
+		},
+		{
+			"name": "Sophia Main 3",
+			"device": "light_hue_so_main_3"
+		},
+		{
+			"name": "Sophia Main 4",
+			"device": "light_hue_so_main_4"
+		},
+		{
+			"name": "Jennifer Main 1",
+			"device": "light_hue_je_main_1"
+		},
+		{
+			"name": "Jennifer Main 2",
+			"device": "light_hue_je_main_2"
+		}
 	],
-	"groups": 
-	[
+	"groups": [
 		{
-			"name": "Living Room"
-		}, 
+			"name": "Living Room Stand",
+			"lights": [
+				"Living Room Stand 1",
+				"Living Room Stand 2"
+			]
+		},
 		{
-			"name": "Kitchen"
-		}, 
+			"name": "Living Room Main",
+			"lights": [
+				"Living Room Main 1",
+				"Living Room Main 2",
+				"Living Room Main 3",
+				"Living Room Main 4",
+				"Living Room Main 5",
+				"Living Room Main 6"
+			]
+		},
 		{
-			"name": "Bedroom"
-		}, 
+			"name": "Living Room Chandelier",
+			"lights": [
+				"Living Room Chandelier 1",
+				"Living Room Chandelier 2",
+				"Living Room Chandelier 3",
+				"Living Room Chandelier 4",
+				"Living Room Chandelier 5",
+				"Living Room Chandelier 6"
+			]
+		},
 		{
-			"name": "Sophia"
-		}, 
+			"name": "Kitchen",
+			"lights": [
+				"Kitchen Lamp 1",
+				"Kitchen Lamp 2"
+			]
+		},
 		{
-			"name": "Jennifer"
+			"name": "Bedroom Stand",
+			"lights": [
+				"Bedroom Stand J",
+				"Bedroom Stand F"
+			]
+		},
+		{
+			"name": "Bedroom Main",
+			"lights": [
+				"Bedroom Main 1",
+				"Bedroom Main 2",
+				"Bedroom Main 3",
+				"Bedroom Main 4"
+			]
+		},
+		{
+			"name": "Sophia Main",
+			"lights": [
+				"Sophia Main 1",
+				"Sophia Main 2",
+				"Sophia Main 3",
+				"Sophia Main 4"
+			]
+		},
+		{
+			"name": "Sophia Stand",
+			"lights": [
+				"Sophia Stand"
+			]
+		},
+		{
+			"name": "Jennifer Main",
+			"lights": [
+				"Jennifer Main 1",
+				"Jennifer Main 2"
+			]
 		}
 	]
 }
