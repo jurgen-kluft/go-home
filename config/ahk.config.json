@@ -1,71 +1,93 @@
 {
   "pin": "53664337",
+  "sensor.in": "state/sensor/conbee/",
+  "light.in": "state/light/conbee/",
   "lightbulbs": [
     {
       "name": "Kitchen",
       "type": "colored",
+      "channel": "state/light/ahk/",
       "id": 101
     },
     {
       "name": "Livingroom Stand",
       "type": "colored",
+      "channel": "state/light/ahk/",
       "id": 201
-    },
-    {
-      "name": "Jennifer Main",
-      "type": "colored",
-      "id": 301
-    },
-    {
-      "name": "Sophia Stand",
-      "type": "colored",
-      "id": 401
-    },
-    {
-      "name": "Bedroom Stand",
-      "type": "colored",
-      "id": 501
-    },
-    {
-      "name": "Bedroom Main",
-      "type": "colored",
-      "id": 502
-    },
-    {
-      "name": "Sophia Main",
-      "type": "white",
-      "id": 402
     },
     {
       "name": "Livingroom Main",
       "type": "white",
+      "channel": "state/light/ahk/",
       "id": 202
     },
     {
       "name": "Livingroom Dinner",
       "type": "white",
+      "channel": "state/light/ahk/",
       "id": 203
+    },
+    {
+      "name": "Jennifer Main",
+      "type": "colored",
+      "channel": "state/light/ahk/",
+      "id": 301
+    },
+    {
+      "name": "Sophia Stand",
+      "type": "colored",
+      "channel": "state/light/ahk/",
+      "id": 401
+    },
+    {
+      "name": "Sophia Main",
+      "type": "white",
+      "channel": "state/light/ahk/",
+      "id": 402
+    },
+    {
+      "name": "Bedroom Stand",
+      "type": "colored",
+      "channel": "state/light/ahk/",
+      "id": 501
+    },
+    {
+      "name": "Bedroom Main",
+      "type": "colored",
+      "channel": "state/light/ahk/",
+      "id": 502
+    },
+    {
+      "name": "Frontdoor Hall Light",
+      "type": "white",
+      "channel": "state/light/ahk/",
+      "id": 402
     }
   ],
   "switches": [
     {
+      "name": "Sophia Bedroom",
+      "channel": "state/switch/ahk/",
+      "id": 942
+    },
+    {
       "name": "Holiday",
-      "channel": "state/sensor/holiday",
+      "channel": "state/switch/ahk/",
       "id": 942
     },
     {
       "name": "Meeting",
-      "channel": "state/sensor/meeting",
+      "channel": "state/switch/ahk/",
       "id": 941
     },
     {
       "name": "Reading",
-      "channel": "state/sensor/reading",
+      "channel": "state/switch/ahk/",
       "id": 942
     },
     {
       "name": "Flux",
-      "channel": "state/sensor/flux",
+      "channel": "state/switch/ahk/",
       "id": 943
     }
   ],

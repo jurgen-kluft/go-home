@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jurgen-kluft/go-home/config"
 	microservice "github.com/jurgen-kluft/go-home/micro-service"
@@ -11,44 +12,79 @@ import (
 // https://github.com/nunows/goyeelight
 
 type instance struct {
-	lamps  map[string]*yee.Yeelight
+	lights map[string]light
 	config *config.YeeConfig
+}
+
+type light struct {
+	name string
+	yee  *yee.Yeelight
+}
+
+func (l light) On() {
+	if l.yee != nil {
+		l.yee.On()
+	}
+}
+func (l light) Off() {
+	if l.yee != nil {
+		l.yee.Off()
+	}
+}
+func (l light) SetCtAbx(value string, effect string, duration string) {
+	if l.yee != nil {
+		l.yee.SetCtAbx(value, effect, duration)
+	}
+}
+func (l light) SetBright(value string, effect string, duration string) {
+	if l.yee != nil {
+		l.yee.SetBright(value, effect, duration)
+	}
+}
+
+func (l light) Valid() bool {
+	return l.yee != nil
 }
 
 func new() *instance {
 	c := &instance{}
-	c.lamps = map[string]*yee.Yeelight{}
+	c.lights = make(map[string]light)
 	return c
 }
 
 func (c *instance) initialize(jsonstr []byte) error {
 	var err error
 	c.config, err = config.YeeConfigFromJSON(jsonstr)
-	c.lamps = map[string]*yee.Yeelight{}
-	for _, lamp := range c.config.Lights {
-		c.lamps[lamp.Name] = yee.New(lamp.IP, lamp.Port)
+	c.lights = make(map[string]light)
+	for _, cl := range c.config.Lights {
+		l := light{name: cl.Name, yee: yee.New(cl.IP, cl.Port)}
+		c.lights[strings.ToLower(cl.Name)] = l
 	}
 	return err
 }
 
-func (c *instance) poweron(name string) {
-	lamp, exists := c.lamps[name]
+func (c *instance) getLightByName(name string) light {
+	l, exists := c.lights[strings.ToLower(name)]
 	if exists {
-		lamp.On()
+		return l
 	}
+	return light{}
+}
+
+func (c *instance) poweron(name string) {
+	light := c.getLightByName(name)
+	light.On()
 }
 func (c *instance) poweroff(name string) {
-	lamp, exists := c.lamps[name]
-	if exists {
-		lamp.Off()
-	}
+	light := c.getLightByName(name)
+	light.Off()
 }
 
 func main() {
 	c := new()
 
-	register := []string{"config/yee/", "state/sensor/yee/", "state/light/yee/"}
-	subscribe := []string{"config/yee/", "state/sensor/yee/", "state/light/yee/", "config/request/"}
+	register := []string{"config/yee/", "state/light/yee/"}
+	subscribe := []string{"config/yee/", "state/light/yee/", "config/request/"}
 
 	m := microservice.New("yee")
 	m.RegisterAndSubscribe(register, subscribe)
@@ -59,43 +95,43 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("state/light/yee/", func(m *microservice.Service, topic string, msg []byte) bool {
-		yeesensor, err := config.SensorStateFromJSON(msg)
+	m.RegisterHandler("state/light/", func(m *microservice.Service, topic string, msg []byte) bool {
+		sensor, err := config.SensorStateFromJSON(msg)
 		if err == nil {
 			m.Logger.LogInfo(m.Name, "received state")
-			lampname := yeesensor.Name
-			if lampname != "" {
-				lamp, exists := c.lamps[lampname]
-				if exists {
-					yeesensor.ExecValueAttr("power", func(power string) {
+			lightname := sensor.Name
+			if lightname != "" {
+				light := c.getLightByName(lightname)
+				if light.Valid() {
+					sensor.ExecValueAttr("power", func(power string) {
 						if power == "on" {
-							fmt.Println(lampname + " turning On")
-							lamp.On()
+							fmt.Println(lightname + " turning On")
+							light.On()
 						} else if power == "off" {
-							fmt.Println(lampname + " turning Off")
-							lamp.Off()
+							fmt.Println(lightname + " turning Off")
+							light.Off()
 						}
 					})
-					yeesensor.ExecFloatAttr("ct", func(ct float64) {
-						lamp.SetCtAbx(fmt.Sprintf("%f", ct), "smooth", "500")
+					sensor.ExecFloatAttr("ct", func(ct float64) {
+						light.SetCtAbx(fmt.Sprintf("%f", ct), "smooth", "500")
 					})
-					yeesensor.ExecFloatAttr("bri", func(bri float64) {
-						lamp.SetBright(fmt.Sprintf("%f", bri), "smooth", "500")
+					sensor.ExecFloatAttr("bri", func(bri float64) {
+						light.SetBright(fmt.Sprintf("%f", bri), "smooth", "500")
 					})
 				} else {
-					fmt.Println(lampname + " doesn't exist")
+					fmt.Println(lightname + " doesn't exist")
 				}
-			} else if lampname == "all" {
-				for _, lamp := range c.lamps {
-					yeesensor.ExecFloatAttr("ct", func(ct float64) {
-						lamp.SetCtAbx(fmt.Sprintf("%f", ct), "smooth", "500")
+			} else if lightname == "all" {
+				for _, light := range c.lights {
+					sensor.ExecFloatAttr("ct", func(ct float64) {
+						light.SetCtAbx(fmt.Sprintf("%f", ct), "smooth", "500")
 					})
-					yeesensor.ExecFloatAttr("bri", func(bri float64) {
-						lamp.SetBright(fmt.Sprintf("%f", bri), "smooth", "500")
+					sensor.ExecFloatAttr("bri", func(bri float64) {
+						light.SetBright(fmt.Sprintf("%f", bri), "smooth", "500")
 					})
 				}
 			} else {
-				fmt.Println(lampname + " doesn't exist")
+				fmt.Println(lightname + " doesn't exist")
 			}
 		}
 		return true

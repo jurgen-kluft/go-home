@@ -2,9 +2,10 @@ package deconz
 
 import (
 	"errors"
-	"github.com/jurgen-kluft/go-home/conbee/deconz/event"
 	"log"
 	"time"
+
+	"github.com/jurgen-kluft/go-home/conbee/deconz/event"
 )
 
 // SensorLookup represents an interface for sensor lookup
@@ -69,7 +70,7 @@ func (r *SensorEventReader) Start(out chan *SensorEvent) error {
 				}
 				// we only care about sensor events
 				if e.Resource != "sensors" {
-					//log.Printf("Dropping non-sensor event type %s", e.Resource)
+					log.Printf("non-sensor event type %s, id: %d, type: %s, event: %s, rawstate: %s", e.Resource, e.ID, e.Type, e.Event, e.RawState)
 					continue
 				}
 

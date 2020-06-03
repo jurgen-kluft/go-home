@@ -125,7 +125,7 @@
     "lighttype": [
         {
             "name": "hue",
-            "channel": "state/sensor/hue/",
+            "channel": "state/light/flux/",
             "ct": {
                 "min": 154.0,
                 "max": 500.0
@@ -137,7 +137,7 @@
         },
         {
             "name": "yee",
-            "channel": "state/sensor/yee/",
+            "channel": "state/light/flux/",
             "ct": {
                 "min": 154.0,
                 "max": 500.0
