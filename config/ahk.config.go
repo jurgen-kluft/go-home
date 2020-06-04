@@ -28,19 +28,24 @@ func (r *AhkConfig) ToJSON() ([]byte, error) {
 
 // AhkConfig contains information for the Apple Homekit service
 type AhkConfig struct {
-	Pin        string `json:"pin"`
-	Lightbulbs []struct {
-		Name string `json:"name"`
-		Type string `json:"type"`
-		ID   int    `json:"id"`
-	} `json:"lightbulbs"`
-	Switches []struct {
-		Name string `json:"name"`
-		ID   int    `json:"id"`
-	} `json:"switches"`
-	Sensors []struct {
-		Name string `json:"name"`
-		Type string `json:"type"`
-		ID   int    `json:"id"`
-	} `json:"sensors"`
+	Pin       string        `json:"pin"`
+	Subscribe []string      `json:"subscribe"`
+	Register  []AhkRegister `json:"register"`
+	Lights    []AhkLight    `json:"lights"`
+	Switches  []AhkLight    `json:"switches"`
+	Sensors   []AhkLight    `json:"sensors"`
 }
+
+type AhkLight struct {
+	Name    string       `json:"name"`
+	Type    *string      `json:"type,omitempty"`
+	Channel *AhkRegister `json:"channel,omitempty"`
+	ID      int64        `json:"id"`
+}
+
+type AhkRegister string
+
+const (
+	StateLightAhk  AhkRegister = "state/light/ahk/"
+	StateSwitchAhk AhkRegister = "state/switch/ahk/"
+)
