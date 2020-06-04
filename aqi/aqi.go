@@ -106,7 +106,7 @@ func (c *instance) Poll() (aqiStateJSON []byte, err error) {
 
 func main() {
 	register := []string{"config/aqi/", "config/request/", "state/sensor/aqi/"}
-	subscribe := []string{"config/aqi/", "config/request/"}
+	subscribe := []string{"config/aqi/"}
 
 	c := construct()
 	m := microservice.New("aqi")

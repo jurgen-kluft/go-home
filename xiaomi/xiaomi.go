@@ -90,8 +90,8 @@ func main() {
 	xiaomi := &xiaomi{}
 	xiaomi.aqara = migateway.NewAqaraManager()
 
-	register := []string{"config/xiaomi/", "state/xiaomi/"}
-	subscribe := []string{"config/xiaomi/", "state/xiaomi/", "config/request/"}
+	register := []string{"state/xiaomi/", "config/request/"}
+	subscribe := []string{"config/xiaomi/"}
 
 	m := microservice.New("xiaomi")
 	m.RegisterAndSubscribe(register, subscribe)

@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/jurgen-kluft/go-home/config"
-	"github.com/jurgen-kluft/go-home/micro-service"
+	microservice "github.com/jurgen-kluft/go-home/micro-service"
 	"github.com/nlopes/slack"
 )
 
@@ -48,8 +49,8 @@ func (s *instance) postMessage(jsondata []byte) {
 }
 
 func main() {
-	register := []string{"config/shout/", "shout/message/"}
-	subscribe := []string{"config/shout/", "shout/message/", "config/request/"}
+	register := []string{"config/request/"}
+	subscribe := []string{"config/shout/", "shout/message/"}
 
 	m := microservice.New("shout")
 	m.RegisterAndSubscribe(register, subscribe)

@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
-	"github.com/jurgen-kluft/go-home/micro-service"
-	"github.com/jurgen-kluft/go-icloud-calendar"
+	microservice "github.com/jurgen-kluft/go-home/micro-service"
+	icalendar "github.com/jurgen-kluft/go-icloud-calendar"
 )
 
 // Calendar ...
@@ -216,7 +216,7 @@ func (c *Calendar) applyRulesToSensorStates() {
 }
 
 func (c *Calendar) publishSensorState(name string, sensorjsonbytes []byte) {
-	c.service.Pubsub.Publish(fmt.Sprintf("state/sensor/%s/", name), sensorjsonbytes)
+	c.service.Pubsub.Publish("state/sensor/calendar/", sensorjsonbytes)
 }
 
 // Process will update 'events' from the calendar
@@ -258,8 +258,8 @@ func (c *Calendar) process() (err error) {
 }
 
 func main() {
-	register := []string{"config/calendar/"}
-	subscribe := []string{"config/calendar/", "config/request/"}
+	register := []string{"config/calendar/", "config/request/", "state/sensor/calendar/"}
+	subscribe := []string{"config/calendar/"}
 
 	m := microservice.New("calendar")
 	m.RegisterAndSubscribe(register, subscribe)
@@ -273,13 +273,6 @@ func main() {
 		if err != nil {
 			c = nil
 			m.Logger.LogError(c.name, err.Error())
-		} else {
-			// Register emitter channel for every sensor
-			for _, ss := range c.sensorStates {
-				if err = m.Register(fmt.Sprintf("state/sensor/%s/", ss.Name)); err != nil {
-					m.Logger.LogError("pubsub", err.Error())
-				}
-			}
 		}
 		return true
 	})

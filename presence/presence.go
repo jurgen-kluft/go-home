@@ -217,8 +217,8 @@ func main() {
 	var presence *Presence
 	var err error
 
-	register := []string{"state/presence/", "config/presence/", "config/request/"}
-	subscribe := []string{"config/presence/", "config/request/"}
+	register := []string{"state/presence/", "config/request/"}
+	subscribe := []string{"config/presence/"}
 
 	micro := microservice.New("presence")
 	micro.RegisterAndSubscribe(register, subscribe)

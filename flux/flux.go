@@ -7,7 +7,7 @@ import (
 
 	"github.com/jurgen-kluft/go-home/config"
 	"github.com/jurgen-kluft/go-home/metrics"
-	"github.com/jurgen-kluft/go-home/micro-service"
+	microservice "github.com/jurgen-kluft/go-home/micro-service"
 )
 
 // Color Temperature
@@ -245,8 +245,8 @@ func (c *context) publishSensor(channel string, json string) {
 }
 
 func main() {
-	register := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/"}
-	subscribe := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/", "config/request/"}
+	register := []string{"config/request/", "config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/"}
+	subscribe := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/"}
 
 	m := microservice.New("flux")
 	m.RegisterAndSubscribe(register, subscribe)

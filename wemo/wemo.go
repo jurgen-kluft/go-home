@@ -23,8 +23,8 @@ func new() *instance {
 func main() {
 	c := new()
 
-	register := []string{"config/wemo/", "sensor/state/wemo/"}
-	subscribe := []string{"config/wemo/", "sensor/state/wemo/", "config/request/"}
+	register := []string{"sensor/state/wemo/", "config/request/"}
+	subscribe := []string{"config/wemo/"}
 
 	m := microservice.New("wemo")
 	m.RegisterAndSubscribe(register, subscribe)

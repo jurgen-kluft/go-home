@@ -18,7 +18,7 @@ import (
 
 func main() {
 	register := []string{}
-	subscribe := []string{"config/automation/", "config/request/"}
+	subscribe := []string{"config/automation/"}
 
 	m := microservice.New("automation")
 	m.RegisterAndSubscribe(register, subscribe)

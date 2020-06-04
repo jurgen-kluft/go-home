@@ -1,8 +1,16 @@
 {
   "pin": "53664337",
-  "sensor.in": "state/sensor/conbee/",
-  "light.in": "state/light/conbee/",
-  "lightbulbs": [
+  "subscribe": [
+    "state/light/conbee/",
+    "state/sensor/conbee/",
+    "state/samsung.tv/",
+    "state/bravia.tv/"
+  ],
+  "register": [
+    "state/light/ahk/",
+    "state/switch/ahk/"
+  ],
+  "lights": [
     {
       "name": "Kitchen",
       "type": "colored",

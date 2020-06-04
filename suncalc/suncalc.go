@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
-	"github.com/jurgen-kluft/go-home/micro-service"
+	microservice "github.com/jurgen-kluft/go-home/micro-service"
 )
 
 const (
@@ -426,8 +426,8 @@ func (s *instance) buildJSONMessage() ([]byte, error) {
 func main() {
 	suncalc := new()
 
-	register := []string{"config/suncalc/", "state/sensor/sun/"}
-	subscribe := []string{"config/suncalc/", "config/request/"}
+	register := []string{"state/sensor/sun/", "config/request/"}
+	subscribe := []string{"config/suncalc/"}
 
 	m := microservice.New("suncalc")
 	m.RegisterAndSubscribe(register, subscribe)
@@ -443,12 +443,12 @@ func main() {
 
 	tickCount := 0
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
-		if tickCount%5 == 0 {	// every 10 seconds
+		if tickCount%5 == 0 { // every 10 seconds
 			if suncalc.config == nil {
 				m.Pubsub.PublishStr("config/request/", m.Name)
 			}
 		}
-		if tickCount%30 == 0 {		// every 1 minute
+		if tickCount%30 == 0 { // every 1 minute
 			if suncalc.config != nil {
 				jsonbytes, err := suncalc.buildJSONMessage()
 				if err == nil {

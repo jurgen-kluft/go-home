@@ -69,8 +69,8 @@ func (c *instance) poweroff(name string) error {
 }
 
 func main() {
-	register := []string{"config/samsung.tv/", "state/tv/samsung/"}
-	subscribe := []string{"config/samsung.tv/", "state/tv/automation/", "state/tv/ahk/", "config/request/"}
+	register := []string{"config/samsung.tv/", "state/samsung.tv/", "config/request/"}
+	subscribe := []string{"config/samsung.tv/", "state/samsung.tv/automation/", "state/samsung.tv/ahk/"}
 
 	c := new()
 
@@ -92,7 +92,7 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("state/tv/samsung/*/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("state/samsung.tv/*/", func(m *microservice.Service, topic string, msg []byte) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")
 		state, err := config.SensorStateFromJSON(msg)
 		if err == nil {

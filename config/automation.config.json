@@ -1,5 +1,5 @@
 {
-    "subscribing_channels": [
+    "subscribe": [
         "state/presence/",
         "state/sensor/conbee/",
         "state/switch/conbee/",
@@ -8,10 +8,10 @@
         "state/tv/bravia/",
         "state/tv/samsung/"
     ],
-    "register_channels": [
+    "register": [
         "state/presence/automation/",
         "state/light/automation/",
-        "state/tv/automation/",
+        "state/bravia.tv/automation/",
         "shout/message/"
     ],
     "device_control_json_cache": {

@@ -10,8 +10,9 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/jurgen-kluft/go-home/config"
-	"github.com/jurgen-kluft/go-home/micro-service"
+	microservice "github.com/jurgen-kluft/go-home/micro-service"
 	"github.com/szatmary/bravia"
 )
 
@@ -80,7 +81,7 @@ func main() {
 	defer c.Close()
 
 	register := []string{c.ccfg, "state/bravia.tv/"}
-	subscribe := []string{c.ccfg, "state/bravia.tv/", "config/request/"}
+	subscribe := []string{c.ccfg, "state/bravia.tv/automation/", "state/bravia.tv/ahk/"}
 
 	m := microservice.New("bravia.tv")
 	m.RegisterAndSubscribe(register, subscribe)
@@ -100,7 +101,7 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("state/bravia.tv/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("state/bravia.tv/*/", func(m *microservice.Service, topic string, msg []byte) bool {
 		m.Logger.LogInfo(m.Name, "received state")
 		state, err := config.SensorStateFromJSON(msg)
 		if err == nil {

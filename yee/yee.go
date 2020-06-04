@@ -83,8 +83,8 @@ func (c *instance) poweroff(name string) {
 func main() {
 	c := new()
 
-	register := []string{"config/yee/", "state/light/yee/"}
-	subscribe := []string{"config/yee/", "state/light/yee/", "config/request/"}
+	register := []string{"state/light/yee/", "config/request/"}
+	subscribe := []string{"config/yee/", "state/light/yee/automation/", "state/light/yee/ahk/", "state/light/yee/flux/"}
 
 	m := microservice.New("yee")
 	m.RegisterAndSubscribe(register, subscribe)
@@ -95,7 +95,7 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("state/light/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("state/light/yee/*/", func(m *microservice.Service, topic string, msg []byte) bool {
 		sensor, err := config.SensorStateFromJSON(msg)
 		if err == nil {
 			m.Logger.LogInfo(m.Name, "received state")
