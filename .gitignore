@@ -1,11 +1,13 @@
 #ignore all files
 *
+#do scan all folders in go-home
+!*/
+
 tags
 *.exe
 *.exe~
 
-#except all folders in go-home
-!*/
+.git/
 .vscode/
 .build/
 
