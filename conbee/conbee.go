@@ -12,15 +12,17 @@ import (
 /*
 STATE
 
-State {Read-Only} [
+State {Read} [
 Bedroom Motion Sensor
 Kitchen Motion Sensor
 Livingroom Motion Sensor 1
 Livingroom Motion Sensor 2
 Frontdoor Magnet Sensor
-]
 
-State {Read/Write} [
+Sophia Switch
+Bedroom Switch
+Remote Switch
+
 Bedroom Light Stand
 Bedroom Light Main
 Kitchen Light Main
@@ -32,18 +34,52 @@ Livingroom Light Stand
 Livingroom Light Chandelier
 ]
 
-When turning ON a light from automation logic we modify the state but we do keep
-reading the state which will take higher priority.
+State {Write} [
+Bedroom Light Stand
+Bedroom Light Main
+Kitchen Light Main
+Jennifer Light Main
+Sophia Light Main
+Sophia Light Stand
+Livingroom Light Main
+Livingroom Light Stand
+Livingroom Light Chandelier
+]
 
+When turning ON a light from automation logic we inform Conbee. We will keep
+reading the state which will be the only factual state.
 
 */
 
+type lightState struct {
+	CT        float32
+	BRI       float32
+	Reachable bool
+	OnOff     bool
+}
+
+type motionSensorState struct {
+	LastSeen time.Time
+	Motion   bool
+}
+
+type contactSensorState struct {
+	LastSeen time.Time
+	Contact  bool
+}
+
+type fullstate struct {
+	lights         map[string]lightState
+	motionSensors  map[string]motionSensorState
+	contactSensors map[string]contactSensorState
+	rename         map[string]string
+}
 
 func main() {
 	config := defaultConfiguration()
 
 	deconzConfig := deconz.Config{Addr: config.Addr, APIKey: config.APIKey}
-	sensorChan, err := sensorEventChan(deconzConfig)
+	eventChan, err := eventChan(deconzConfig)
 	if err != nil {
 		panic(err)
 	}
@@ -57,8 +93,8 @@ func main() {
 	for {
 
 		select {
-		case sensorEvent := <-sensorChan:
-			_, fields, err := sensorEvent.Timeseries()
+		case ev := <-eventChan:
+			fields, err := ev.Fields()
 
 			if err != nil {
 				//log.Printf("skip event: '%s'", err)
@@ -67,34 +103,24 @@ func main() {
 
 			for k, v := range fields {
 				if strings.HasPrefix(k, "presence") {
-					log.Printf("motion:  %s -> %s = %v (uuid: %d)", sensorEvent.Name, k, v, sensorEvent.ID)
+					log.Printf("motion:  %s -> %s = %v (uuid: %s)", ev.Name, k, v, ev.UniqueID)
 				} else if strings.HasPrefix(k, "open") {
-					log.Printf("magnet:  %s -> %s = %v (uuid: %d)", sensorEvent.Name, k, v, sensorEvent.ID)
+					log.Printf("magnet:  %s -> %s = %v (uuid: %s)", ev.Name, k, v, ev.UniqueID)
 				} else if strings.HasPrefix(k, "button") {
-					log.Printf("switch:  %s -> %s = %v (uuid: %d)", sensorEvent.Name, k, v, sensorEvent.ID)
+					log.Printf("switch:  %s -> %s = %v (uuid: %s)", ev.Name, k, v, ev.UniqueID)
 				}
 			}
 
 			timeout.Reset(1 * time.Second)
 
 		case <-timeout.C:
-			// when timer fires: save batch points, initialize a new batch
-			// err := influxdb.Write(batch)
-			// if err != nil {
-			// 	panic(err)
-			// }
-
-			// log.Printf("Saved %d records to influxdb", len(batch.Points()))
-			// // influx batch point
-			// batch, err = client.NewBatchPoints(client.BatchPointsConfig{
-			// 	Database:  config.InfluxdbDatabase,
-			// 	Precision: "s",
-			// })
+			// Currently does nothing
+			// Request the state of all lights?
 		}
 	}
 }
 
-func sensorEventChan(c deconz.Config) (chan *deconz.SensorEvent, error) {
+func eventChan(c deconz.Config) (chan *deconz.DeviceEvent, error) {
 	// get an event reader from the API
 	d := deconz.API{Config: c}
 	reader, err := d.EventReader()
@@ -109,10 +135,10 @@ func sensorEventChan(c deconz.Config) (chan *deconz.SensorEvent, error) {
 	}
 
 	// create a new reader, embedding the event reader
-	sensorEventReader := d.SensorEventReader(reader)
-	channel := make(chan *deconz.SensorEvent)
+	eventReader := d.DeviceEventReader(reader)
+	channel := make(chan *deconz.DeviceEvent)
 	// start it, it starts its own thread
-	sensorEventReader.Start(channel)
+	eventReader.Start(channel)
 	// return the channel
 	return channel, nil
 }

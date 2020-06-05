@@ -140,5 +140,19 @@
       "type": "occupancy",
       "id": 982
     }
+  ],
+  "televisions": [
+    {
+      "name": "Bedroom TV",
+      "type": "samsung.tv",
+      "channel": "state/samsung.tv/ahk/",
+      "id": 1001
+    },
+    {
+      "name": "Livingroom TV",
+      "type": "bravia.tv",
+      "channel": "state/bravia.tv/ahk/",
+      "id": 1002
+    }
   ]
 }

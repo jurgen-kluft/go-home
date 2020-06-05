@@ -7,7 +7,8 @@ import (
 
 // TypeLookuper is the interface that we require to lookup types from id's
 type TypeLookuper interface {
-	LookupType(int) (string, error)
+	SupportsResource(string) bool
+	LookupType(string) (string, error)
 }
 
 // Event represents a deconz sensor event
@@ -15,6 +16,7 @@ type Event struct {
 	Type     string          `json:"t"`
 	Event    string          `json:"e"`
 	Resource string          `json:"r"`
+	UniqueID string          `json:"uniqueid"`
 	ID       int             `json:"id,string"`
 	RawState json.RawMessage `json:"state"`
 	State    interface{}
@@ -36,7 +38,7 @@ func (d *Decoder) Parse(b []byte) (*Event, error) {
 	// If there is no state, dont try to parse it
 	// TODO: figure out what to do with these
 	//       some of them seems to be battery updates
-	if e.Resource != "sensors" || len(e.RawState) == 0 {
+	if !d.TypeStore.SupportsResource(e.Resource) || len(e.RawState) == 0 {
 		e.State = &EmptyState{}
 		return &e, nil
 	}
@@ -53,9 +55,9 @@ func (d *Decoder) Parse(b []byte) (*Event, error) {
 // on looking up the id though the TypeStore
 func (e *Event) ParseState(tl TypeLookuper) error {
 
-	t, err := tl.LookupType(e.ID)
+	t, err := tl.LookupType(e.UniqueID)
 	if err != nil {
-		return fmt.Errorf("unable to lookup event id %d: %s", e.ID, err)
+		return fmt.Errorf("unable to lookup event id %s: %s", e.UniqueID, err)
 	}
 
 	switch t {

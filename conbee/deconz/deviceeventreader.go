@@ -8,9 +8,9 @@ import (
 	"github.com/jurgen-kluft/go-home/conbee/deconz/event"
 )
 
-// SensorLookup represents an interface for sensor lookup
-type SensorLookup interface {
-	LookupSensor(int) (*Sensor, error)
+// DeviceLookup represents an interface for device lookup
+type DeviceLookup interface {
+	LookupDevice(string) (*Device, error)
 }
 
 // EventReader interface
@@ -20,16 +20,16 @@ type EventReader interface {
 	Close() error
 }
 
-// SensorEventReader reads events from an event.reader and returns SensorEvents
-type SensorEventReader struct {
-	lookup  SensorLookup
+// DeviceEventReader reads events from an event.reader and returns DeviceEvents
+type DeviceEventReader struct {
+	lookup  DeviceLookup
 	reader  EventReader
 	running bool
 }
 
 // Start starts a thread reading events into the given channel
 // returns immediately
-func (r *SensorEventReader) Start(out chan *SensorEvent) error {
+func (r *DeviceEventReader) Start(out chan *DeviceEvent) error {
 
 	if r.lookup == nil {
 		return errors.New("Cannot run without a SensorLookup from which to lookup sensors")
@@ -39,7 +39,7 @@ func (r *SensorEventReader) Start(out chan *SensorEvent) error {
 	}
 
 	if r.running {
-		return errors.New("Reader is already running.")
+		return errors.New("reader is already running")
 	}
 
 	r.running = true
@@ -74,13 +74,15 @@ func (r *SensorEventReader) Start(out chan *SensorEvent) error {
 					continue
 				}
 
-				sensor, err := r.lookup.LookupSensor(e.ID)
+				// TODO: Check if the UniqueID is formatted consistently the same way
+				device, err := r.lookup.LookupDevice(e.UniqueID)
+
 				if err != nil {
-					log.Printf("Dropping event. Could not lookup sensor for id %d: %s", e.ID, err)
+					log.Printf("Dropping event. Could not lookup device for id %s: %s", e.UniqueID, err)
 					continue
 				}
 				// send event on channel
-				out <- &SensorEvent{Event: e, Sensor: sensor}
+				out <- &DeviceEvent{Event: e, Device: device}
 			}
 		}
 		// if not running, close connection and return from goroutine
@@ -90,7 +92,7 @@ func (r *SensorEventReader) Start(out chan *SensorEvent) error {
 	return nil
 }
 
-// Close closes the reader, closing the connection to deconz and terminating the goroutine
-func (r *SensorEventReader) StopReadEvents() {
+// StopReadEvents closes the reader, closing the connection to deconz and terminating the goroutine
+func (r *DeviceEventReader) StopReadEvents() {
 	r.running = false
 }

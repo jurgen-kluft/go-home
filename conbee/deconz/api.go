@@ -11,44 +11,62 @@ import (
 // API represents the deCONZ rest api
 type API struct {
 	Config      Config
-	sensorCache *CachedSensorStore
+	deviceCache *CachedDeviceStore
 }
 
-// Sensors returns a map of sensors
-func (a *API) Sensors() (*Sensors, error) {
-	url := fmt.Sprintf("%s/%s/sensors", a.Config.Addr, a.Config.APIKey)
-	resp, err := http.Get(url)
+// Devices returns a map of devices
+func (a *API) Devices() (*Devices, error) {
+	var resp *http.Response
+	var err error
+	var url string
+	var devices Devices
+
+	url = fmt.Sprintf("%s/%s/sensors", a.Config.Addr, a.Config.APIKey)
+	resp, err = http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("Sensors() unable to get %s: %s", url, err)
+		return nil, fmt.Errorf("Devices() unable to get %s: %s", url, err)
 	}
-
 	defer resp.Body.Close()
-
-	var sensors Sensors
-
-	// To print the json response (all sensors)
-	//bodyBytes, err := ioutil.ReadAll(resp.Body)
-	//if err != nil {
-	//	return nil, fmt.Errorf("unable to decode deCONZ response: %s", err)
-	//}
-	//jsonstr := string(bodyBytes)
-	//fmt.Println(jsonstr)
-
-	dec := json.NewDecoder(resp.Body)
+	var sensors map[int]Device
+	var dec *json.Decoder
+	dec = json.NewDecoder(resp.Body)
 	err = dec.Decode(&sensors)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode deCONZ response: %s", err)
 	}
+	for _, s := range sensors {
+		// TODO: Check if the DeviceID is formatted consistently the same way
+		fmt.Printf("Sensor %s with unique-ID '%s'", s.Name, s.DeviceID)
+		devices[s.DeviceID] = s
+	}
 
-	return &sensors, nil
+	url = fmt.Sprintf("%s/%s/lights", a.Config.Addr, a.Config.APIKey)
+	resp, err = http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("Devices() unable to get %s: %s", url, err)
+	}
+	defer resp.Body.Close()
+	var lights map[int]Device
+	dec = json.NewDecoder(resp.Body)
+	err = dec.Decode(&lights)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode deCONZ response: %s", err)
+	}
+	for _, l := range lights {
+		// TODO: Check if the DeviceID is formatted consistently the same way
+		fmt.Printf("Light %s with unique-ID '%s'", l.Name, l.DeviceID)
+		devices[l.DeviceID] = l
+	}
+
+	return &devices, nil
 
 }
 
 // EventReader returns a event.Reader with a default cached type store
 func (a *API) EventReader() (*event.Reader, error) {
 
-	if a.sensorCache == nil {
-		a.sensorCache = &CachedSensorStore{SensorGetter: a}
+	if a.deviceCache == nil {
+		a.deviceCache = &CachedDeviceStore{DeviceGetter: a}
 	}
 
 	if a.Config.wsAddr == "" {
@@ -58,15 +76,15 @@ func (a *API) EventReader() (*event.Reader, error) {
 		}
 	}
 
-	return &event.Reader{TypeStore: a.sensorCache, WebsocketAddr: a.Config.wsAddr}, nil
+	return &event.Reader{TypeStore: a.deviceCache, WebsocketAddr: a.Config.wsAddr}, nil
 }
 
-// SensorEventReader takes an event reader and returns an sensor event reader
-func (a *API) SensorEventReader(r *event.Reader) *SensorEventReader {
+// DeviceEventReader takes an event reader and returns an sensor event reader
+func (a *API) DeviceEventReader(r *event.Reader) *DeviceEventReader {
 
-	if a.sensorCache == nil {
-		a.sensorCache = &CachedSensorStore{SensorGetter: a}
+	if a.deviceCache == nil {
+		a.deviceCache = &CachedDeviceStore{DeviceGetter: a}
 	}
 
-	return &SensorEventReader{lookup: a.sensorCache, reader: r}
+	return &DeviceEventReader{lookup: a.deviceCache, reader: r}
 }

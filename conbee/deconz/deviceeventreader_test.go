@@ -12,8 +12,12 @@ const smokeDetectorNoFireEventPayload = `{	"e": "changed",	"id": "5",	"r": "sens
 type testLookup struct {
 }
 
-func (t *testLookup) LookupSensor(i int) (*Sensor, error) {
-	return &Sensor{Name: "Test Sensor", Type: "ZHAFire"}, nil
+func (t *testLookup) LookupSensor(i int) (*Device, error) {
+	return &Device{Name: "Test Sensor", Type: "ZHAFire"}, nil
+}
+
+func (t *testLookup) SupportsResource(_type string) bool {
+	return true
 }
 
 func (t *testLookup) LookupType(i int) (string, error) {
@@ -35,8 +39,8 @@ func (t testReader) Close() error {
 }
 func TestSensorEventReader(t *testing.T) {
 
-	r := SensorEventReader{reader: testReader{}}
-	channel := make(chan *SensorEvent)
+	r := DeviceEventReader{reader: testReader{}}
+	channel := make(chan *DeviceEvent)
 	err := r.Start(channel)
 	if err != nil {
 		t.Fail()
@@ -45,16 +49,10 @@ func TestSensorEventReader(t *testing.T) {
 	if strconv.Itoa(e.Event.ID) != "5" {
 		t.Fail()
 	}
-	tags, fields, err := e.Timeseries()
+	fields, err := e.Fields()
 	if err != nil {
 		t.Logf(err.Error())
 		t.FailNow()
-	}
-	if tags["name"] != "Test Sensor" {
-		t.Fail()
-	}
-	if tags["id"] != "5" {
-		t.Fail()
 	}
 
 	if fields["fire"] != false {
