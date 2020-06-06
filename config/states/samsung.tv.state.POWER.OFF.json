@@ -1,6 +1,6 @@
 {
     "name": "Bedroom Samsung-TV",
-    "valueattrs": [
+    "stringattrs": [
         {
             "name": "power",
             "value": "off"

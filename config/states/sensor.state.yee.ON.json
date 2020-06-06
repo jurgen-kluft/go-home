@@ -1,6 +1,6 @@
 {
 	"name": "Frontdoor hall light",
-	"valueattrs": [
+	"stringattrs": [
 		{
 			"name": "power",
 			"value": "on"

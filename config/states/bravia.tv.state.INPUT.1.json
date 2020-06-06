@@ -1,6 +1,6 @@
 {
     "name": "Livingroom Sony Bravia-TV",
-    "valueattrs": [
+    "stringattrs": [
         {
             "name": "input",
             "value": "1"
