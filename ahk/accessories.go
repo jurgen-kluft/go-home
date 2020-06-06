@@ -1,6 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/brutella/hc/accessory"
 	"github.com/brutella/hc/service"
 	"github.com/jurgen-kluft/go-home/config"
@@ -18,10 +22,39 @@ func (t *television) PowerSelect(state int) {
 type coloredLightbulb struct {
 	*accessory.Accessory
 	Light *service.ColoredLightbulb
+	ID    int // deconz light ID
+}
+
+var (
+	setLightStateURL = "http://%s/api/%s/lights/%d/state"
+)
+
+func turnOnOffLight(id int, on bool) {
+
+	url := fmt.Sprintf(setLightStateURL, "10.0.0.18", "0A498B9909", id)
+	stateJSON := "{ \"on\": false }"
+	if on {
+		stateJSON = "{ \"on\": true }"
+	}
+	postbody := strings.NewReader(string(stateJSON))
+	request, err := http.NewRequest("PUT", url, postbody)
+	if err == nil {
+		request.Header.Set("Content-Type", "application/json")
+		client := http.Client{}
+		response, err := client.Do(request)
+		if err == nil {
+			fmt.Println(stateJSON)
+			response.Body.Close()
+		} else {
+			fmt.Println("turnOnOffLight() ERROR: ", err)
+		}
+	} else {
+		fmt.Println("turnOnOffLight() ERROR: ", err)
+	}
 }
 
 func (c *coloredLightbulb) Callback(onoff bool) {
-
+	turnOnOffLight(31, onoff)
 }
 
 type lightbulb struct {
@@ -151,7 +184,7 @@ type accessories struct {
 	Televisions       []*television
 }
 
-func (a *accessories) initializeFromConfig(config config.AhkConfig) []*accessory.Accessory {
+func (a *accessories) initializeFromConfig(config *config.AhkConfig) []*accessory.Accessory {
 
 	a.Bridge = accessory.NewBridge(accessory.Info{Name: "Bridge", ID: 1})
 	a.ColoredLights = make([]*coloredLightbulb, 0, 10)
@@ -162,10 +195,11 @@ func (a *accessories) initializeFromConfig(config config.AhkConfig) []*accessory
 	a.ContactSensors = make([]*contactSensor, 0, 10)
 	a.AirQualitySensors = make([]*airQualitySensor, 0, 10)
 	a.Switches = make([]*button, 0, 10)
+	a.Televisions = make([]*television, 0, 10)
 
 	for _, lght := range config.Lights {
 		if lght.Type == "colored" {
-			lightbulb := newColoredLightbulb(accessory.Info{Name: lght.Name, ID: lght.ID})
+			lightbulb := newColoredLightbulb(accessory.Info{Name: lght.Name, ID: lght.ID, Manufacturer: lght.Manufacturer})
 			lightbulb.Light.On.OnValueRemoteUpdate(lightbulb.Callback)
 			a.ColoredLights = append(a.ColoredLights, lightbulb)
 		} else if lght.Type == "white" {
@@ -177,7 +211,7 @@ func (a *accessories) initializeFromConfig(config config.AhkConfig) []*accessory
 
 	for _, ms := range config.Sensors {
 		if ms.Type == "motion" {
-			sensor := newMotionSensor(accessory.Info{Name: ms.Name, ID: ms.ID})
+			sensor := newMotionSensor(accessory.Info{Name: ms.Name, ID: ms.ID, Manufacturer: ms.Manufacturer})
 			a.MotionSensors = append(a.MotionSensors, sensor)
 		} else if ms.Type == "contact" {
 			sensor := newContactSensor(accessory.Info{Name: ms.Name, ID: ms.ID})
@@ -192,13 +226,13 @@ func (a *accessories) initializeFromConfig(config config.AhkConfig) []*accessory
 	}
 
 	for _, swtch := range config.Switches {
-		sw := newButton(accessory.Info{Name: swtch.Name, ID: swtch.ID})
+		sw := newButton(accessory.Info{Name: swtch.Name, ID: swtch.ID, Manufacturer: swtch.Manufacturer})
 		sw.Button.On.OnValueRemoteUpdate(sw.Callback)
 		a.Switches = append(a.Switches, sw)
 	}
 
-	for _, tv := range config.Switches {
-		t := newTelevision(accessory.Info{Name: tv.Name, ID: tv.ID})
+	for _, tv := range config.Televisions {
+		t := newTelevision(accessory.Info{Name: tv.Name, ID: tv.ID, Manufacturer: tv.Manufacturer})
 		t.Tv.PowerModeSelection.OnValueRemoteUpdate(t.PowerSelect)
 		a.Televisions = append(a.Televisions, t)
 	}
@@ -226,6 +260,9 @@ func (a *accessories) initializeFromConfig(config config.AhkConfig) []*accessory
 		accs = append(accs, acc.Accessory)
 	}
 	for _, acc := range a.Switches {
+		accs = append(accs, acc.Accessory)
+	}
+	for _, acc := range a.Televisions {
 		accs = append(accs, acc.Accessory)
 	}
 

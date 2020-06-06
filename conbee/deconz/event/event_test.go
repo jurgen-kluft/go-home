@@ -21,27 +21,31 @@ const floodDetectorFloodDetectedEventPayload = `{ "e": "changed", "id": "6", "r"
 const switchSensorEventPayload = `{	"e": "changed",	"id": "7",	"r": "sensors",	"state": {	  "buttonevent": 1000,	  "lastupdated": "2018-03-20T20:52:18"	},	"t": "event"  }  `
 
 type LookupImpl struct {
-	Store map[int]string
+	Store map[string]string
 }
 
-func (l *LookupImpl) LookupType(i int) (string, error) {
+func (l *LookupImpl) LookupType(i string) (string, error) {
 	if t, ok := l.Store[i]; ok {
 		return t, nil
 	}
 	return "", errors.New("not found")
 }
 
+func (l *LookupImpl) SupportsResource(i string) bool {
+	return true
+}
+
 var decoder Decoder
 
 func TestMain(m *testing.M) {
 
-	decoder = Decoder{TypeStore: &LookupImpl{Store: map[int]string{
-		1: "ZHATemperature",
-		2: "ZHAHumidity",
-		3: "ZHAPressure",
-		5: "ZHAFire",
-		6: "ZHAWater",
-		7: "ZHASwitch",
+	decoder = Decoder{TypeStore: &LookupImpl{Store: map[string]string{
+		"1": "ZHATemperature",
+		"2": "ZHAHumidity",
+		"3": "ZHAPressure",
+		"5": "ZHAFire",
+		"6": "ZHAWater",
+		"7": "ZHASwitch",
 	}}}
 	os.Exit(m.Run())
 }

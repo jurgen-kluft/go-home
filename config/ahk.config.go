@@ -38,10 +38,11 @@ type AhkConfig struct {
 }
 
 type AhkDevice struct {
-	Name    string       `json:"name"`
-	Type    string       `json:"type,omitempty"`
-	Channel *AhkRegister `json:"channel,omitempty"`
-	ID      uint64       `json:"id"`
+	Name         string       `json:"name"`
+	Type         string       `json:"type,omitempty"`
+	Channel      *AhkRegister `json:"channel,omitempty"`
+	ID           uint64       `json:"id"`
+	Manufacturer string       `json:"manufacturer"`
 }
 
 type AhkRegister string

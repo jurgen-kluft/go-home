@@ -33,7 +33,7 @@ func (e EventErrorImpl) Error() string {
 	return e.errStr
 }
 
-// Dial connects connects to deconz, use ReadEvent to recieve events
+// Dial connects connects to deconz, use ReadEvent to receive events
 func (r *Reader) Dial() error {
 
 	if r.TypeStore == nil {

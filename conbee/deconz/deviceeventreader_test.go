@@ -20,7 +20,7 @@ func (t *testLookup) SupportsResource(_type string) bool {
 	return true
 }
 
-func (t *testLookup) LookupType(i int) (string, error) {
+func (t *testLookup) LookupType(i string) (string, error) {
 	return "ZHAFire", nil
 }
 

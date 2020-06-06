@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 
 	"github.com/brutella/hc"
@@ -9,7 +10,16 @@ import (
 )
 
 func main() {
-	var ahkConfig config.AhkConfig
+	filename := "../config/ahk.config.json"
+	filedata, err := ioutil.ReadFile(filename)
+	if err != nil {
+		fmt.Println(err.Error)
+		return
+	}
+	jsonbytes := filedata
+
+	var ahkConfig *config.AhkConfig
+	ahkConfig, err = config.AhkConfigFromJSON(jsonbytes)
 
 	acsrs := &accessories{}
 	accs := acsrs.initializeFromConfig(ahkConfig)
@@ -33,4 +43,5 @@ func main() {
 
 	// Receive complete state of lights, sensors and TV's
 
+	return
 }

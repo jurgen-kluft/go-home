@@ -3,15 +3,16 @@
         "state/presence/",
         "state/sensor/conbee/",
         "state/switch/conbee/",
-        "state/switch/ahk/",
         "state/light/conbee/",
-        "state/tv/bravia/",
-        "state/tv/samsung/"
+        "state/switch/ahk/",
+        "state/bravia.tv/",
+        "state/samsung.tv/"
     ],
     "register": [
         "state/presence/automation/",
         "state/light/automation/",
         "state/bravia.tv/automation/",
+        "state/samsung.tv/automation/",
         "shout/message/"
     ],
     "device_control_json_cache": {
@@ -72,12 +73,12 @@
             "toggle": "{\"name\": \"Bedroom Plug\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"toggle\"}]}"
         },
         "Bedroom TV": {
-            "channel": "state/tv/samsung/automation/",
+            "channel": "state/samsung.tv/automation/",
             "on": "{\"name\": \"Bedroom Samsung-TV\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Bedroom Samsung-TV\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
         "Livingroom TV": {
-            "channel": "state/tv/bravia/automation/",
+            "channel": "state/bravia.tv/automation/",
             "on": "{\"name\": \"Livingroom Sony Bravia-TV\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Livingroom Sony Bravia-TV\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         }

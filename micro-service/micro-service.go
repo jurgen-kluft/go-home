@@ -1,11 +1,12 @@
 package microservice
 
 import (
-	"github.com/jurgen-kluft/go-home/config"
-	logpkg "github.com/jurgen-kluft/go-home/logging"
-	"github.com/jurgen-kluft/go-home/nats"
 	"strings"
 	"time"
+
+	"github.com/jurgen-kluft/go-home/config"
+	logpkg "github.com/jurgen-kluft/go-home/logging"
+	pubsub "github.com/jurgen-kluft/go-home/nats"
 )
 
 // Delegate is a handler that the user can register on a certain received topic
@@ -84,6 +85,47 @@ func (m *Service) RegisterHandler(topic string, delegate Delegate) {
 	m.Handlers[natstopic] = delegate
 }
 
+func matchTopic(etopic string, itopic string) bool {
+	ei := 0
+	ii := 0
+	cs := true
+	for ei < len(etopic) && ii < len(itopic) {
+		echar := etopic[ei]
+		ichar := itopic[ii]
+		if (echar == '/' || echar == '.') && (ichar == '/' || ichar == '.') {
+			cs = true
+			ei++
+			ii++
+		} else if cs && etopic[ei] == '*' { // chapter start ?
+			// consume chapter from itopic
+			ei++
+			for ii < len(itopic) && (itopic[ii] != '/' && itopic[ii] != '.') {
+				ii++
+			}
+			if ii == len(itopic) {
+				return false
+			}
+			cs = false
+		} else if echar != ichar {
+			return false
+		} else {
+			ei++
+			ii++
+			cs = false
+		}
+	}
+	return ei == len(etopic) && ii == len(itopic)
+}
+
+func (m *Service) FindHandler(itopic string) (delegate Delegate, exists bool) {
+	for etopic, edelegate := range m.Handlers {
+		if matchTopic(etopic, itopic) {
+			return edelegate, true
+		}
+	}
+	return nil, false
+}
+
 func (m *Service) Loop() {
 	quit := false
 	for !quit {
@@ -98,7 +140,7 @@ func (m *Service) Loop() {
 				select {
 				case msg := <-m.ProcessMessages:
 					topic := msg.Topic
-					delegate, exists := m.Handlers[topic]
+					delegate, exists := m.FindHandler(topic)
 					if exists {
 						if !delegate(m, topic, msg.Payload) {
 							connected = false

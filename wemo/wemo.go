@@ -1,7 +1,3 @@
-// Features:
-// - Turn On/Off Wemo Switches
-// - Publish state of Switches
-
 package main
 
 import (

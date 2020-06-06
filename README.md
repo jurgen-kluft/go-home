@@ -10,8 +10,8 @@ The only one not fully tested yet is 'automation'.
 ## App Structure
 
 Note:
-  InfluxDB for tracking metrics and usage of all processes.
-  Since all of this is written in Go it should be able to run anywhere, from a Raspberry PI to a Windows/Mac machine.
+  InfluxDB for tracking metrics and usage of some processes.
+  Since all of this is written in Go it should be able to run anywhere, from a Raspberry PI, Arduino to a Windows/Mac machine.
 
 - Since every process is just running it's own logic want we need is a pub/sub server where every process
   can register itself to specific events that it is interested in.
@@ -19,9 +19,9 @@ Note:
   -> Researching the possibility of using zeroconf 'Service Discovery - mDNS'
 
 - Following sub-processes:
-  - Apple HomeKit       WIP, (Apple Home Kit accessory emulator, our UI solution)
+  - Apple HomeKit       WIP, (Apple Home Kit accessory emulator, our **UI** solution)
   - Conbee II DECONZ    WIP, (Philips HUE / IKEA / Xiaomi Aqara; lights, switches, sensors)
-  - Wemo                Untested, (Wemo devices)
+  - Wemo                Ok, (Wemo wifi powerplug)
   - Config              Ok, (A service that is the provider of configurations for all other services)
   - Presence            Ok, (Connects to Netgear Router to obtain list of devices present on the network)
   - Flux                Ok, (Calculates Color-Temperature and Brightness per day for Hue and Yee lights)

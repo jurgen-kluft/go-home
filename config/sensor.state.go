@@ -13,7 +13,7 @@ type SensorState struct {
 	BoolAttrs    []BoolAttr    `json:"boolattrs,omitempty"`
 	IntAttrs     []IntAttr     `json:"intattrs,omitempty"`
 	FloatAttrs   []FloatAttr   `json:"floatattrs,omitempty"`
-	StringAttrs  []StringAttr  `json:"valueattrs,omitempty"`
+	StringAttrs  []StringAttr  `json:"stringattrs,omitempty"`
 	TimeWndAttrs []TimeWndAttr `json:"timeslotattrs,omitempty"`
 }
 

@@ -3,6 +3,7 @@
   "subscribe": [
     "state/light/conbee/",
     "state/sensor/conbee/",
+    "state/presence/automation/",
     "state/samsung.tv/",
     "state/bravia.tv/"
   ],
@@ -15,129 +16,158 @@
       "name": "Kitchen",
       "type": "colored",
       "channel": "state/light/ahk/",
+      "manufacturer": "Philips Hue",
       "id": 101
     },
     {
       "name": "Livingroom Stand",
       "type": "colored",
       "channel": "state/light/ahk/",
+      "manufacturer": "Philips Hue",
       "id": 201
     },
     {
       "name": "Livingroom Main",
       "type": "white",
       "channel": "state/light/ahk/",
+      "manufacturer": "IKEA",
       "id": 202
     },
     {
       "name": "Livingroom Dinner",
       "type": "white",
       "channel": "state/light/ahk/",
+      "manufacturer": "IKEA",
       "id": 203
     },
     {
       "name": "Jennifer Main",
       "type": "colored",
       "channel": "state/light/ahk/",
+      "manufacturer": "Philips Hue",
       "id": 301
     },
     {
       "name": "Sophia Stand",
       "type": "colored",
       "channel": "state/light/ahk/",
+      "manufacturer": "Philips Hue",
       "id": 401
     },
     {
       "name": "Sophia Main",
       "type": "white",
       "channel": "state/light/ahk/",
+      "manufacturer": "Philips Hue",
       "id": 402
     },
     {
       "name": "Bedroom Stand",
       "type": "colored",
       "channel": "state/light/ahk/",
+      "manufacturer": "Philips Hue",
       "id": 501
     },
     {
       "name": "Bedroom Main",
       "type": "colored",
       "channel": "state/light/ahk/",
+      "manufacturer": "Philips Hue",
       "id": 502
     },
     {
       "name": "Frontdoor Hall Light",
       "type": "white",
       "channel": "state/light/ahk/",
+      "manufacturer": "Yee",
       "id": 402
     }
   ],
   "switches": [
     {
+      "name": "Bedroom",
+      "channel": "state/switch/ahk/",
+      "manufacturer": "Xiaomi Aqara",
+      "id": 941
+    },
+    {
       "name": "Sophia Bedroom",
       "channel": "state/switch/ahk/",
+      "manufacturer": "Xiaomi Aqara",
       "id": 942
     },
     {
       "name": "Holiday",
       "channel": "state/switch/ahk/",
-      "id": 942
+      "manufacturer": "Virtual",
+      "id": 943
     },
     {
       "name": "Meeting",
       "channel": "state/switch/ahk/",
-      "id": 941
+      "manufacturer": "Virtual",
+      "id": 944
     },
     {
       "name": "Reading",
       "channel": "state/switch/ahk/",
-      "id": 942
+      "manufacturer": "Virtual",
+      "id": 945
     },
     {
       "name": "Flux",
       "channel": "state/switch/ahk/",
-      "id": 943
+      "manufacturer": "Virtual",
+      "id": 946
     }
   ],
   "sensors": [
     {
       "name": "MotionInLivingroom",
       "type": "motion",
+      "manufacturer": "Xiaomi Aqara",
       "id": 281
     },
     {
       "name": "MotionNearPiano",
       "type": "motion",
+      "manufacturer": "Xiaomi Aqara",
       "id": 282
     },
     {
       "name": "LivingroomLightIntensity",
       "type": "light",
+      "manufacturer": "IKEA",
       "id": 283
     },
     {
       "name": "MotionInKitchen",
       "type": "motion",
+      "manufacturer": "Xiaomi Aqara",
       "id": 181
     },
     {
       "name": "MotionInBedroom",
       "type": "motion",
+      "manufacturer": "Xiaomi Aqara",
       "id": 581
     },
     {
       "name": "FrontdoorOpenOrClosed",
       "type": "contact",
+      "manufacturer": "Xiaomi Aqara",
       "id": 681
     },
     {
       "name": "AirQuality",
       "type": "air-quality",
+      "manufacturer": "Virtual",
       "id": 981
     },
     {
       "name": "Occupancy",
       "type": "occupancy",
+      "manufacturer": "Virtual",
       "id": 982
     }
   ],
@@ -146,12 +176,14 @@
       "name": "Bedroom TV",
       "type": "samsung.tv",
       "channel": "state/samsung.tv/ahk/",
+      "manufacturer": "Samsung",
       "id": 1001
     },
     {
       "name": "Livingroom TV",
       "type": "bravia.tv",
       "channel": "state/bravia.tv/ahk/",
+      "manufacturer": "Sony",
       "id": 1002
     }
   ]
