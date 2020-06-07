@@ -114,8 +114,18 @@ func (e *Event) ParseState(tl TypeLookuper) error {
 		var s Daylight
 		err = json.Unmarshal(e.RawState, &s)
 		e.State = &s
+	case "Extended color light":
+		var s ExtendedColorLightState
+		err = json.Unmarshal(e.RawState, &s)
+		e.State = &s
+	case "Dimmable light":
+		var s DimmableLightState
+		err = json.Unmarshal(e.RawState, &s)
+		e.State = &s
 	default:
-		err = fmt.Errorf("unable to unmarshal event state: %s is not a known type", t)
+		e.Resource = "Unknown"
+		fmt.Printf("event state: %s is not a known type", t)
+		//err = fmt.Errorf("unable to unmarshal event state: %s is not a known type", t)
 	}
 
 	// err should continue to be null if everythings ok
@@ -125,6 +135,22 @@ func (e *Event) ParseState(tl TypeLookuper) error {
 // State is for embedding into event states
 type State struct {
 	Lastupdated string
+}
+
+// ExtendedColorLightState represent the state of a extended color light type
+type ExtendedColorLightState struct {
+	ColorMode string
+	Bri       int
+	CT        int
+	On        bool
+	Reachable bool
+}
+
+// DimmableLightState represent the state of a dimmable light type
+type DimmableLightState struct {
+	Bri       int
+	On        bool
+	Reachable bool
 }
 
 // ZHAHumidity represents a presure change

@@ -21,7 +21,7 @@ type DeviceGetter interface {
 // SupportsResource returns true if this Store supports the resource type
 func (c *CachedDeviceStore) SupportsResource(restype string) bool {
 	// TODO: determine the resource types we are interested in
-	return true
+	return restype != "Unknown"
 }
 
 // LookupType lookups deCONZ event types though a cache

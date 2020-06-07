@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 
 	"github.com/brutella/hc"
 	"github.com/jurgen-kluft/go-home/config"
@@ -32,7 +31,7 @@ func main() {
 	}
 	t, err := hc.NewIPTransport(config, acsrs.Bridge.Accessory, accs...)
 	if err != nil {
-		log.Panic(err)
+		fmt.Println(err)
 	}
 
 	hc.OnTermination(func() {

@@ -7,5 +7,5 @@ type Devices map[string]Device // UniqueID -> Device
 type Device struct {
 	Type     string
 	Name     string
-	DeviceID string
+	DeviceID string `json:"uniqueid"`
 }

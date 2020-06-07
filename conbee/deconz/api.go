@@ -19,7 +19,7 @@ func (a *API) Devices() (*Devices, error) {
 	var resp *http.Response
 	var err error
 	var url string
-	var devices Devices
+	devices := Devices{}
 
 	url = fmt.Sprintf("%s/%s/sensors", a.Config.Addr, a.Config.APIKey)
 	resp, err = http.Get(url)
@@ -36,7 +36,7 @@ func (a *API) Devices() (*Devices, error) {
 	}
 	for _, s := range sensors {
 		// TODO: Check if the DeviceID is formatted consistently the same way
-		fmt.Printf("Sensor %s with unique-ID '%s'", s.Name, s.DeviceID)
+		fmt.Printf("Sensor %s with unique-ID '%s'\n", s.Name, s.DeviceID)
 		devices[s.DeviceID] = s
 	}
 
@@ -54,7 +54,7 @@ func (a *API) Devices() (*Devices, error) {
 	}
 	for _, l := range lights {
 		// TODO: Check if the DeviceID is formatted consistently the same way
-		fmt.Printf("Light %s with unique-ID '%s'", l.Name, l.DeviceID)
+		fmt.Printf("Light %s with unique-ID '%s'\n", l.Name, l.DeviceID)
 		devices[l.DeviceID] = l
 	}
 

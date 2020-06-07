@@ -108,6 +108,8 @@ func main() {
 					log.Printf("magnet:  %s -> %s = %v (uuid: %s)", ev.Name, k, v, ev.UniqueID)
 				} else if strings.HasPrefix(k, "button") {
 					log.Printf("switch:  %s -> %s = %v (uuid: %s)", ev.Name, k, v, ev.UniqueID)
+				} else if strings.HasPrefix(k, "bri") {
+					log.Printf("light:  %s -> %s = %v (uuid: %s)", ev.Name, k, v, ev.UniqueID)
 				}
 			}
 

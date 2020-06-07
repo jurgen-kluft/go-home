@@ -27,34 +27,31 @@ type coloredLightbulb struct {
 
 var (
 	setLightStateURL = "http://%s/api/%s/lights/%d/state"
+	setGroupStateURL = "http://%s/api/%s/groups/%d/action"
 )
 
-func turnOnOffLight(id int, on bool) {
-
-	url := fmt.Sprintf(setLightStateURL, "10.0.0.18", "0A498B9909", id)
+func turnOnOffLightGroup(groupID int, on bool) {
+	url := fmt.Sprintf(setGroupStateURL, "10.0.0.18", "0A498B9909", groupID)
 	stateJSON := "{ \"on\": false }"
 	if on {
 		stateJSON = "{ \"on\": true }"
 	}
-	postbody := strings.NewReader(string(stateJSON))
-	request, err := http.NewRequest("PUT", url, postbody)
-	if err == nil {
-		request.Header.Set("Content-Type", "application/json")
-		client := http.Client{}
-		response, err := client.Do(request)
-		if err == nil {
-			fmt.Println(stateJSON)
-			response.Body.Close()
-		} else {
-			fmt.Println("turnOnOffLight() ERROR: ", err)
-		}
-	} else {
-		fmt.Println("turnOnOffLight() ERROR: ", err)
+	body := strings.NewReader(stateJSON)
+	request, err := http.NewRequest("PUT", url, body)
+	if err != nil {
+		return
 	}
+	request.Header.Set("Content-Type", "application/json")
+	client := http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		return
+	}
+	response.Body.Close()
 }
 
 func (c *coloredLightbulb) Callback(onoff bool) {
-	turnOnOffLight(31, onoff)
+	turnOnOffLightGroup(18, onoff)
 }
 
 type lightbulb struct {
@@ -186,7 +183,14 @@ type accessories struct {
 
 func (a *accessories) initializeFromConfig(config *config.AhkConfig) []*accessory.Accessory {
 
-	a.Bridge = accessory.NewBridge(accessory.Info{Name: "Bridge", ID: 1})
+	bridgeInfo := accessory.Info{Name: "Bridge", ID: 1}
+	bridgeInfo.FirmwareRevision = "1.0"
+	bridgeInfo.Manufacturer = "go-home"
+	bridgeInfo.Model = "micro"
+	bridgeInfo.Name = "home"
+	bridgeInfo.SerialNumber = "090A1-93EAM0"
+	a.Bridge = accessory.NewBridge(bridgeInfo)
+
 	a.ColoredLights = make([]*coloredLightbulb, 0, 10)
 	a.WhiteLights = make([]*lightbulb, 0, 10)
 	a.MotionSensors = make([]*motionSensor, 0, 10)

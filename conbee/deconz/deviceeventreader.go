@@ -11,6 +11,7 @@ import (
 // DeviceLookup represents an interface for device lookup
 type DeviceLookup interface {
 	LookupDevice(string) (*Device, error)
+	SupportsResource(string) bool
 }
 
 // EventReader interface
@@ -69,8 +70,8 @@ func (r *DeviceEventReader) Start(out chan *DeviceEvent) error {
 					continue REDIAL
 				}
 				// we only care about sensor events
-				if e.Resource != "sensors" {
-					log.Printf("non-sensor event type %s, id: %d, type: %s, event: %s, rawstate: %s", e.Resource, e.ID, e.Type, e.Event, e.RawState)
+				if !r.lookup.SupportsResource(e.Resource) {
+					log.Printf("unsupported resource %s with id: %d, type: %s, event: %s, rawstate: %s", e.Resource, e.ID, e.Type, e.Event, e.RawState)
 					continue
 				}
 
