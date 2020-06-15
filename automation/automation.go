@@ -100,7 +100,7 @@ func newPresence() *homePresence {
 	h.detectionStamp = time.Now()
 	h.detectionDelayDuration = time.Minute * 15
 	h.detectionEvalResult = false
-	h.detectionEvalDuration = time.Minute * 10
+	h.detectionEvalDuration = time.Minute * 15
 	h.presence = map[string]bool{}
 	return h
 }
@@ -138,7 +138,7 @@ func (h *homePresence) determineIfPeopleAreHome(now time.Time) {
 			}
 			h.detectionState = "Scan"
 		} else {
-			// Look at the Wifi presence. (Should we actually do this, is motion not enough ?)
+			// Look at the Wifi presence?, no! (WIFI can stay connected until people are out of the building)
 			if h.peopleAreHome == false {
 				for _, prsnc := range h.presence {
 					h.peopleAreHome = h.peopleAreHome || prsnc
@@ -268,29 +268,20 @@ func (a *automation) presenceDetection() {
 }
 
 func (a *automation) handleEvent(channel string, state *config.SensorState) {
-	sensortype := ""
-	sensorname := ""
-	parts := strings.Split(channel, "/")
-	if len(parts) >= 2 {
-		sensortype = parts[1]
-		if len(parts) == 3 {
-			sensorname = parts[2]
-		}
-	}
-
-	if sensorname != "" && sensortype == "sensor" {
-		a.sensors[sensorname] = state.GetValueAttr(sensorname, "")
+	sensortype := state.Type
+	sensorname := state.Name
+	if sensortype == "sensor" {
+		a.sensors[sensorname] = state.GetValueAttr("state", "")
 		if sensorname == "timeofday" {
 			a.handleTimeOfDay(a.sensors[sensorname])
 		}
-	} else if sensortype == "xiaomi" {
-		name := state.Name
-		if name == config.SophiaRoomSwitch || name == config.BedroomSwitch {
-			a.handleSwitch(name, state)
-		} else if name == config.KitchenMotionSensor || name == config.LivingroomMotionSensor || name == config.BedroomMotionSensor {
-			a.handleMotionSensor(name, state)
-		} else if name == config.FrontdoorMagnetSensor {
-			a.handleMagnetSensor(name, state)
+	} else if sensortype == "switch" {
+		if sensorname == config.SophiaRoomSwitch || sensorname == config.BedroomSwitch {
+			a.handleSwitch(sensorname, state)
+		} else if sensorname == config.KitchenMotionSensor || sensorname == config.LivingroomMotionSensor || sensorname == config.BedroomMotionSensor {
+			a.handleMotionSensor(sensorname, state)
+		} else if sensorname == config.FrontdoorMagnetSensor {
+			a.handleMagnetSensor(sensorname, state)
 		}
 	} else if sensortype == "presence" {
 		a.handlePresence(state)

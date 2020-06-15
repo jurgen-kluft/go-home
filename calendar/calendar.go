@@ -40,14 +40,14 @@ func (c *Calendar) initialize(jsondata []byte) (err error) {
 	for _, sn := range c.config.Sensors {
 		ekey := strings.ToLower(sn.Name)
 		c.sensors[ekey] = sn
-		sensor := &config.SensorState{Name: ekey, Time: time.Now()}
-		if sn.Type == "string" {
-			sensor.AddStringAttr(ekey, sn.State)
-		} else if sn.Type == "float" {
-			value, _ := strconv.ParseFloat(sn.State, 64)
+		sensor := &config.SensorState{Name: ekey, Type: sn.Type, Time: time.Now()}
+		if sn.AttrType == "string" {
+			sensor.AddStringAttr(ekey, sn.AttrValue)
+		} else if sn.AttrType == "float" {
+			value, _ := strconv.ParseFloat(sn.AttrValue, 64)
 			sensor.AddFloatAttr(ekey, value)
-		} else if sn.Type == "bool" {
-			value, _ := strconv.ParseBool(sn.State)
+		} else if sn.AttrType == "bool" {
+			value, _ := strconv.ParseBool(sn.AttrValue)
 			sensor.AddBoolAttr(ekey, value)
 		}
 		c.sensorStates[ekey] = sensor
@@ -198,17 +198,17 @@ func (c *Calendar) applyRulesToSensorStates() {
 				if exists && ifsensor.StringAttrs != nil {
 					ifthenValue := ifsensor.StringAttrs[0].Value
 					if ifthenValue == ifthen.State {
-						sensor.StringAttrs[0].Value = p.State
+						sensor.StringAttrs[0].Value = p.Value
 					}
 				} else if exists && ifsensor.BoolAttrs != nil {
 					ifthenValue := ifsensor.BoolAttrs[0].Value
 					if ifthenValue && ("true" == ifthen.State) {
-						sensor.StringAttrs[0].Value = p.State
+						sensor.StringAttrs[0].Value = p.Value
 					} else if !ifthenValue && ("false" == ifthen.State) {
-						sensor.StringAttrs[0].Value = p.State
+						sensor.StringAttrs[0].Value = p.Value
 					}
 				} else {
-					c.service.Logger.LogError(c.name, fmt.Sprintf("Logical error when applying rules to sensor states (%s)", p.Key+", "+p.State))
+					c.service.Logger.LogError(c.name, fmt.Sprintf("Logical error when applying rules to key/value (%s) '", p.Key+"'/'"+p.Value+"'"))
 				}
 			}
 		}

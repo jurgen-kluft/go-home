@@ -198,7 +198,7 @@ func (p *Presence) presence(now time.Time) (result error) {
 }
 
 func (p *Presence) publish(now time.Time, client *pubsub.Context) {
-	sensor := config.NewSensorState("state.presence")
+	sensor := config.NewSensorState("state.presence", "presence")
 	sensor.Time = now
 	for _, m := range p.members {
 		//fmt.Printf("member: %s, presence: %v\n", m.name, m.current.State.String())

@@ -411,7 +411,7 @@ func (s *instance) buildJSONMessage() ([]byte, error) {
 
 	moments := s.getMoments(now, lat, lng)
 
-	sunstate := config.NewSensorState("state.sensor.sun")
+	sunstate := config.NewSensorState("state.sensor.sun", "sun")
 	for _, m := range moments {
 		sunstate.AddTimeWndAttr(m.title, m.start, m.end)
 	}

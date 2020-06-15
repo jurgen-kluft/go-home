@@ -58,20 +58,22 @@ func (c Ccal) print() {
 }
 
 type Csensor struct {
-	Name  string `json:"name"`
-	State string `json:"state"`
-	Type  string `json:"type"`
+	Name      string `json:"name"`
+	Type      string `json:"type"`
+	AttrType  string `json:"attrtype"`
+	AttrValue string `json:"attrvalue"`
 }
 
 func (c Csensor) print() {
 	fmt.Printf("sensor.name = %s\n", c.Name)
-	fmt.Printf("sensor.state = %s\n", c.State)
 	fmt.Printf("sensor.type = %s\n", c.Type)
+	fmt.Printf("sensor.attrvalue = %s\n", c.AttrValue)
+	fmt.Printf("sensor.attrtype = %s\n", c.AttrType)
 }
 
 type Crule struct {
 	Key    string   `json:"key"`
-	State  string   `json:"state"`
+	Value  string   `json:"value"`
 	IfThen []IfThen `json:"if"`
 }
 
@@ -82,7 +84,7 @@ type IfThen struct {
 
 func (c Crule) print() {
 	fmt.Printf("rule.key = %s\n", c.Key)
-	fmt.Printf("rule.state = %s\n", c.State)
+	fmt.Printf("rule.value = %s\n", c.Value)
 	fmt.Println("If:")
 	for _, rule := range c.IfThen {
 		fmt.Printf("    if key='%s' has state:'%s'\n", rule.Key, rule.State)

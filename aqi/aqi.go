@@ -9,7 +9,7 @@ import (
 
 	"github.com/jurgen-kluft/go-home/config"
 	"github.com/jurgen-kluft/go-home/metrics"
-	"github.com/jurgen-kluft/go-home/micro-service"
+	microservice "github.com/jurgen-kluft/go-home/micro-service"
 )
 
 type instance struct {
@@ -93,7 +93,7 @@ func (c *instance) Poll() (aqiStateJSON []byte, err error) {
 		c.metrics.Send(c.name)
 
 		// MQTT: As a sensor
-		sensor := config.NewSensorState("sensor.weather.aqi")
+		sensor := config.NewSensorState("sensor.weather.aqi", "airquality")
 		sensor.AddFloatAttr(c.name, aqi)
 		level := c.getAiqTagAndDescr(aqi)
 		sensor.AddStringAttr("name", level.Tag)

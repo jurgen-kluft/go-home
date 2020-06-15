@@ -4,16 +4,7 @@
 			"path": "."
 		},
 		{
-			"path": "../../grandcat/zeroconf"
-		},
-		{
 			"path": "../go-conbee"
-		},
-		{
-			"path": "../../brutella/hc"
-		},
-		{
-			"path": "../../brutella/dnssd"
 		}
 	],
 	"settings": {

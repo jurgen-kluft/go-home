@@ -1,9 +1,9 @@
 {
   "Addr": "http://10.0.0.18/api",
   "APIKey": "0A498B9909",
-  "lights.out": "state/lights/conbee/",
-  "switches.out": "state/switches/conbee/",
-  "sensors.out": "state/sensors/conbee/",
+  "lights.out": "state/light/conbee/",
+  "switches.out": "state/switch/conbee/",
+  "sensors.out": "state/sensor/conbee/",
   "lights.in": [
     "state/light/automation/",
     "state/light/flux/",

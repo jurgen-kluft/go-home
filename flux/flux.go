@@ -211,7 +211,7 @@ func (c *context) Process() error {
 	//  - Sensor.Light.DarkOrLight = string(Dark)
 
 	for _, ltype := range c.config.Lighttype {
-		sensor := config.NewSensorState("all")
+		sensor := config.NewSensorState("all", "flux")
 
 		c.metrics.Begin(ltype.Name)
 
@@ -231,7 +231,7 @@ func (c *context) Process() error {
 		}
 	}
 
-	sensorDOL, err := config.StringAttrAsJSON("darkorlight", "DarkOrLight", string(current.Darkorlight))
+	sensorDOL, err := config.StringAttrAsJSON("darkorlight", "illumination", "DarkOrLight", string(current.Darkorlight))
 	if err == nil {
 		c.publishSensor("state/sensor/darkorlight/", sensorDOL)
 	}
