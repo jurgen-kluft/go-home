@@ -13,37 +13,37 @@ import (
 STATE
 
 State {Read} [
-Bedroom Motion Sensor
-Kitchen Motion Sensor
-Livingroom Motion Sensor 1
-Livingroom Motion Sensor 2
-Frontdoor Magnet Sensor
+	Bedroom Motion Sensor
+	Kitchen Motion Sensor
+	Livingroom Motion Sensor 1
+	Livingroom Motion Sensor 2
+	Frontdoor Magnet Sensor
 
-Sophia Switch
-Bedroom Switch
-Remote Switch
+	Sophia Switch
+	Bedroom Switch
+	Remote Switch
 
-Bedroom Light Stand
-Bedroom Light Main
-Kitchen Light Main
-Jennifer Light Main
-Sophia Light Main
-Sophia Light Stand
-Livingroom Light Main
-Livingroom Light Stand
-Livingroom Light Chandelier
+	Bedroom Light Stand
+	Bedroom Light Main
+	Kitchen Light Main
+	Jennifer Light Main
+	Sophia Light Main
+	Sophia Light Stand
+	Livingroom Light Main
+	Livingroom Light Stand
+	Livingroom Light Chandelier
 ]
 
 State {Write} [
-Bedroom Light Stand
-Bedroom Light Main
-Kitchen Light Main
-Jennifer Light Main
-Sophia Light Main
-Sophia Light Stand
-Livingroom Light Main
-Livingroom Light Stand
-Livingroom Light Chandelier
+	Bedroom Light Stand
+	Bedroom Light Main
+	Kitchen Light Main
+	Jennifer Light Main
+	Sophia Light Main
+	Sophia Light Stand
+	Livingroom Light Main
+	Livingroom Light Stand
+	Livingroom Light Chandelier
 ]
 
 When turning ON a light from automation logic we inform Conbee. We will keep
@@ -52,6 +52,8 @@ reading the state which will be the only factual state.
 */
 
 type lightState struct {
+	Name      string
+	IDs       []string
 	CT        float32
 	BRI       float32
 	Reachable bool
@@ -59,20 +61,30 @@ type lightState struct {
 }
 
 type motionSensorState struct {
+	Name     string
+	ID       string
 	LastSeen time.Time
 	Motion   bool
 }
 
 type contactSensorState struct {
+	Name     string
+	ID       string
+	LastSeen time.Time
+	Contact  bool
+}
+
+type switchState struct {
+	Name     string
+	ID       string
 	LastSeen time.Time
 	Contact  bool
 }
 
 type fullstate struct {
-	lights         map[string]lightState
+	lights         map[string]*lightState
 	motionSensors  map[string]motionSensorState
 	contactSensors map[string]contactSensorState
-	rename         map[string]string
 }
 
 func main() {
