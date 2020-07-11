@@ -26,39 +26,40 @@
       "battery_type": "cr2032"
     }
   ],
-  "motion-sensors": [
-    {
-      "id": "00:15:8d:00:01:a9:11:3b-01-0406",
-      "name": "Kitchen Motion",
-      "battery_type": "cr2450"
-    },
-    {
-      "id": "00:0b:57:ff:fe:9b:be:e2-01-0006",
-      "name": "Livingroom Motion",
-      "battery_type": "cr2450"
-    },
-    {
-      "id": "00:15:8d:00:01:e1:4e:04-01-0406",
-      "name": "Livingroom Motion",
-      "battery_type": "cr2450"
-    },
-    {
-      "id": "00:15:8d:00:01:aa:98:bc-01-0406",
-      "name": "Bedroom Motion",
-      "battery_type": "cr2450"
-    }
-  ],
-  "contact-sensors": [
-    {
-      "id": "00:15:8d:00:01:21:47:63-01-0006",
-      "name": "Front Door Magnet",
-      "battery_type": "cr1632"
-    }
-  ],
+  "sensors": {
+    "motion": [
+      {
+        "id": "00:15:8d:00:01:a9:11:3b-01-0406",
+        "name": "Kitchen Motion",
+        "battery_type": "cr2450"
+      },
+      {
+        "id": "00:0b:57:ff:fe:9b:be:e2-01-0006",
+        "name": "Livingroom Motion",
+        "battery_type": "cr2450"
+      },
+      {
+        "id": "00:15:8d:00:01:e1:4e:04-01-0406",
+        "name": "Livingroom Motion",
+        "battery_type": "cr2450"
+      },
+      {
+        "id": "00:15:8d:00:01:aa:98:bc-01-0406",
+        "name": "Bedroom Motion",
+        "battery_type": "cr2450"
+      }
+    ],
+    "contact": [
+      {
+        "id": "00:15:8d:00:01:21:47:63-01-0006",
+        "name": "Front Door Magnet",
+        "battery_type": "cr1632"
+      }
+    ]
+  },
   "lights": [
     {
       "name": "Kitchen",
-      "type": "hue",
       "ids": [
         "00:17:88:01:02:31:dd:0d-0b",
         "00:17:88:01:02:31:db:8c-0b"
@@ -66,7 +67,6 @@
     },
     {
       "name": "Livingroom Main",
-      "type": "hue",
       "ids": [
         "00:17:88:01:03:c0:21:65-0b",
         "00:17:88:01:03:ea:7a:7e-0b",
@@ -78,7 +78,6 @@
     },
     {
       "name": "Livingroom Chandelier",
-      "type": "hue",
       "ids": [
         "00:17:88:01:03:16:92:3f-0b",
         "00:17:88:01:03:3b:ae:aa-0b",
@@ -90,7 +89,6 @@
     },
     {
       "name": "Bedroom Main",
-      "type": "hue",
       "ids": [
         "00:17:88:01:06:bc:e3:ae-0b",
         "00:17:88:01:06:bc:e1:0c-0b",
@@ -100,7 +98,6 @@
     },
     {
       "name": "Bedroom Stand",
-      "type": "hue",
       "ids": [
         "00:17:88:01:02:31:a6:99-0b",
         "00:17:88:01:02:31:ac:89-0b"
@@ -108,7 +105,6 @@
     },
     {
       "name": "Jennifer Main",
-      "type": "hue",
       "ids": [
         "00:17:88:01:10:28:3e:3f-0b",
         "00:17:88:01:06:33:e1:73-0b"
@@ -116,7 +112,6 @@
     },
     {
       "name": "Sophia Main",
-      "type": "hue",
       "ids": [
         "00:17:88:01:06:bc:e0:de-0b",
         "00:17:88:01:06:bc:e3:95-0b",
@@ -126,14 +121,12 @@
     },
     {
       "name": "Sophia Stand",
-      "type": "hue",
       "ids": [
         "00:17:88:01:10:28:75:94-0b"
       ]
     },
     {
       "name": "Livingroom Stand",
-      "type": "hue",
       "ids": [
         "00:17:88:01:02:33:01:79-0b",
         "00:17:88:01:02:31:d9:f9-0b"

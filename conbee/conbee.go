@@ -13,37 +13,9 @@ import (
 STATE
 
 State {Read} [
-	Bedroom Motion Sensor
-	Kitchen Motion Sensor
-	Livingroom Motion Sensor 1
-	Livingroom Motion Sensor 2
-	Frontdoor Magnet Sensor
-
-	Sophia Switch
-	Bedroom Switch
-	Remote Switch
-
-	Bedroom Light Stand
-	Bedroom Light Main
-	Kitchen Light Main
-	Jennifer Light Main
-	Sophia Light Main
-	Sophia Light Stand
-	Livingroom Light Main
-	Livingroom Light Stand
-	Livingroom Light Chandelier
 ]
 
 State {Write} [
-	Bedroom Light Stand
-	Bedroom Light Main
-	Kitchen Light Main
-	Jennifer Light Main
-	Sophia Light Main
-	Sophia Light Stand
-	Livingroom Light Main
-	Livingroom Light Stand
-	Livingroom Light Chandelier
 ]
 
 When turning ON a light from automation logic we inform Conbee. We will keep
@@ -54,6 +26,7 @@ reading the state which will be the only factual state.
 type lightState struct {
 	Name      string
 	IDs       []string
+	LastSeen  time.Time
 	CT        float32
 	BRI       float32
 	Reachable bool
@@ -82,9 +55,39 @@ type switchState struct {
 }
 
 type fullstate struct {
-	lights         map[string]*lightState
+	switches       map[string]switchState
 	motionSensors  map[string]motionSensorState
 	contactSensors map[string]contactSensorState
+	lights         map[string]*lightState
+}
+
+func configToFullState(c config.ConbeeConfig) fullstate {
+	full := fullstate{}
+	full.switches = make(map[string]switchState)
+	full.motionSensors = make(map[string]motionSensorState)
+	full.contactSensors = make(map[string]contactSensorState)
+	full.lights = make(map[string]*lightState)
+
+	for _, e := range c.Switches {
+		state := switchState{Name: e.Name, ID: e.ID, LastSeen: time.Now(), Contact: false}
+		full.switches[state.ID] = state
+	}
+	for _, e := range c.Sensors.Motion {
+		state := motionSensorState{Name: e.Name, ID: e.ID, LastSeen: time.Now(), Motion: false}
+		full.motionSensors[state.ID] = state
+	}
+	for _, e := range c.Sensors.Contact {
+		state := contactSensorState{Name: e.Name, ID: e.ID, LastSeen: time.Now(), Contact: false}
+		full.contactSensors[state.ID] = state
+	}
+	for _, e := range c.Lights {
+		state := &lightState{Name: e.Name, IDs: e.IDS, LastSeen: time.Now(), Reachable: false, OnOff: false}
+		for _, id := range state.IDs {
+			full.lights[id] = state
+		}
+	}
+
+	return full
 }
 
 func main() {

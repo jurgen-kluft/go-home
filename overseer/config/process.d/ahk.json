@@ -1,0 +1,6 @@
+{
+    "name": "Apple Homekit Bridge",
+    "command": "../ahk/ahk",
+    "redirect_stderr": true,
+    "stdout_logfile": "log/ahk"
+}

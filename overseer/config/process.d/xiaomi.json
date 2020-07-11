@@ -1,6 +1,0 @@
-{
-    "name": "xiaomi",
-    "command": "../xiaomi/xiaomi",
-    "redirect_stderr": true,
-    "stdout_logfile": "log/xiaomi"
-}

@@ -28,6 +28,29 @@ func (r *ConbeeConfig) ToJSON() (string, error) {
 
 // ConbeeConfig contains information to connect to a Conbee-II device
 type ConbeeConfig struct {
-	Addr   string `json:"url"`
-	APIKey string `json:"apikey"`
+	Addr        string         `json:"Addr"`
+	APIKey      string         `json:"APIKey"`
+	LightsOut   string         `json:"lights.out"`
+	SwitchesOut string         `json:"switches.out"`
+	SensorsOut  string         `json:"sensors.out"`
+	LightsIn    []string       `json:"lights.in"`
+	Switches    []ConbeeDevice `json:"switches"`
+	Sensors     ConbeeSensors  `json:"sensors"`
+	Lights      []ConbeeLight  `json:"lights"`
+}
+
+type ConbeeLight struct {
+	Name string   `json:"name"`
+	IDS  []string `json:"ids"`
+}
+
+type ConbeeSensors struct {
+	Motion  []ConbeeDevice `json:"motion"`
+	Contact []ConbeeDevice `json:"contact"`
+}
+
+type ConbeeDevice struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	BatteryType string `json:"battery_type"`
 }
