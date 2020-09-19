@@ -55,10 +55,10 @@ func (c *Calendar) initialize(jsondata []byte) (err error) {
 
 	for _, cal := range c.config.Calendars {
 		if strings.HasPrefix(cal.URL.String, "http") {
-			ical := icalendar.NewURLCalendar(cal.URL.String)
+			ical := icalendar.NewURLCalendar(cal.Name, cal.URL.String)
 			c.cals = append(c.cals, ical)
 		} else if strings.HasPrefix(cal.URL.String, "file") {
-			c.cals = append(c.cals, icalendar.NewFileCalendar(cal.URL.String))
+			c.cals = append(c.cals, icalendar.NewFileCalendar(cal.Name, cal.URL.String))
 		} else {
 			c.service.Logger.LogError(c.name, fmt.Sprintf("Unknown calendar source '%s'", cal.URL))
 		}
@@ -66,19 +66,19 @@ func (c *Calendar) initialize(jsondata []byte) (err error) {
 	}
 
 	c.update = time.Now()
-	c.load()
+	//c.load()
 	return nil
 }
 
 func (c *Calendar) updateSensorStates(when time.Time) error {
-	//fmt.Printf("Update %d calendars\n", len(c.cals))
+	fmt.Printf("Update %d calendars\n", len(c.cals))
 
 	for _, cal := range c.cals {
-		//fmt.Printf("Update calendar '%s'\n", cal.Name)
+		fmt.Printf("Update calendar '%s'\n", cal.Name)
 		eventsForDay := cal.GetEventsFor(when)
 
 		if len(eventsForDay) == 0 {
-			//fmt.Printf("Calendar '%s' has no events\n", cal.Name)
+			fmt.Printf("Calendar '%s' has no events\n", cal.Name)
 		}
 
 		for _, event := range eventsForDay {
@@ -267,17 +267,20 @@ func main() {
 	c := new()
 	c.service = m
 
+	tickCount := 150
+
 	m.RegisterHandler("config/calendar/", func(m *microservice.Service, topic string, msg []byte) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")
 		err := c.initialize(msg)
 		if err != nil {
 			c = nil
 			m.Logger.LogError(c.name, err.Error())
+		} else {
+			tickCount = 150
 		}
 		return true
 	})
 
-	tickCount := 0
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
 		if tickCount%5 == 0 {
 			if c != nil && c.config == nil {
