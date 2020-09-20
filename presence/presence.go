@@ -207,7 +207,7 @@ func (p *Presence) publish(now time.Time, client *pubsub.Context) {
 	jsonstr, err := sensor.ToJSON()
 	if err == nil {
 		client.Publish("state/presence/", jsonstr)
-		fmt.Println(jsonstr)
+		//fmt.Println(jsonstr)
 	} else {
 		fmt.Println(err)
 	}

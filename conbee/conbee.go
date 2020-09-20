@@ -2,10 +2,10 @@ package main
 
 import (
 	"log"
-	"strings"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/conbee/deconz"
+	"github.com/jurgen-kluft/go-home/conbee/deconz/event"
 	"github.com/jurgen-kluft/go-home/config"
 )
 
@@ -51,25 +51,25 @@ type switchState struct {
 	Name     string
 	ID       string
 	LastSeen time.Time
-	Contact  bool
+	Button   bool
 }
 
-type fullstate struct {
+type fullState struct {
 	switches       map[string]switchState
 	motionSensors  map[string]motionSensorState
 	contactSensors map[string]contactSensorState
 	lights         map[string]*lightState
 }
 
-func configToFullState(c config.ConbeeConfig) fullstate {
-	full := fullstate{}
+func fullStateFromConfig(c config.ConbeeConfig) fullState {
+	full := fullState{}
 	full.switches = make(map[string]switchState)
 	full.motionSensors = make(map[string]motionSensorState)
 	full.contactSensors = make(map[string]contactSensorState)
 	full.lights = make(map[string]*lightState)
 
 	for _, e := range c.Switches {
-		state := switchState{Name: e.Name, ID: e.ID, LastSeen: time.Now(), Contact: false}
+		state := switchState{Name: e.Name, ID: e.ID, LastSeen: time.Now(), Button: false}
 		full.switches[state.ID] = state
 	}
 	for _, e := range c.Sensors.Motion {
@@ -93,13 +93,13 @@ func configToFullState(c config.ConbeeConfig) fullstate {
 func main() {
 	config := defaultConfiguration()
 
-	deconzConfig := deconz.Config{Addr: config.Addr, APIKey: config.APIKey}
-	eventChan, err := eventChan(deconzConfig)
+	eventChan, err := eventChan(config.Addr, config.APIKey)
 	if err != nil {
 		panic(err)
 	}
+	log.Printf("Connected to deCONZ at %s", config.Addr)
 
-	log.Printf("Connected to deCONZ at %s", deconzConfig.Addr)
+	fullState := fullStateFromConfig(config)
 
 	//TODO: figure out how to create a timer that is stopped
 	timeout := time.NewTimer(1 * time.Second)
@@ -109,22 +109,40 @@ func main() {
 
 		select {
 		case ev := <-eventChan:
-			fields, err := ev.Fields()
+			//fields, err := ev.Fields()
+			//if err != nil {
+			//	log.Printf("skip event: '%s'", err)
+			//	continue
+			//}
 
-			if err != nil {
-				//log.Printf("skip event: '%s'", err)
-				continue
-			}
-
-			for k, v := range fields {
-				if strings.HasPrefix(k, "presence") {
-					log.Printf("motion:  %s -> %s = %v (uuid: %s)", ev.Name, k, v, ev.UniqueID)
-				} else if strings.HasPrefix(k, "open") {
-					log.Printf("magnet:  %s -> %s = %v (uuid: %s)", ev.Name, k, v, ev.UniqueID)
-				} else if strings.HasPrefix(k, "button") {
-					log.Printf("switch:  %s -> %s = %v (uuid: %s)", ev.Name, k, v, ev.UniqueID)
-				} else if strings.HasPrefix(k, "bri") {
-					log.Printf("light:  %s -> %s = %v (uuid: %s)", ev.Name, k, v, ev.UniqueID)
+			cstate, exist := fullState.contactSensors[ev.UniqueID]
+			if exist {
+				dstate := ev.State.(event.ZHAOpenClose)
+				log.Printf("contact:  %s -> %v = %v", cstate.Name, cstate.Contact, fields["open"].(bool))
+				cstate.Contact = fields["open"].(bool)
+				fullState.contactSensors[ev.UniqueID] = cstate
+			} else {
+				mstate, exist := fullState.motionSensors[ev.UniqueID]
+				if exist {
+					log.Printf("motion:  %s -> %v = %v", mstate.Name, mstate.Motion, fields["presence"].(bool))
+					mstate.Motion = fields["presence"].(bool)
+					fullState.motionSensors[ev.UniqueID] = mstate
+				} else {
+					sstate, exist := fullState.switches[ev.UniqueID]
+					if exist {
+						log.Printf("switch:  %s -> %v = %v", sstate.Name, sstate.Button, fields["button"].(bool))
+						sstate.Button = fields["button"].(bool)
+						fullState.switches[ev.UniqueID] = sstate
+					} else {
+						lstate, exist := fullState.lights[ev.UniqueID]
+						if exist {
+							log.Printf("light:  %s -> %v = %v", lstate.Name, lstate.OnOff, fields["on"].(bool))
+							lstate.OnOff = fields["on"].(bool)
+							fullState.lights[ev.UniqueID] = lstate
+						} else {
+							log.Printf("unknown:  %s", ev.UniqueID)
+						}
+					}
 				}
 			}
 
@@ -137,9 +155,9 @@ func main() {
 	}
 }
 
-func eventChan(c deconz.Config) (chan *deconz.DeviceEvent, error) {
+func eventChan(addr string, APIkey string) (chan *deconz.DeviceEvent, error) {
 	// get an event reader from the API
-	d := deconz.API{Config: c}
+	d := deconz.API{Config: deconz.Config{Addr: addr, APIKey: APIkey}}
 	reader, err := d.EventReader()
 	if err != nil {
 		return nil, err
@@ -160,12 +178,13 @@ func eventChan(c deconz.Config) (chan *deconz.DeviceEvent, error) {
 	return channel, nil
 }
 
-func defaultConfiguration() *config.ConbeeConfig {
-	// this is the default configuration
-	c := &config.ConbeeConfig{
-		Addr:   "http://10.0.0.18/api",
-		APIKey: "0A498B9909",
+func defaultConfiguration() config.ConbeeConfig {
+	c := config.ConbeeConfig{}
+	err := config.LoadFile("../config/conbee.config.json", &c)
+	if err == nil {
+		log.Printf("Addr: %s, APIKey: %s", c.Addr, c.APIKey)
+	} else {
+		panic(err)
 	}
-
 	return c
 }

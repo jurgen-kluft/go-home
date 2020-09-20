@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../go-conbee"
+		},
+		{
+			"path": "../go-icloud-calendar"
 		}
 	],
 	"settings": {

@@ -16,16 +16,19 @@ Still need to test the following processes:
 * conbee
 * wemo
 
+## Fix
+
+* calendar; fetching from URL is not working (connection time-out?)
+
 ## Tested
 
 * aqi
 * bravia.tv
-* calendar
 * flux
 * presence
 * samsung.tv
 * shout
 * suncalc
 * weather
-* xiaomi
+* xiaomi (obsolete)
 * yee
