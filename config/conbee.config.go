@@ -1,6 +1,9 @@
 package config
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"io/ioutil"
+)
 
 // ConbeeConfigFromJSON parser the incoming JSON string and returns an Config instance for Aqi
 func ConbeeConfigFromJSON(data []byte) (*ConbeeConfig, error) {
@@ -26,6 +29,20 @@ func (r *ConbeeConfig) ToJSON() (string, error) {
 	return "", err
 }
 
+// LoadConfig loads a ConbeeConfig from a file
+func LoadConfig(filename string) (*ConbeeConfig, error) {
+	filedata, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	c := &ConbeeConfig{}
+	err = json.Unmarshal(filedata, c)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
 // ConbeeConfig contains information to connect to a Conbee-II device
 type ConbeeConfig struct {
 	Addr        string         `json:"Addr"`
@@ -39,16 +56,19 @@ type ConbeeConfig struct {
 	Lights      []ConbeeLight  `json:"lights"`
 }
 
+// ConbeeLight is a structure that references a light object at Conbee
 type ConbeeLight struct {
 	Name string   `json:"name"`
 	IDS  []string `json:"ids"`
 }
 
+// ConbeeSensors is a structure that references sensor objects at Conbee
 type ConbeeSensors struct {
 	Motion  []ConbeeDevice `json:"motion"`
 	Contact []ConbeeDevice `json:"contact"`
 }
 
+// ConbeeDevice is a structure that references a device at Conbee
 type ConbeeDevice struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`

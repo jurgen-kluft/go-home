@@ -51,7 +51,7 @@ type switchState struct {
 	Name     string
 	ID       string
 	LastSeen time.Time
-	Button   bool
+	Button   int
 }
 
 type fullState struct {
@@ -61,7 +61,7 @@ type fullState struct {
 	lights         map[string]*lightState
 }
 
-func fullStateFromConfig(c config.ConbeeConfig) fullState {
+func fullStateFromConfig(c *config.ConbeeConfig) fullState {
 	full := fullState{}
 	full.switches = make(map[string]switchState)
 	full.motionSensors = make(map[string]motionSensorState)
@@ -69,7 +69,7 @@ func fullStateFromConfig(c config.ConbeeConfig) fullState {
 	full.lights = make(map[string]*lightState)
 
 	for _, e := range c.Switches {
-		state := switchState{Name: e.Name, ID: e.ID, LastSeen: time.Now(), Button: false}
+		state := switchState{Name: e.Name, ID: e.ID, LastSeen: time.Now(), Button: 0}
 		full.switches[state.ID] = state
 	}
 	for _, e := range c.Sensors.Motion {
@@ -117,28 +117,46 @@ func main() {
 
 			cstate, exist := fullState.contactSensors[ev.UniqueID]
 			if exist {
-				dstate := ev.State.(event.ZHAOpenClose)
-				log.Printf("contact:  %s -> %v = %v", cstate.Name, cstate.Contact, fields["open"].(bool))
-				cstate.Contact = fields["open"].(bool)
-				fullState.contactSensors[ev.UniqueID] = cstate
+				dstate := ev.State.(*event.ZHAOpenClose)
+				if dstate != nil {
+					log.Printf("contact:  %s -> %v = %v", cstate.Name, cstate.Contact, dstate.Open)
+					cstate.Contact = dstate.Open
+					fullState.contactSensors[ev.UniqueID] = cstate
+				}
 			} else {
 				mstate, exist := fullState.motionSensors[ev.UniqueID]
 				if exist {
-					log.Printf("motion:  %s -> %v = %v", mstate.Name, mstate.Motion, fields["presence"].(bool))
-					mstate.Motion = fields["presence"].(bool)
-					fullState.motionSensors[ev.UniqueID] = mstate
+					dstate := ev.State.(*event.ZHAPresence)
+					if dstate != nil {
+						log.Printf("motion:  %s -> %v = %v", mstate.Name, mstate.Motion, dstate.Presence)
+						mstate.Motion = dstate.Presence
+						fullState.motionSensors[ev.UniqueID] = mstate
+					}
 				} else {
 					sstate, exist := fullState.switches[ev.UniqueID]
 					if exist {
-						log.Printf("switch:  %s -> %v = %v", sstate.Name, sstate.Button, fields["button"].(bool))
-						sstate.Button = fields["button"].(bool)
-						fullState.switches[ev.UniqueID] = sstate
+						dstate := ev.State.(*event.ZHASwitch)
+						if dstate != nil {
+							log.Printf("switch:  %s -> %v = %v", sstate.Name, sstate.Button, dstate.Buttonevent)
+							sstate.Button = dstate.Buttonevent
+							fullState.switches[ev.UniqueID] = sstate
+						}
 					} else {
 						lstate, exist := fullState.lights[ev.UniqueID]
 						if exist {
-							log.Printf("light:  %s -> %v = %v", lstate.Name, lstate.OnOff, fields["on"].(bool))
-							lstate.OnOff = fields["on"].(bool)
-							fullState.lights[ev.UniqueID] = lstate
+							dstate1 := ev.State.(*event.ExtendedColorLightState)
+							if dstate1 != nil {
+								log.Printf("light:  %s -> %v = %v", lstate.Name, lstate.OnOff, dstate1.On)
+								lstate.OnOff = dstate1.On
+								fullState.lights[ev.UniqueID] = lstate
+							} else {
+								dstate2 := ev.State.(*event.DimmableLightState)
+								if dstate2 != nil {
+									log.Printf("light:  %s -> %v = %v", lstate.Name, lstate.OnOff, dstate2.On)
+									lstate.OnOff = dstate2.On
+									fullState.lights[ev.UniqueID] = lstate
+								}
+							}
 						} else {
 							log.Printf("unknown:  %s", ev.UniqueID)
 						}
@@ -178,9 +196,8 @@ func eventChan(addr string, APIkey string) (chan *deconz.DeviceEvent, error) {
 	return channel, nil
 }
 
-func defaultConfiguration() config.ConbeeConfig {
-	c := config.ConbeeConfig{}
-	err := config.LoadFile("../config/conbee.config.json", &c)
+func defaultConfiguration() *config.ConbeeConfig {
+	c, err := config.LoadConfig("../config/conbee.config.json")
 	if err == nil {
 		log.Printf("Addr: %s, APIKey: %s", c.Addr, c.APIKey)
 	} else {
