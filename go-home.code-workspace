@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../go-icloud-calendar"
+		},
+		{
+			"path": "../go-deconz"
 		}
 	],
 	"settings": {

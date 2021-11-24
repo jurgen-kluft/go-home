@@ -39,6 +39,9 @@ func (d *Decoder) Parse(b []byte) (*Event, error) {
 	// TODO: figure out what to do with these
 	//       some of them seems to be battery updates
 	if !d.TypeStore.SupportsResource(e.Resource) || len(e.RawState) == 0 {
+		if !d.TypeStore.SupportsResource(e.Resource) {
+			fmt.Printf("Unsupported device type '%s': %s\n", e.Resource, string(e.RawState))
+		}
 		e.State = &EmptyState{}
 		return &e, nil
 	}
@@ -115,11 +118,13 @@ func (e *Event) ParseState(tl TypeLookuper) error {
 		err = json.Unmarshal(e.RawState, &s)
 		e.State = &s
 	case "Extended color light":
-		var s ExtendedColorLightState
+		var s LightState
+		fmt.Printf("light-state: %s\n", string(e.RawState))
 		err = json.Unmarshal(e.RawState, &s)
 		e.State = &s
 	case "Dimmable light":
-		var s DimmableLightState
+		var s LightState
+		fmt.Printf("light-state: %s\n", string(e.RawState))
 		err = json.Unmarshal(e.RawState, &s)
 		e.State = &s
 	default:
@@ -137,8 +142,9 @@ type State struct {
 	Lastupdated string
 }
 
-// ExtendedColorLightState represent the state of a extended color light type
-type ExtendedColorLightState struct {
+// LightState represent the state of a extended color light type
+type LightState struct {
+	State
 	ColorMode string
 	Bri       int
 	CT        int
@@ -146,11 +152,13 @@ type ExtendedColorLightState struct {
 	Reachable bool
 }
 
-// DimmableLightState represent the state of a dimmable light type
-type DimmableLightState struct {
-	Bri       int
-	On        bool
-	Reachable bool
+// IsLightState returns true if s is of type LightState
+func IsLightState(s interface{}) bool {
+	switch s.(type) {
+	case *LightState:
+		return true
+	}
+	return false
 }
 
 // ZHAHumidity represents a presure change
@@ -281,4 +289,15 @@ func (z *Daylight) Fields() map[string]interface{} {
 }
 
 // EmptyState is an empty struct used to indicate no state was parsed
-type EmptyState struct{}
+type EmptyState struct {
+	State
+}
+
+// IsEmptyState returns true if s is of type EmptyState
+func IsEmptyState(s interface{}) bool {
+	switch s.(type) {
+	case *EmptyState:
+		return true
+	}
+	return false
+}

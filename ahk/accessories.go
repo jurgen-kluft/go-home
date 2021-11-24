@@ -51,7 +51,7 @@ func turnOnOffLightGroup(groupID int, on bool) {
 }
 
 func (c *coloredLightbulb) Callback(onoff bool) {
-	turnOnOffLightGroup(18, onoff)
+	turnOnOffLightGroup(int(c.Accessory.ID), onoff)
 }
 
 type lightbulb struct {
@@ -271,4 +271,62 @@ func (a *accessories) initializeFromConfig(config *config.AhkConfig) []*accessor
 	}
 
 	return accs
+}
+
+func accessoryTypeToString(atype accessory.AccessoryType) string {
+	switch atype {
+	case accessory.TypeBridge:
+		return "Bridge"
+	case accessory.TypeFan:
+		return "Fan"
+	case accessory.TypeGarageDoorOpener:
+		return "Garage Door Opener"
+	case accessory.TypeLightbulb:
+		return "Lightbulb"
+	case accessory.TypeDoorLock:
+		return "Door Lock"
+	case accessory.TypeOutlet:
+		return "Outlet"
+	case accessory.TypeSwitch:
+		return "Switch"
+	case accessory.TypeThermostat:
+		return "Thermostat"
+	case accessory.TypeSensor:
+		return "Sensor"
+	case accessory.TypeSecuritySystem:
+		return "Security System"
+	case accessory.TypeDoor:
+		return "Door"
+	case accessory.TypeWindow:
+		return "Window"
+	case accessory.TypeWindowCovering:
+		return "Window Covering"
+	case accessory.TypeProgrammableSwitch:
+		return "Programmable Switch"
+	case accessory.TypeIPCamera:
+		return "IP Camera"
+	case accessory.TypeVideoDoorbell:
+		return "Video Doorbell"
+	case accessory.TypeAirPurifier:
+		return "Air Purifier"
+	case accessory.TypeHeater:
+		return "Heater"
+	case accessory.TypeAirConditioner:
+		return "Air Conditioner"
+	case accessory.TypeHumidifier:
+		return "Humidifier"
+	case accessory.TypeDehumidifier:
+		return "Dehumidifier"
+	case accessory.TypeSprinklers:
+		return "Sprinklers"
+	case accessory.TypeFaucets:
+		return "Faucets"
+	case accessory.TypeShowerSystems:
+		return "Shower System"
+	case accessory.TypeTelevision:
+		return "Television"
+	case accessory.TypeRemoteControl:
+		return "Remote Control"
+	}
+	return ""
 }

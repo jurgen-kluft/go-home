@@ -63,7 +63,7 @@ func main() {
 
 	tickCount := 0
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
-		if (tickCount & 0x1) == 0 {
+		if (tickCount % 5) == 0 {
 			// Every 10 seconds
 			if auto.config != nil {
 				auto.now = time.Now()

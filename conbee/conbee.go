@@ -19,7 +19,8 @@ State {Write} [
 ]
 
 When turning ON a light from automation logic we inform Conbee. We will keep
-reading the state which will be the only factual state.
+reading the state which will be the only factual state. The factual state will
+be reported (and displayed/refreshed in any UI)
 
 */
 
@@ -105,6 +106,11 @@ func main() {
 	timeout := time.NewTimer(1 * time.Second)
 	timeout.Stop()
 
+	// This could be the start of a module to keep track of the state
+	// of lights and motion sensors.
+	// Even lights that are turned on and off are seen.
+	// We should send this information to 'automation' and 'ahk'
+	//
 	for {
 
 		select {
@@ -114,56 +120,51 @@ func main() {
 			//	log.Printf("skip event: '%s'", err)
 			//	continue
 			//}
-
-			cstate, exist := fullState.contactSensors[ev.UniqueID]
-			if exist {
-				dstate := ev.State.(*event.ZHAOpenClose)
-				if dstate != nil {
-					log.Printf("contact:  %s -> %v = %v", cstate.Name, cstate.Contact, dstate.Open)
-					cstate.Contact = dstate.Open
-					fullState.contactSensors[ev.UniqueID] = cstate
-				}
+			if ev.State == nil || event.IsEmptyState(ev.State) {
+				// An empty state for one of the devices
 			} else {
-				mstate, exist := fullState.motionSensors[ev.UniqueID]
+				cstate, exist := fullState.contactSensors[ev.UniqueID]
 				if exist {
-					dstate := ev.State.(*event.ZHAPresence)
+					dstate := ev.State.(*event.ZHAOpenClose)
 					if dstate != nil {
-						log.Printf("motion:  %s -> %v = %v", mstate.Name, mstate.Motion, dstate.Presence)
-						mstate.Motion = dstate.Presence
-						fullState.motionSensors[ev.UniqueID] = mstate
+						log.Printf("contact:  %s -> %v = %v", cstate.Name, cstate.Contact, dstate.Open)
+						cstate.Contact = dstate.Open
+						fullState.contactSensors[ev.UniqueID] = cstate
 					}
 				} else {
-					sstate, exist := fullState.switches[ev.UniqueID]
+					mstate, exist := fullState.motionSensors[ev.UniqueID]
 					if exist {
-						dstate := ev.State.(*event.ZHASwitch)
+						dstate := ev.State.(*event.ZHAPresence)
 						if dstate != nil {
-							log.Printf("switch:  %s -> %v = %v", sstate.Name, sstate.Button, dstate.Buttonevent)
-							sstate.Button = dstate.Buttonevent
-							fullState.switches[ev.UniqueID] = sstate
+							log.Printf("motion:  %s -> %v = %v", mstate.Name, mstate.Motion, dstate.Presence)
+							mstate.Motion = dstate.Presence
+							fullState.motionSensors[ev.UniqueID] = mstate
 						}
 					} else {
-						lstate, exist := fullState.lights[ev.UniqueID]
+						sstate, exist := fullState.switches[ev.UniqueID]
 						if exist {
-							dstate1 := ev.State.(*event.ExtendedColorLightState)
-							if dstate1 != nil {
-								log.Printf("light:  %s -> %v = %v", lstate.Name, lstate.OnOff, dstate1.On)
-								lstate.OnOff = dstate1.On
-								fullState.lights[ev.UniqueID] = lstate
-							} else {
-								dstate2 := ev.State.(*event.DimmableLightState)
-								if dstate2 != nil {
-									log.Printf("light:  %s -> %v = %v", lstate.Name, lstate.OnOff, dstate2.On)
-									lstate.OnOff = dstate2.On
-									fullState.lights[ev.UniqueID] = lstate
-								}
+							dstate := ev.State.(*event.ZHASwitch)
+							if dstate != nil {
+								log.Printf("switch:  %s -> %v = %v", sstate.Name, sstate.Button, dstate.Buttonevent)
+								sstate.Button = dstate.Buttonevent
+								fullState.switches[ev.UniqueID] = sstate
 							}
 						} else {
-							log.Printf("unknown:  %s", ev.UniqueID)
+							lstate, exist := fullState.lights[ev.UniqueID]
+							if exist {
+								dstate1 := ev.State.(*event.LightState)
+								if dstate1 != nil {
+									log.Printf("light:  %s -> %v = %v", lstate.Name, lstate.OnOff, dstate1.On)
+									lstate.OnOff = dstate1.On
+									fullState.lights[ev.UniqueID] = lstate
+								}
+							} else {
+								log.Printf("unknown:  %s", ev.UniqueID)
+							}
 						}
 					}
 				}
 			}
-
 			timeout.Reset(1 * time.Second)
 
 		case <-timeout.C:
