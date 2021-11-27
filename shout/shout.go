@@ -5,7 +5,7 @@ import (
 
 	"github.com/jurgen-kluft/go-home/config"
 	microservice "github.com/jurgen-kluft/go-home/micro-service"
-	"github.com/nlopes/slack"
+	"github.com/slack-go/slack"
 )
 
 // Instance is our instant-messenger instance (currently Slack)
