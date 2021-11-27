@@ -20,15 +20,15 @@
       "filename": "calendar.config.json",
       "channel": "config/calendar/"
     },
+    "conbee": {
+      "name": "conbee",
+      "filename": "conbee.config.json",
+      "channel": "config/conbee/"
+    },
     "flux": {
       "name": "flux",
       "filename": "flux.config.json",
       "channel": "config/flux/"
-    },
-    "hue": {
-      "name": "hue",
-      "filename": "hue.config.json",
-      "channel": "config/hue/"
     },
     "huebridge": {
       "name": "huebridge",

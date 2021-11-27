@@ -21,12 +21,12 @@ func (r *ConbeeConfig) FromJSON(data []byte) error {
 }
 
 // ToJSON converts a ConbeeConfig to a JSON string
-func (r *ConbeeConfig) ToJSON() (string, error) {
+func (r *ConbeeConfig) ToJSON() ([]byte, error) {
 	data, err := json.Marshal(r)
 	if err == nil {
-		return string(data), nil
+		return data, nil
 	}
-	return "", err
+	return nil, err
 }
 
 // LoadConfig loads a ConbeeConfig from a file
@@ -45,32 +45,48 @@ func LoadConfig(filename string) (*ConbeeConfig, error) {
 
 // ConbeeConfig contains information to connect to a Conbee-II device
 type ConbeeConfig struct {
-	Addr        string         `json:"Addr"`
-	APIKey      string         `json:"APIKey"`
-	LightsOut   string         `json:"lights.out"`
-	SwitchesOut string         `json:"switches.out"`
-	SensorsOut  string         `json:"sensors.out"`
-	LightsIn    []string       `json:"lights.in"`
-	Switches    []ConbeeDevice `json:"switches"`
-	Sensors     ConbeeSensors  `json:"sensors"`
-	Lights      []ConbeeLight  `json:"lights"`
+	Addr       string             `json:"Addr"`
+	APIKey     string             `json:"APIKey"`
+	LightsOut  string             `json:"lights.out"`
+	SensorsOut string             `json:"sensors.out"`
+	LightsIn   []string           `json:"lights.in"`
+	Switches   []ConbeeSwitch     `json:"switch"`
+	Motion     []ConbeeMotion     `json:"motion"`
+	Contact    []ConbeeContact    `json:"contact"`
+	Lights     []ConbeeLightGroup `json:"lights"`
 }
 
 // ConbeeLight is a structure that references a light object at Conbee
-type ConbeeLight struct {
+type ConbeeLightGroup struct {
 	Name string   `json:"name"`
 	IDS  []string `json:"ids"`
 }
 
-// ConbeeSensors is a structure that references sensor objects at Conbee
-type ConbeeSensors struct {
-	Motion  []ConbeeDevice `json:"motion"`
-	Contact []ConbeeDevice `json:"contact"`
-}
-
-// ConbeeDevice is a structure that references a device at Conbee
+// ConbeeDevice is a structure that references a general device at Conbee
 type ConbeeDevice struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
 	BatteryType string `json:"battery_type"`
+}
+
+// ConbeeMotion is a structure that references a motion sensor device at Conbee
+type ConbeeMotion struct {
+	ConbeeDevice
+	On  string `json:"on"`
+	Off string `json:"off"`
+}
+
+// ConbeeContact is a structure that references a magnet sensor device at Conbee
+type ConbeeContact struct {
+	ConbeeDevice
+	Open  string `json:"open"`
+	Close string `json:"close"`
+}
+
+// ConbeeContact is a structure that references a switch/button device at Conbee
+type ConbeeSwitch struct {
+	ConbeeDevice
+	SingleClick  string `json:"single_click"`
+	DoubleClick  string `json:"double_click"`
+	TrippleClick string `json:"tripple_click"`
 }

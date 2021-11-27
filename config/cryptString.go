@@ -70,7 +70,7 @@ func (cs CryptString) Value() (value driver.Value, err error) {
 func SetCryptKey(secretKey []byte) error {
 	keyLen := len(secretKey)
 	if keyLen != 16 && keyLen != 24 && keyLen != 32 {
-		return fmt.Errorf("Invalid KEY to set for GO_HOME_KEY; must be 16, 24, or 32 bytes (got %d)", keyLen)
+		return fmt.Errorf("invalid KEY to set for GO_HOME_KEY; must be 16, 24, or 32 bytes (got %d)", keyLen)
 	}
 	cryptKeeperKey = secretKey
 	return nil

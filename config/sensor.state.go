@@ -5,8 +5,28 @@ import (
 	"time"
 )
 
+const (
+	KitchenMotionSensor          = "Kitchen Motion"
+	LivingroomMotionSensor       = "Livingroom Motion"
+	BedroomMotionSensor          = "Bedroom Motion"
+	BedroomPowerPlug             = "Bedroom Plug"
+	BedroomCeilingLightSwitch    = "Bedroom Ceiling Light-Switch"
+	BedroomChandelierLightSwitch = "Bedroom Chandelier Light-Switch"
+	BedroomSwitch                = "Bedroom Switch"
+	SophiaRoomSwitch             = "Sophia Switch"
+	FrontdoorMagnetSensor        = "Front Door Magnet"
+)
+
+const (
+	SwitchSingleClick  = "single click"
+	SwitchDoubleClick  = "double click"
+	SwitchTrippleClick = "tripple click"
+	SwitchLongPress    = "long press"
+	SwitchLongRelease  = "long release"
+)
+
 // SensorState holds all information of a sensor
-// e.g. Name="aqi", Type="AirQuality", IntAttr{ Name:"PM2.5", Value: 54 }
+// e.g. { "Name": "aqi", "Type": "AirQuality", "IntAttr": { "Name": "PM2.5", "Value": 54 } }
 type SensorState struct {
 	Name         string        `json:"name"`
 	Type         string        `json:"type"`

@@ -308,12 +308,12 @@ func main() {
 
 	tickCount := 0
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
-		if (tickCount % 5) == 0 {
+		if (tickCount % 30) == 0 {
 			err := c.Process()
 			if err != nil {
 				m.Logger.LogError(c.name, err.Error())
 			}
-		} else if (tickCount % 30) == 0 {
+		} else if (tickCount % 59) == 0 {
 			if c.config == nil {
 				m.Pubsub.PublishStr("config/request/", m.Name)
 			}

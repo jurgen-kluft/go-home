@@ -3,7 +3,6 @@ package event
 import (
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/gorilla/websocket"
 )
@@ -63,8 +62,7 @@ func (r *Reader) ReadEvent() (*Event, error) {
 
 	e, err := r.decoder.Parse(message)
 	if err != nil {
-		log.Printf("recv: %s", message)
-		return nil, EventErrorImpl{fmt.Errorf("unable to parse message: %s", err).Error(), true}
+		return nil, EventErrorImpl{fmt.Errorf("unable to parse message: %s", string(message)).Error(), true}
 	}
 
 	return e, nil

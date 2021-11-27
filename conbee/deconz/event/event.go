@@ -32,7 +32,7 @@ func (d *Decoder) Parse(b []byte) (*Event, error) {
 	var e Event
 	err := json.Unmarshal(b, &e)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal json: %s", err)
+		return nil, fmt.Errorf("unable to unmarshal json: %s", string(b))
 	}
 
 	// If there is no state, dont try to parse it
@@ -48,7 +48,7 @@ func (d *Decoder) Parse(b []byte) (*Event, error) {
 
 	err = e.ParseState(d.TypeStore)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal state: %s", err)
+		return nil, fmt.Errorf("unable to parse state: %s", string(b))
 	}
 
 	return &e, nil
@@ -237,13 +237,23 @@ func (z *ZHAFire) Fields() map[string]interface{} {
 // ZHASwitch represents a change from a button or switch
 type ZHASwitch struct {
 	State
-	Buttonevent int
+	ButtonEvent int32
+}
+
+func (z *ZHASwitch) ButtonEventAsString() string {
+	switch z.ButtonEvent {
+	case 1002:
+		return "single click"
+	case 1004:
+		return "double click"
+	}
+	return "click"
 }
 
 // Fields returns timeseries data for influxdb
 func (z *ZHASwitch) Fields() map[string]interface{} {
 	return map[string]interface{}{
-		"buttonevent": z.Buttonevent,
+		"buttonevent": z.ButtonEvent,
 	}
 }
 
