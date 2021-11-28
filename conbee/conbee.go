@@ -1,8 +1,8 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"sync/atomic"
 	"time"
 
@@ -13,18 +13,8 @@ import (
 )
 
 /*
-STATE
-
-State {Read} [
-]
-
-State {Write} [
-]
-
-When turning ON a light from automation logic we inform Conbee. We will keep
-reading the state which will be the only factual state. The factual state will
-be reported (and displayed/refreshed in any UI)
-
+This process will scan for events from Conbee, mainly sensors and will send those as
+sensor states over NATS.
 */
 
 type lightState struct {
@@ -98,46 +88,43 @@ func fullStateFromConfig(c *config.ConbeeConfig) fullState {
 	return full
 }
 
-type AtomBool int32
+type signal_t int32
 
-func (b *AtomBool) Set(value bool) {
+func (b *signal_t) set(value bool) {
 	var i int32 = 0
 	if value {
 		i = 1
 	}
 	atomic.StoreInt32((*int32)(b), int32(i))
 }
-func (b *AtomBool) IsTrue() bool {
+func (b *signal_t) is_true() bool {
 	return atomic.LoadInt32((*int32)(b)) != 0
 }
-func (b *AtomBool) IsNotTrue() bool {
+func (b *signal_t) is_not_true() bool {
 	return atomic.LoadInt32((*int32)(b)) == 0
 }
 
-func async_conbee(cc *config.ConbeeConfig, mm *microservice.Service, running *AtomBool, quit chan bool) {
+func async_conbee(ctx context.Context, sg *signal_t, cc *config.ConbeeConfig, mm *microservice.Service) {
 	mm.Logger.LogInfo(mm.Name, fmt.Sprintf("Connecting to deCONZ at %s with API key %s", cc.Addr, cc.APIKey))
 
-	defer running.Set(false)
+	defer sg.set(true)
 
 	eventChan, err := eventChan(cc.Addr, cc.APIKey)
 	if err != nil {
 		return
 	}
+	defer close(eventChan)
+
 	mm.Logger.LogInfo(mm.Name, fmt.Sprintf("Connected to deCONZ at %s", cc.Addr))
 
 	fullState := fullStateFromConfig(cc)
 	for {
 
 		select {
-		case <-quit:
+		case <-ctx.Done():
 			return
 
 		case ev := <-eventChan:
-			//fields, err := ev.Fields()
-			//if err != nil {
-			//	log.Printf("skip event: '%s'", err)
-			//	continue
-			//}
 			if ev.State == nil || event.IsEmptyState(ev.State) {
 				// An empty state for one of the devices
 			} else {
@@ -215,9 +202,7 @@ func main() {
 	var cc *config.ConbeeConfig = nil
 	var nc *config.ConbeeConfig = nil
 
-	async_conbee_quit := make(chan bool)
-	async_conbee_running := new(AtomBool)
-	async_conbee_running.Set(false)
+	var alive signal_t
 
 	for {
 		var err error
@@ -232,6 +217,11 @@ func main() {
 			register = append(register, cc.LightsOut)
 			register = append(register, cc.SensorsOut)
 		}
+
+		// context.WithCancel returns a copy of parent with a new Done channel.
+		// The returned context's Done channel is closed when the returned cancel function is called or when the parent
+		// context's Done channel is closed, whichever happens first.
+		ctx, cancel := context.WithCancel(context.Background())
 
 		m := microservice.New("conbee")
 		m.RegisterAndSubscribe(register, subscribe)
@@ -262,7 +252,7 @@ func main() {
 				}
 			} else if (tickCount % 9) == 0 {
 				if cc != nil {
-					if async_conbee_running.IsNotTrue() {
+					if alive.is_not_true() {
 						m.Logger.LogInfo(m.Name, "Conbee routine is not running, schedule restart..")
 						// seems that async_conbee go routine is not running
 						// micro-service exit and restart
@@ -275,18 +265,17 @@ func main() {
 		})
 
 		if cc != nil {
-			async_conbee_running.Set(true)
-			go async_conbee(cc, m, async_conbee_running, async_conbee_quit)
+			alive.set(true)
+			go async_conbee(ctx, &alive, cc, m)
 		}
 
 		m.Loop()
 
 		// signal our (running) async conbee go routine to exit
-		if async_conbee_running.IsTrue() {
-			async_conbee_quit <- true
-			for async_conbee_running.IsTrue() {
-				time.Sleep(1 * time.Second)
-			}
+		cancel()
+
+		for alive.is_true() {
+			time.Sleep(1 * time.Second)
 		}
 
 		// Sleep for a while before restarting
@@ -319,14 +308,4 @@ func eventChan(addr string, APIkey string) (chan *deconz.DeviceEvent, error) {
 	eventReader.Start(channel)
 	// return the channel
 	return channel, nil
-}
-
-func defaultConfiguration() *config.ConbeeConfig {
-	c, err := config.LoadConfig("../config/conbee.config.json")
-	if err == nil {
-		log.Printf("Addr: %s, APIKey: %s", c.Addr, c.APIKey)
-	} else {
-		panic(err)
-	}
-	return c
 }
