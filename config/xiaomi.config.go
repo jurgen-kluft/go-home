@@ -4,25 +4,6 @@ import (
 	"encoding/json"
 )
 
-const (
-	KitchenMotionSensor          = "Kitchen Motion"
-	LivingroomMotionSensor       = "Livingroom Motion"
-	BedroomMotionSensor          = "Bedroom Motion"
-	BedroomPowerPlug             = "Bedroom Plug"
-	BedroomCeilingLightSwitch    = "Bedroom Ceiling Light-Switch"
-	BedroomChandelierLightSwitch = "Bedroom Chandelier Light-Switch"
-	BedroomSwitch                = "Bedroom Switch"
-	SophiaRoomSwitch             = "Sophia Switch"
-	FrontdoorMagnetSensor        = "Front Door Magnet"
-)
-
-const (
-	WirelessSwitchSingleClick = "single click"
-	WirelessSwitchDoubleClick = "double click"
-	WirelessSwitchLongPress   = "long press"
-	WirelessSwitchLongRelease = "long release"
-)
-
 type XiaomiConfig struct {
 	Name   string      `json:"name"`
 	IP     string      `json:"ip"`

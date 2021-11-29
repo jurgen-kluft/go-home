@@ -8,24 +8,37 @@ Setup the following on my Mac Mini:
 * Influx DB  [DONE]
 * Grafana    [WIP]
 
+## ESP32
+
+The following micro services could run on an ESP32:
+
+* SunCalc
+* Flux
+* Calendar
+* Zigbee HUB
+* BLE Scan??
+
 ## Test
 
 Still need to test the following processes:
 
 * ahk
-* conbee
+* conbee (state reader)
 * wemo
+
+## Fix
+
+* calendar; fetching from URL is not working (connection time-out?)
 
 ## Tested
 
 * aqi
 * bravia.tv
-* calendar
 * flux
 * presence
 * samsung.tv
 * shout
 * suncalc
 * weather
-* xiaomi
+* xiaomi (obsolete)
 * yee

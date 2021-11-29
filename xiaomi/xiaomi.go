@@ -174,7 +174,7 @@ func main() {
 				case *migateway.GatewayStateChange:
 					state := msg.(*migateway.GatewayStateChange)
 					name := "gateway"
-					sensor := config.NewSensorState(name)
+					sensor := config.NewSensorState(name, "gateway")
 					sensor.AddFloatAttr("illumination", state.To.Illumination)
 					sensor.AddIntAttr("rgb", int64(state.To.RGB))
 					jsondata, err := sensor.ToJSON()
@@ -187,7 +187,7 @@ func main() {
 				case *migateway.MagnetStateChange:
 					state := msg.(*migateway.MagnetStateChange)
 					name := xiaomi.GetNameOfMagnetSensor(state.ID)
-					sensor := config.NewSensorState(name)
+					sensor := config.NewSensorState(name, "contact")
 					sensor.AddBoolAttr("open", state.To.Opened)
 					sensor.AddFloatAttr("battery", float64(state.To.Battery))
 					jsondata, err := sensor.ToJSON()
@@ -200,7 +200,7 @@ func main() {
 				case *migateway.MotionStateChange:
 					state := msg.(*migateway.MotionStateChange)
 					name := xiaomi.GetNameOfMotionSensor(state.ID)
-					sensor := config.NewSensorState(name)
+					sensor := config.NewSensorState(name, "motion")
 					sensor.AddTimeWndAttr("lastmotion", state.To.LastMotion, time.Now())
 					sensor.AddBoolAttr("motion", state.To.HasMotion)
 					sensor.AddFloatAttr("battery", float64(state.To.Battery))
@@ -214,7 +214,7 @@ func main() {
 				case *migateway.PlugStateChange:
 					state := msg.(*migateway.PlugStateChange)
 					name := xiaomi.GetNameOfPlug(state.ID)
-					sensor := config.NewSensorState(name)
+					sensor := config.NewSensorState(name, "powerplug")
 					sensor.AddBoolAttr("inuse", state.To.InUse)
 					sensor.AddBoolAttr("ison", state.To.IsOn)
 					sensor.AddIntAttr("loadvoltage", int64(state.To.LoadVoltage))
@@ -230,7 +230,7 @@ func main() {
 				case *migateway.SwitchStateChange:
 					state := msg.(*migateway.SwitchStateChange)
 					name := xiaomi.GetNameOfSwitch(state.ID)
-					sensor := config.NewSensorState(name)
+					sensor := config.NewSensorState(name, "switch")
 					sensor.AddStringAttr("click", state.To.Click.String())
 					sensor.AddFloatAttr("battery", float64(state.To.Battery))
 					jsondata, err := sensor.ToJSON()
@@ -243,7 +243,7 @@ func main() {
 				case *migateway.DualWiredWallSwitchStateChange:
 					state := msg.(*migateway.DualWiredWallSwitchStateChange)
 					name := xiaomi.GetNameOfSwitch(state.ID)
-					sensor := config.NewSensorState(name)
+					sensor := config.NewSensorState(name, "switch")
 					sensor.AddBoolAttr("channel0", state.To.Channel0On)
 					sensor.AddBoolAttr("channel1", state.To.Channel1On)
 					jsondata, err := sensor.ToJSON()

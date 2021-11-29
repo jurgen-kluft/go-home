@@ -26,3 +26,9 @@ tags
 
 !*.code-workspace
 !*.iotworkbenchproject
+
+#except the following folders
+!ahk/
+!aqi/
+!automation/
+!lights/

@@ -17,63 +17,63 @@
       "type": "colored",
       "channel": "state/light/ahk/",
       "manufacturer": "Philips Hue",
-      "id": 101
+      "id": 7
     },
     {
       "name": "Livingroom Stand",
       "type": "colored",
       "channel": "state/light/ahk/",
       "manufacturer": "Philips Hue",
-      "id": 201
+      "id": 5
     },
     {
       "name": "Livingroom Main",
       "type": "white",
       "channel": "state/light/ahk/",
       "manufacturer": "IKEA",
-      "id": 202
+      "id": 6
     },
     {
       "name": "Livingroom Dinner",
       "type": "white",
       "channel": "state/light/ahk/",
       "manufacturer": "IKEA",
-      "id": 203
+      "id": 7
     },
     {
       "name": "Jennifer Main",
       "type": "colored",
       "channel": "state/light/ahk/",
       "manufacturer": "Philips Hue",
-      "id": 301
+      "id": 10
     },
     {
       "name": "Sophia Stand",
       "type": "colored",
       "channel": "state/light/ahk/",
       "manufacturer": "Philips Hue",
-      "id": 401
+      "id": 8
     },
     {
       "name": "Sophia Main",
       "type": "white",
       "channel": "state/light/ahk/",
       "manufacturer": "Philips Hue",
-      "id": 402
+      "id": 9
     },
     {
       "name": "Bedroom Stand",
       "type": "colored",
       "channel": "state/light/ahk/",
       "manufacturer": "Philips Hue",
-      "id": 501
+      "id": 12
     },
     {
       "name": "Bedroom Main",
       "type": "colored",
       "channel": "state/light/ahk/",
       "manufacturer": "Philips Hue",
-      "id": 502
+      "id": 13
     },
     {
       "name": "Frontdoor Hall Light",

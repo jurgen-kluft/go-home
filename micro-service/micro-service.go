@@ -133,7 +133,6 @@ func (m *Service) Loop() {
 		err := m.Pubsub.Connect(m.Name, m.PubsubRegister, m.PubsubSubscribe)
 		if err == nil {
 			m.Logger.LogInfo("pubsub", "connected")
-			m.Pubsub.PublishStr("config/request/", m.Name)
 
 			connected := true
 			for connected {
@@ -179,7 +178,11 @@ func (m *Service) Loop() {
 			m.Logger.LogError(m.Name, err.Error())
 		}
 
-		m.Logger.LogInfo("pubsub", "Waiting 5 seconds before re-connecting..")
-		time.Sleep(5 * time.Second)
+		if !quit {
+			m.Logger.LogInfo("pubsub", "Waiting 5 seconds before re-connecting..")
+			time.Sleep(5 * time.Second)
+		} else {
+			m.Logger.LogInfo("pubsub", "End.")
+		}
 	}
 }

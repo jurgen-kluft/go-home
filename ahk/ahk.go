@@ -27,7 +27,7 @@ func main() {
 	config := hc.Config{Pin: ahkConfig.Pin}
 	fmt.Println("bridge: " + acsrs.Bridge.Info.Name.GetValue())
 	for _, acc := range accs {
-		fmt.Println("   accessory: " + acc.Info.Name.GetValue())
+		fmt.Println("   accessory: " + acc.Info.Name.GetValue() + " type:" + accessoryTypeToString(acc.Type))
 	}
 	t, err := hc.NewIPTransport(config, acsrs.Bridge.Accessory, accs...)
 	if err != nil {
@@ -41,6 +41,8 @@ func main() {
 	t.Start()
 
 	// Receive complete state of lights, sensors and TV's
+	// Somewhere we should hold a single source of truth, the full state of
+	// all lights, TV's, booleans and other variables.
 
 	return
 }

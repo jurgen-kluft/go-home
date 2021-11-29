@@ -2,10 +2,11 @@ package pubsub
 
 import (
 	"fmt"
-	server "github.com/nats-io/nats.go"
 	"strings"
 	"sync/atomic"
 	"time"
+
+	server "github.com/nats-io/nats.go"
 )
 
 type AtomBool int32
@@ -93,7 +94,7 @@ func (ctx *Context) Connect(username string, register, subscribe []string) error
 		ctx.Connected.Set(true)
 		go func() {
 			for ctx.Connected.IsTrue() {
-				time.Sleep(time.Duration(2) * time.Second)
+				time.Sleep(time.Duration(1) * time.Second)
 				ctx.InMsgs <- ctx.Tick
 			}
 		}()

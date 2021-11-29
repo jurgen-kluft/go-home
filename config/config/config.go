@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/jurgen-kluft/go-home/config"
-	"github.com/jurgen-kluft/go-home/micro-service"
+	microservice "github.com/jurgen-kluft/go-home/micro-service"
 )
 
 // Configs holds all the config objects that we can have
@@ -51,10 +51,10 @@ func (c *context) configFromJSON(configname string, jsondata []byte) (config.Con
 		ci, err = config.BraviaTVConfigFromJSON(jsondata)
 	case "calendar":
 		ci, err = config.CalendarConfigFromJSON(jsondata)
+	case "conbee":
+		ci, err = config.ConbeeConfigFromJSON(jsondata)
 	case "flux":
 		ci, err = config.FluxConfigFromJSON(jsondata)
-	case "hue":
-		ci, err = config.HueConfigFromJSON(jsondata)
 	case "huebridge":
 		ci, err = config.HueBridgeConfigFromJSON(jsondata)
 	case "presence":

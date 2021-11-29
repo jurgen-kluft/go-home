@@ -2,30 +2,26 @@
 	"name": "Netgear Nighthawk R6900",
 	"host": "10.0.0.1",
 	"port": 5000,
-	"user": "admin",
-	"password": "ng_postulate8008",
+	"user": "cFOGyzpNP-BWB_UL2H4fgAvM_bpp",
+	"password": "E1q2lzVQams43tTV5pgxTsdnNWoS7EDxGgrfDEHjmyk=",
 	"update_history": 64,
 	"update_interval_sec": 9,
 	"devices": [
 		{
 			"name": "Faith",
-			"mac": "70:F0:87:70:07:81"
-		},
-		{
-			"name": "Faith",
-			"mac": "18:F1:D8:98:0B:52"
+			"mac": "8w6VcCHNWfqqqQNolv8VRlLXVwU62RH3l4cBs32_kFN4"
 		},
 		{
 			"name": "Jurgen",
-			"mac": "B8:C1:11:82:E4:72"
+			"mac": "Cfd8hY-UJmDC1Up5LE_kqq1DjZOPYehYm4dfwC1jGnsP"
 		},
 		{
 			"name": "GrandPa",
-			"mac": "78:02:F8:2A:70:1A"
+			"mac": "_eWM6U7cmiK_5SVMwwHf9H24bag3v_1X7mV4jmKmjyf_"
 		},
 		{
 			"name": "GrandMa",
-			"mac": "90:3C:92:72:0D:C8"
+			"mac": "Cku3kuhsaadvsvIyJmi_qwt5f1LIZ_i_neWPFJT384hv"
 		}
 	]
 }

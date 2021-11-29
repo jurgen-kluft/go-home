@@ -211,7 +211,7 @@ func (c *context) Process() error {
 	//  - Sensor.Light.DarkOrLight = string(Dark)
 
 	for _, ltype := range c.config.Lighttype {
-		sensor := config.NewSensorState("all")
+		sensor := config.NewSensorState("all", "flux")
 
 		c.metrics.Begin(ltype.Name)
 
@@ -231,7 +231,7 @@ func (c *context) Process() error {
 		}
 	}
 
-	sensorDOL, err := config.StringAttrAsJSON("darkorlight", "DarkOrLight", string(current.Darkorlight))
+	sensorDOL, err := config.StringAttrAsJSON("darkorlight", "illumination", "DarkOrLight", string(current.Darkorlight))
 	if err == nil {
 		c.publishSensor("state/sensor/darkorlight/", sensorDOL)
 	}
@@ -308,12 +308,12 @@ func main() {
 
 	tickCount := 0
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
-		if (tickCount % 5) == 0 {
+		if (tickCount % 30) == 0 {
 			err := c.Process()
 			if err != nil {
 				m.Logger.LogError(c.name, err.Error())
 			}
-		} else if (tickCount % 30) == 0 {
+		} else if (tickCount % 59) == 0 {
 			if c.config == nil {
 				m.Pubsub.PublishStr("config/request/", m.Name)
 			}

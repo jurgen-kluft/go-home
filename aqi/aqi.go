@@ -9,7 +9,7 @@ import (
 
 	"github.com/jurgen-kluft/go-home/config"
 	"github.com/jurgen-kluft/go-home/metrics"
-	"github.com/jurgen-kluft/go-home/micro-service"
+	microservice "github.com/jurgen-kluft/go-home/micro-service"
 )
 
 type instance struct {
@@ -93,7 +93,7 @@ func (c *instance) Poll() (aqiStateJSON []byte, err error) {
 		c.metrics.Send(c.name)
 
 		// MQTT: As a sensor
-		sensor := config.NewSensorState("sensor.weather.aqi")
+		sensor := config.NewSensorState("sensor.weather.aqi", "airquality")
 		sensor.AddFloatAttr(c.name, aqi)
 		level := c.getAiqTagAndDescr(aqi)
 		sensor.AddStringAttr("name", level.Tag)
@@ -113,13 +113,14 @@ func main() {
 	m.RegisterAndSubscribe(register, subscribe)
 
 	pollCount := int64(0)
+	maxPollCount := int64(150)
 
 	m.RegisterHandler("config/aqi/", func(m *microservice.Service, topic string, msg []byte) bool {
 		config, err := config.AqiConfigFromJSON(msg)
 		if err == nil {
 			m.Logger.LogInfo(m.Name, "received configuration")
 			c.config = config
-			pollCount = 0
+			pollCount = maxPollCount
 		} else {
 			m.Logger.LogError(m.Name, "received bad configuration, "+err.Error())
 		}
@@ -128,7 +129,7 @@ func main() {
 
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
 		if c != nil && c.config != nil {
-			if pollCount == 150 {
+			if pollCount >= maxPollCount {
 				pollCount = 0
 				m.Logger.LogInfo(m.Name, "polling Aqi")
 				jsonstate, err := c.Poll()

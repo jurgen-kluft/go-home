@@ -60,11 +60,9 @@ func (r *Reader) ReadEvent() (*Event, error) {
 		return nil, fmt.Errorf("event read error: %s", err)
 	}
 
-	//log.Printf("recv: %s", message)
-
 	e, err := r.decoder.Parse(message)
 	if err != nil {
-		return nil, EventErrorImpl{fmt.Errorf("unable to parse message: %s", err).Error(), true}
+		return nil, EventErrorImpl{fmt.Errorf("unable to parse message: %s", string(message)).Error(), true}
 	}
 
 	return e, nil

@@ -1,12 +1,152 @@
 {
   "Addr": "http://10.0.0.18/api",
   "APIKey": "0A498B9909",
-  "lights.out": "state/lights/conbee/",
-  "switches.out": "state/switches/conbee/",
-  "sensors.out": "state/sensors/conbee/",
+  "lights.out": "state/light/",
+  "sensors.out": "state/sensor/",
   "lights.in": [
     "state/light/automation/",
     "state/light/flux/",
     "state/light/ahk/"
+  ],
+  "switch": [
+    {
+      "id": "00:15:8d:00:01:5d:b3:2c-01-0006",
+      "name": "Bedroom Switch",
+      "battery_type": "cr2032",
+      "single_click": "{ \"Name\": \"Bedroom Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"single click\" } ] }",
+      "double_click": "{ \"Name\": \"Bedroom Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"double click\" } ] }",
+      "tripple_click": "{ \"Name\": \"Bedroom Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"tripple click\" } ] }"
+    },
+    {
+      "id": "00:15:8d:00:02:24:48:f2-01-0006",
+      "name": "Sophia Switch",
+      "battery_type": "cr2032",
+      "single_click": "{ \"Name\": \"Sophia Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"single click\" } ] }",
+      "double_click": "{ \"Name\": \"Sophia Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"double click\" } ] }",
+      "tripple_click": "{ \"Name\": \"Sophia Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"tripple click\" } ] }"
+    },
+    {
+      "id": "14:b4:57:ff:fe:36:99:8a-01-1000",
+      "name": "Master Switch",
+      "battery_type": "cr2032",
+      "single_click": "{ \"Name\": \"Master Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"single click\" } ] }",
+      "double_click": "{ \"Name\": \"Master Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"double click\" } ] }",
+      "tripple_click": "{ \"Name\": \"Master Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"tripple click\" } ] }"
+    }
+  ],
+  "motion": [
+    {
+      "id": "00:15:8d:00:01:a9:11:3b-01-0406",
+      "name": "Kitchen Motion",
+      "battery_type": "cr2450",
+      "on": "{ \"Name\": \"Kitchen Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"on\" } ] }",
+      "off": "{ \"Name\": \"Kitchen Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"off\" } ] }"
+    },
+    {
+      "id": "00:0b:57:ff:fe:9b:be:e2-01-0006",
+      "name": "Livingroom Motion",
+      "battery_type": "cr2450",
+      "on": "{ \"Name\": \"Livingroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"on\" } ] }",
+      "off": "{ \"Name\": \"Livingroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"off\" } ] }"
+    },
+    {
+      "id": "00:15:8d:00:01:e1:4e:04-01-0406",
+      "name": "Livingroom Motion",
+      "battery_type": "cr2450",
+      "on": "{ \"Name\": \"Livingroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"on\" } ] }",
+      "off": "{ \"Name\": \"Livingroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"off\" } ] }"
+    },
+    {
+      "id": "00:15:8d:00:01:aa:98:bc-01-0406",
+      "name": "Bedroom Motion",
+      "battery_type": "cr2450",
+      "on": "{ \"Name\": \"Bedroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"on\" } ] }",
+      "off": "{ \"Name\": \"Bedroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"off\" } ] }"
+    }
+  ],
+  "contact": [
+    {
+      "id": "00:15:8d:00:01:21:47:63-01-0006",
+      "name": "Front Door Magnet",
+      "battery_type": "cr1632",
+      "open": "{ \"Name\": \"Front Door Magnet\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"open\" } ] }",
+      "close": "{ \"Name\": \"Front Door Magnet\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"close\" } ] }"
+    }
+  ],
+  "lights": [
+    {
+      "name": "Kitchen",
+      "ids": [
+        "00:17:88:01:02:31:dd:0d-0b",
+        "00:17:88:01:02:31:db:8c-0b"
+      ]
+    },
+    {
+      "name": "Livingroom Main",
+      "ids": [
+        "00:17:88:01:03:c0:21:65-0b",
+        "00:17:88:01:03:ea:7a:7e-0b",
+        "00:17:88:01:03:e9:23:78-0b",
+        "00:17:88:01:03:ea:ec:c7-0b",
+        "00:17:88:01:03:3b:b3:ed-0b",
+        "00:17:88:01:03:b5:03:35-0b"
+      ]
+    },
+    {
+      "name": "Livingroom Chandelier",
+      "ids": [
+        "00:17:88:01:03:16:92:3f-0b",
+        "00:17:88:01:03:3b:ae:aa-0b",
+        "00:17:88:01:03:ea:dc:ab-0b",
+        "00:17:88:01:03:ea:3b:75-0b",
+        "00:17:88:01:03:b5:45:5d-0b",
+        "00:17:88:01:03:e9:23:47-0b"
+      ]
+    },
+    {
+      "name": "Bedroom Main",
+      "ids": [
+        "00:17:88:01:06:bc:e3:ae-0b",
+        "00:17:88:01:06:bc:e1:0c-0b",
+        "00:17:88:01:06:bc:e3:94-0b",
+        "00:17:88:01:06:bc:e2:0e-0b"
+      ]
+    },
+    {
+      "name": "Bedroom Stand",
+      "ids": [
+        "00:17:88:01:02:31:a6:99-0b",
+        "00:17:88:01:02:31:ac:89-0b"
+      ]
+    },
+    {
+      "name": "Jennifer Main",
+      "ids": [
+        "00:17:88:01:10:28:3e:3f-0b",
+        "00:17:88:01:06:33:e1:73-0b"
+      ]
+    },
+    {
+      "name": "Sophia Main",
+      "ids": [
+        "00:17:88:01:06:bc:e0:de-0b",
+        "00:17:88:01:06:bc:e3:95-0b",
+        "00:17:88:01:06:33:e3:17-0b",
+        "00:17:88:01:10:2a:0c:70-0b"
+      ]
+    },
+    {
+      "name": "Sophia Stand",
+      "ids": [
+        "00:17:88:01:10:28:75:94-0b"
+      ]
+    },
+    {
+      "name": "Livingroom Stand",
+      "ids": [
+        "00:17:88:01:02:33:01:79-0b",
+        "00:17:88:01:02:31:d9:f9-0b"
+      ]
+    }
   ]
 }

@@ -1,130 +1,295 @@
 package main
 
 import (
-	"log"
-	"strings"
+	"context"
+	"fmt"
+	"sync/atomic"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/conbee/deconz"
+	"github.com/jurgen-kluft/go-home/conbee/deconz/event"
 	"github.com/jurgen-kluft/go-home/config"
+	microservice "github.com/jurgen-kluft/go-home/micro-service"
 )
 
 /*
-STATE
-
-State {Read} [
-Bedroom Motion Sensor
-Kitchen Motion Sensor
-Livingroom Motion Sensor 1
-Livingroom Motion Sensor 2
-Frontdoor Magnet Sensor
-
-Sophia Switch
-Bedroom Switch
-Remote Switch
-
-Bedroom Light Stand
-Bedroom Light Main
-Kitchen Light Main
-Jennifer Light Main
-Sophia Light Main
-Sophia Light Stand
-Livingroom Light Main
-Livingroom Light Stand
-Livingroom Light Chandelier
-]
-
-State {Write} [
-Bedroom Light Stand
-Bedroom Light Main
-Kitchen Light Main
-Jennifer Light Main
-Sophia Light Main
-Sophia Light Stand
-Livingroom Light Main
-Livingroom Light Stand
-Livingroom Light Chandelier
-]
-
-When turning ON a light from automation logic we inform Conbee. We will keep
-reading the state which will be the only factual state.
-
+This process will scan for events from Conbee, mainly sensors and will send those as
+sensor states over NATS.
 */
 
 type lightState struct {
+	Name      string
+	IDs       []string
+	LastSeen  time.Time
 	CT        float32
 	BRI       float32
 	Reachable bool
 	OnOff     bool
+	Conbee    config.ConbeeLightGroup
 }
 
 type motionSensorState struct {
+	Name     string
+	ID       string
 	LastSeen time.Time
 	Motion   bool
+	Conbee   config.ConbeeMotion
 }
 
 type contactSensorState struct {
+	Name     string
+	ID       string
 	LastSeen time.Time
 	Contact  bool
+	Conbee   config.ConbeeContact
 }
 
-type fullstate struct {
-	lights         map[string]lightState
+type switchState struct {
+	Name     string
+	ID       string
+	LastSeen time.Time
+	Button   string
+	Conbee   config.ConbeeSwitch
+}
+
+type fullState struct {
+	switches       map[string]switchState
 	motionSensors  map[string]motionSensorState
 	contactSensors map[string]contactSensorState
-	rename         map[string]string
+	lights         map[string]*lightState
 }
 
-func main() {
-	config := defaultConfiguration()
+func fullStateFromConfig(c *config.ConbeeConfig) fullState {
+	full := fullState{}
+	full.switches = make(map[string]switchState)
+	full.motionSensors = make(map[string]motionSensorState)
+	full.contactSensors = make(map[string]contactSensorState)
+	full.lights = make(map[string]*lightState)
 
-	deconzConfig := deconz.Config{Addr: config.Addr, APIKey: config.APIKey}
-	eventChan, err := eventChan(deconzConfig)
-	if err != nil {
-		panic(err)
+	for _, e := range c.Switches {
+		state := switchState{Name: e.Name, ID: e.ID, LastSeen: time.Now(), Button: "", Conbee: e}
+		full.switches[state.ID] = state
+	}
+	for _, e := range c.Motion {
+		state := motionSensorState{Name: e.Name, ID: e.ID, LastSeen: time.Now(), Motion: false, Conbee: e}
+		full.motionSensors[state.ID] = state
+	}
+	for _, e := range c.Contact {
+		state := contactSensorState{Name: e.Name, ID: e.ID, LastSeen: time.Now(), Contact: false, Conbee: e}
+		full.contactSensors[state.ID] = state
+	}
+	for _, e := range c.Lights {
+		state := &lightState{Name: e.Name, IDs: e.IDS, LastSeen: time.Now(), Reachable: false, OnOff: false, Conbee: e}
+		for _, id := range state.IDs {
+			full.lights[id] = state
+		}
 	}
 
-	log.Printf("Connected to deCONZ at %s", deconzConfig.Addr)
+	return full
+}
 
-	//TODO: figure out how to create a timer that is stopped
-	timeout := time.NewTimer(1 * time.Second)
-	timeout.Stop()
+type signal_t int32
 
+func (b *signal_t) set(value bool) {
+	var i int32 = 0
+	if value {
+		i = 1
+	}
+	atomic.StoreInt32((*int32)(b), int32(i))
+}
+func (b *signal_t) is_true() bool {
+	return atomic.LoadInt32((*int32)(b)) != 0
+}
+func (b *signal_t) is_not_true() bool {
+	return atomic.LoadInt32((*int32)(b)) == 0
+}
+
+func async_conbee(ctx context.Context, sg *signal_t, cc *config.ConbeeConfig, mm *microservice.Service) {
+	mm.Logger.LogInfo(mm.Name, fmt.Sprintf("Connecting to deCONZ at %s with API key %s", cc.Addr, cc.APIKey))
+
+	defer sg.set(true)
+
+	eventChan, err := eventChan(cc.Addr, cc.APIKey)
+	if err != nil {
+		return
+	}
+	defer close(eventChan)
+
+	mm.Logger.LogInfo(mm.Name, fmt.Sprintf("Connected to deCONZ at %s", cc.Addr))
+
+	fullState := fullStateFromConfig(cc)
 	for {
 
 		select {
+		case <-ctx.Done():
+			return
+
 		case ev := <-eventChan:
-			fields, err := ev.Fields()
-
-			if err != nil {
-				//log.Printf("skip event: '%s'", err)
-				continue
-			}
-
-			for k, v := range fields {
-				if strings.HasPrefix(k, "presence") {
-					log.Printf("motion:  %s -> %s = %v (uuid: %s)", ev.Name, k, v, ev.UniqueID)
-				} else if strings.HasPrefix(k, "open") {
-					log.Printf("magnet:  %s -> %s = %v (uuid: %s)", ev.Name, k, v, ev.UniqueID)
-				} else if strings.HasPrefix(k, "button") {
-					log.Printf("switch:  %s -> %s = %v (uuid: %s)", ev.Name, k, v, ev.UniqueID)
-				} else if strings.HasPrefix(k, "bri") {
-					log.Printf("light:  %s -> %s = %v (uuid: %s)", ev.Name, k, v, ev.UniqueID)
+			if ev.State == nil || event.IsEmptyState(ev.State) {
+				// An empty state for one of the devices
+			} else {
+				cstate, exist := fullState.contactSensors[ev.UniqueID]
+				if exist {
+					dstate := ev.State.(*event.ZHAOpenClose)
+					if dstate != nil {
+						mm.Logger.LogInfo(mm.Name, fmt.Sprintf("contact:  %s -> %v = %v", cstate.Name, cstate.Contact, dstate.Open))
+						cstate.Contact = dstate.Open
+						fullState.contactSensors[ev.UniqueID] = cstate
+						if dstate.Open {
+							msg := &microservice.Message{Topic: "state/sensor/", Payload: []byte(cstate.Conbee.Open)}
+							mm.ProcessMessages <- msg
+						} else {
+							msg := &microservice.Message{Topic: "state/sensor/", Payload: []byte(cstate.Conbee.Close)}
+							mm.ProcessMessages <- msg
+						}
+					}
+				} else {
+					mstate, exist := fullState.motionSensors[ev.UniqueID]
+					if exist {
+						dstate := ev.State.(*event.ZHAPresence)
+						if dstate != nil {
+							mm.Logger.LogInfo(mm.Name, fmt.Sprintf("motion:  %s -> %v = %v", mstate.Name, mstate.Motion, dstate.Presence))
+							mstate.Motion = dstate.Presence
+							fullState.motionSensors[ev.UniqueID] = mstate
+							if dstate.Presence {
+								msg := &microservice.Message{Topic: "state/sensor/", Payload: []byte(mstate.Conbee.On)}
+								mm.ProcessMessages <- msg
+							} else {
+								msg := &microservice.Message{Topic: "state/sensor/", Payload: []byte(mstate.Conbee.Off)}
+								mm.ProcessMessages <- msg
+							}
+						}
+					} else {
+						sstate, exist := fullState.switches[ev.UniqueID]
+						if exist {
+							dstate := ev.State.(*event.ZHASwitch)
+							if dstate != nil {
+								mm.Logger.LogInfo(mm.Name, fmt.Sprintf("switch:  %s -> %v = %v", sstate.Name, sstate.Button, dstate.ButtonEventAsString()))
+								sstate.Button = dstate.ButtonEventAsString()
+								fullState.switches[ev.UniqueID] = sstate
+								if sstate.Button == config.SwitchSingleClick {
+									msg := &microservice.Message{Topic: "state/sensor/", Payload: []byte(sstate.Conbee.SingleClick)}
+									mm.ProcessMessages <- msg
+								} else if sstate.Button == config.SwitchDoubleClick {
+									msg := &microservice.Message{Topic: "state/sensor/", Payload: []byte(sstate.Conbee.DoubleClick)}
+									mm.ProcessMessages <- msg
+								} else if sstate.Button == config.SwitchTrippleClick {
+									msg := &microservice.Message{Topic: "state/sensor/", Payload: []byte(sstate.Conbee.TrippleClick)}
+									mm.ProcessMessages <- msg
+								}
+							}
+						} else {
+							lstate, exist := fullState.lights[ev.UniqueID]
+							if exist {
+								dstate1 := ev.State.(*event.LightState)
+								if dstate1 != nil {
+									mm.Logger.LogInfo(mm.Name, fmt.Sprintf("light:  %s -> %v = %v", lstate.Name, lstate.OnOff, dstate1.On))
+									lstate.OnOff = dstate1.On
+									fullState.lights[ev.UniqueID] = lstate
+								}
+							} else {
+								mm.Logger.LogInfo(mm.Name, fmt.Sprintf("unknown:  %s", ev.UniqueID))
+							}
+						}
+					}
 				}
 			}
-
-			timeout.Reset(1 * time.Second)
-
-		case <-timeout.C:
-			// Currently does nothing
-			// Request the state of all lights?
 		}
 	}
 }
 
-func eventChan(c deconz.Config) (chan *deconz.DeviceEvent, error) {
+func main() {
+	var cc *config.ConbeeConfig = nil
+	var nc *config.ConbeeConfig = nil
+
+	var alive signal_t
+
+	for {
+		var err error
+
+		cc = nc
+
+		register := []string{"config/request/", "config/conbee/"}
+		subscribe := []string{"config/conbee/"}
+
+		if cc != nil {
+			subscribe = append(subscribe, cc.LightsIn...)
+			register = append(register, cc.LightsOut)
+			register = append(register, cc.SensorsOut)
+		}
+
+		// context.WithCancel returns a copy of parent with a new Done channel.
+		// The returned context's Done channel is closed when the returned cancel function is called or when the parent
+		// context's Done channel is closed, whichever happens first.
+		ctx, cancel := context.WithCancel(context.Background())
+
+		m := microservice.New("conbee")
+		m.RegisterAndSubscribe(register, subscribe)
+
+		m.RegisterHandler("config/conbee/", func(m *microservice.Service, topic string, msg []byte) bool {
+			m.Logger.LogInfo(m.Name, "Received configuration, schedule restart")
+			nc, err = config.ConbeeConfigFromJSON(msg)
+			if err != nil {
+				m.Logger.LogError(m.Name, err.Error())
+			} else {
+				cc = nil
+				return false
+			}
+			return true
+		})
+
+		m.RegisterHandler("state/sensor/", func(m *microservice.Service, topic string, sensor_state_payload []byte) bool {
+			m.Pubsub.PublishStr(cc.SensorsOut, string(sensor_state_payload))
+			return true
+		})
+
+		tickCount := 0
+		m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+			if (tickCount % 30) == 0 {
+				if nc == nil {
+					m.Logger.LogInfo(m.Name, "Requesting configuration..")
+					m.Pubsub.PublishStr("config/request/", m.Name)
+				}
+			} else if (tickCount % 9) == 0 {
+				if cc != nil {
+					if alive.is_not_true() {
+						m.Logger.LogInfo(m.Name, "Conbee routine is not running, schedule restart..")
+						// seems that async_conbee go routine is not running
+						// micro-service exit and restart
+						return false
+					}
+				}
+			}
+			tickCount++
+			return true
+		})
+
+		if cc != nil {
+			alive.set(true)
+			go async_conbee(ctx, &alive, cc, m)
+		}
+
+		m.Loop()
+
+		// signal our (running) async conbee go routine to exit
+		cancel()
+
+		for alive.is_true() {
+			time.Sleep(1 * time.Second)
+		}
+
+		// Sleep for a while before restarting
+		m.Logger.LogInfo(m.Name, "Waiting 10 seconds before re-starting..")
+		time.Sleep(10 * time.Second)
+
+		m.Logger.LogInfo(m.Name, "Re-start..")
+	}
+
+}
+
+func eventChan(addr string, APIkey string) (chan *deconz.DeviceEvent, error) {
 	// get an event reader from the API
-	d := deconz.API{Config: c}
+	d := deconz.API{Config: deconz.Config{Addr: addr, APIKey: APIkey}}
 	reader, err := d.EventReader()
 	if err != nil {
 		return nil, err
@@ -143,14 +308,4 @@ func eventChan(c deconz.Config) (chan *deconz.DeviceEvent, error) {
 	eventReader.Start(channel)
 	// return the channel
 	return channel, nil
-}
-
-func defaultConfiguration() *config.ConbeeConfig {
-	// this is the default configuration
-	c := &config.ConbeeConfig{
-		Addr:   "http://10.0.0.18/api",
-		APIKey: "0A498B9909",
-	}
-
-	return c
 }

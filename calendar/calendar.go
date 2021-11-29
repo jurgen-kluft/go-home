@@ -40,14 +40,14 @@ func (c *Calendar) initialize(jsondata []byte) (err error) {
 	for _, sn := range c.config.Sensors {
 		ekey := strings.ToLower(sn.Name)
 		c.sensors[ekey] = sn
-		sensor := &config.SensorState{Name: ekey, Time: time.Now()}
-		if sn.Type == "string" {
-			sensor.AddStringAttr(ekey, sn.State)
-		} else if sn.Type == "float" {
-			value, _ := strconv.ParseFloat(sn.State, 64)
+		sensor := &config.SensorState{Name: ekey, Type: sn.Type, Time: time.Now()}
+		if sn.AttrType == "string" {
+			sensor.AddStringAttr(ekey, sn.AttrValue)
+		} else if sn.AttrType == "float" {
+			value, _ := strconv.ParseFloat(sn.AttrValue, 64)
 			sensor.AddFloatAttr(ekey, value)
-		} else if sn.Type == "bool" {
-			value, _ := strconv.ParseBool(sn.State)
+		} else if sn.AttrType == "bool" {
+			value, _ := strconv.ParseBool(sn.AttrValue)
 			sensor.AddBoolAttr(ekey, value)
 		}
 		c.sensorStates[ekey] = sensor
@@ -55,10 +55,10 @@ func (c *Calendar) initialize(jsondata []byte) (err error) {
 
 	for _, cal := range c.config.Calendars {
 		if strings.HasPrefix(cal.URL.String, "http") {
-			ical := icalendar.NewURLCalendar(cal.URL.String)
+			ical := icalendar.NewURLCalendar(cal.Name, cal.URL.String)
 			c.cals = append(c.cals, ical)
 		} else if strings.HasPrefix(cal.URL.String, "file") {
-			c.cals = append(c.cals, icalendar.NewFileCalendar(cal.URL.String))
+			c.cals = append(c.cals, icalendar.NewFileCalendar(cal.Name, cal.URL.String))
 		} else {
 			c.service.Logger.LogError(c.name, fmt.Sprintf("Unknown calendar source '%s'", cal.URL))
 		}
@@ -66,19 +66,19 @@ func (c *Calendar) initialize(jsondata []byte) (err error) {
 	}
 
 	c.update = time.Now()
-	c.load()
+	//c.load()
 	return nil
 }
 
 func (c *Calendar) updateSensorStates(when time.Time) error {
-	//fmt.Printf("Update %d calendars\n", len(c.cals))
+	fmt.Printf("Update %d calendars\n", len(c.cals))
 
 	for _, cal := range c.cals {
-		//fmt.Printf("Update calendar '%s'\n", cal.Name)
+		fmt.Printf("Update calendar '%s'\n", cal.Name)
 		eventsForDay := cal.GetEventsFor(when)
 
 		if len(eventsForDay) == 0 {
-			//fmt.Printf("Calendar '%s' has no events\n", cal.Name)
+			fmt.Printf("Calendar '%s' has no events\n", cal.Name)
 		}
 
 		for _, event := range eventsForDay {
@@ -198,17 +198,17 @@ func (c *Calendar) applyRulesToSensorStates() {
 				if exists && ifsensor.StringAttrs != nil {
 					ifthenValue := ifsensor.StringAttrs[0].Value
 					if ifthenValue == ifthen.State {
-						sensor.StringAttrs[0].Value = p.State
+						sensor.StringAttrs[0].Value = p.Value
 					}
 				} else if exists && ifsensor.BoolAttrs != nil {
 					ifthenValue := ifsensor.BoolAttrs[0].Value
 					if ifthenValue && ("true" == ifthen.State) {
-						sensor.StringAttrs[0].Value = p.State
+						sensor.StringAttrs[0].Value = p.Value
 					} else if !ifthenValue && ("false" == ifthen.State) {
-						sensor.StringAttrs[0].Value = p.State
+						sensor.StringAttrs[0].Value = p.Value
 					}
 				} else {
-					c.service.Logger.LogError(c.name, fmt.Sprintf("Logical error when applying rules to sensor states (%s)", p.Key+", "+p.State))
+					c.service.Logger.LogError(c.name, fmt.Sprintf("Logical error when applying rules to key/value (%s) '", p.Key+"'/'"+p.Value+"'"))
 				}
 			}
 		}
@@ -267,17 +267,20 @@ func main() {
 	c := new()
 	c.service = m
 
+	tickCount := 150
+
 	m.RegisterHandler("config/calendar/", func(m *microservice.Service, topic string, msg []byte) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")
 		err := c.initialize(msg)
 		if err != nil {
 			c = nil
 			m.Logger.LogError(c.name, err.Error())
+		} else {
+			tickCount = 150
 		}
 		return true
 	})
 
-	tickCount := 0
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
 		if tickCount%5 == 0 {
 			if c != nil && c.config == nil {

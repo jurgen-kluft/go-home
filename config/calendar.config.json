@@ -2,122 +2,131 @@
   "calendars": [
     {
       "name": "Home",
-      "url": "zXxPr7iy8AU0fwN57TbTW_eIeIDlyGSarB0Efu9en8iR1L0DrXpG8apaR6WldVSo49Zpp8kXo4t25izstjaE1YqU3Scbr9k9hmAeXxCu0AZH1rx5j2f4eW_V-ackWM5CrRm7U-FlgSDzOPVMFfalFQWGdDzrOunfxqnxrZWt77TY"
-    },
-    {
-      "name": "TimeOfDay2",
-      "url": "b2AvbFSbNlkaTdqGOXRSRIkGyu0uZv39PjFR0oQqfw2MiUqTfZvhLcCcFcq2kF__ulquSYpXvvyIYA_Koe3MKvRYd6Er8PDj--9QbYTPyhPqy7BsORT5hZcCYLfFWwQA9VdbOAlebZT4_10aQLY0AVc6DMWmZvd1OOKpttf4hGVv2XMWlgS_EIleeR7cw8iAOgtChbOSHs2acLNbTA=="
+      "url": "W_ElpkUQPAmXmJB-6sNknBwfVrBLyEeOzMo9KEIrtwEv5Osb4EaBCoMl8YpUFPr56hFCYdzzNHCwlyl8hpRwcWhYNh_f9T34BJs9UK0bqPhOIpdQxArAkrMVoQ=="
     },
     {
       "name": "Season",
-      "url": "UNBDFqQf0AmljLgoiqi__ds5wOChFiUBouzJ0dxLWY0z9PqzVThhDWg8Z7CzRrn8-B5H8SwmLF5Peiq6XJzh-vJ0Z1zoZ4_Z5KBx3wCJ-mXvW1-8Kci2XC4w-9N7nLAOuLWNDwZHQ6HyNUPXEdGS7YWN4Sqfddku7BZm7GzdgQ8VzmxP20rsgXcmjGvPjOaQ4PpaJbGx9SQy67z1glA3boJ9UuDHxYOS"
+      "url": "E5TdywPHr3bj2USXucchGNEFGgn3-FAfMbhTSsXXuwzPgmm8LA5M9VdzHHORQf6oAs_j8fQBBtoaX2Lvk8tS0kO4jJUUvdFlJtjVBN9bZkAIkosH_slcua_A0RSHnHk9pByDH6Eq36uvpyMBzrDYx0thwos69zrfq5wf1DVNWDLWIkd4O6I="
+    },
+    {
+      "name": "TimeOfDay2",
+      "url": "FwTntbDZWE_B5P6n4XHBEebQSLN6v4WaCckrbNq7QgGyl_e_GPWdqde8FvpHoB4aQLpdnhO5lU2IlAtyPDc8oE23CvQgmGh9hqrBmZK_PCJmofhK1kk0dREEiIG0N09aHYtDA-eSGrG6-RZF-ZUdSDTdwkqCjZj2eqPCxsj7bj0Snb_hrTI="
     }
   ],
   "sensors": [
     {
       "name": "geo.latitude",
-      "type": "float",
-      "state": "31.2304"
+      "type": "location",
+      "attrtype": "float",
+      "attrvalue": "31.2304"
     },
     {
       "name": "geo.longitude",
-      "state": "121.4737",
-      "type": "float"
+      "type": "location",
+      "attrvalue": "121.4737",
+      "attrtype": "float"
     },
     {
       "name": "jennifer",
-      "state": "free",
-      "type": "string"
+      "type": "calendar",
+      "attrvalue": "free",
+      "attrtype": "string"
     },
     {
       "name": "sophia",
-      "state": "free",
-      "type": "string"
+      "type": "calendar",
+      "attrvalue": "free",
+      "attrtype": "string"
     },
     {
       "name": "parents",
-      "state": "free",
-      "type": "string"
+      "type": "calendar",
+      "attrvalue": "free",
+      "attrtype": "string"
     },
     {
       "name": "alarm",
-      "state": "off",
-      "type": "string"
+      "type": "calendar",
+      "attrvalue": "off",
+      "attrtype": "string"
     },
     {
       "name": "season",
-      "state": "winter",
-      "type": "string"
+      "type": "calendar",
+      "attrvalue": "winter",
+      "attrtype": "string"
     },
     {
       "name": "timeofday",
-      "state": "morning",
-      "type": "string"
+      "type": "calendar",
+      "attrvalue": "morning",
+      "attrtype": "string"
     },
     {
       "name": "weekend",
-      "state": "false",
-      "type": "bool"
+      "type": "calendar",
+      "attrvalue": "false",
+      "attrtype": "bool"
     }
   ],
   "rules": [
     {
       "key": "jennifer",
-      "state": "free",
+      "value": "free",
       "if": [
         {
           "key": "weekend",
-          "state": "true"
+          "value": "true"
         }
       ]
     },
     {
       "key": "jennifer",
-      "state": "school",
+      "value": "school",
       "if": [
         {
           "key": "weekend",
-          "state": "false"
+          "value": "false"
         }
       ]
     },
     {
       "key": "sophia",
-      "state": "free",
+      "value": "free",
       "if": [
         {
           "key": "weekend",
-          "state": "true"
+          "value": "true"
         }
       ]
     },
     {
       "key": "sophia",
-      "state": "school",
+      "value": "school",
       "if": [
         {
           "key": "weekend",
-          "state": "false"
+          "value": "false"
         }
       ]
     },
     {
       "key": "parents",
-      "state": "free",
+      "value": "free",
       "if": [
         {
           "key": "weekend",
-          "state": "true"
+          "value": "true"
         }
       ]
     },
     {
       "key": "parents",
-      "state": "work",
+      "value": "work",
       "if": [
         {
           "key": "weekend",
-          "state": "false"
+          "value": "false"
         }
       ]
     }

@@ -6,7 +6,7 @@ import (
 
 	"github.com/adlio/darksky"
 	"github.com/jurgen-kluft/go-home/config"
-	"github.com/jurgen-kluft/go-home/micro-service"
+	microservice "github.com/jurgen-kluft/go-home/micro-service"
 )
 
 func converFToC(fahrenheit float64) float64 {
@@ -161,7 +161,7 @@ func (c *instance) process(name string) ([]byte, error) {
 	if now.Unix() >= c.update.Unix() {
 		c.update = time.Unix(now.Unix()+5*60, 0)
 
-		state := config.NewSensorState(name)
+		state := config.NewSensorState(name, "weather")
 
 		lat := c.latitude
 		lng := c.longitude
