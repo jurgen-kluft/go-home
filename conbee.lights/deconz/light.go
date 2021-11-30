@@ -73,6 +73,7 @@ type Light struct {
 }
 
 // LightState contains the specific, controllable fields of a light.
+
 type LightState struct {
 	On         bool      `json:"on"`
 	Brightness int       `json:"bri"`
@@ -92,21 +93,21 @@ type GetLightsResponse map[string]Light
 // SetLightStateRequest lets a user update certain properties of the light.
 // These are directly changing the active light and what it is showing.
 type SetLightStateRequest struct {
-	On         bool      `json:"on"`
-	Brightness int       `json:"bri,omitempty"`
-	Hue        int       `json:"hue,omitempty"`
-	Saturation int       `json:"sat,omitempty"`
-	CT         int       `json:"ct,omitempty"`
-	XY         []float64 `json:"xy,omitempty"`
-	Alert      string    `json:"alert,omitempty"`
+	On         *bool      `json:"on,omitempty"`
+	Brightness int        `json:"bri,omitempty"`
+	Hue        *int       `json:"hue,omitempty"`
+	Saturation *int       `json:"sat,omitempty"`
+	CT         int        `json:"ct,omitempty"`
+	XY         *[]float64 `json:"xy,omitempty"`
+	Alert      *string    `json:"alert,omitempty"`
 	// Effect contains the light effect to apply. Either 'none' or 'colorloop'
-	Effect string `json:"effect,omitempty"`
+	Effect *string `json:"effect,omitempty"`
 	// ColorLoopSpeed contains the speed of a colorloop.
 	// 1 is very fast, 255 is very slow.
 	// This is only read if the 'colorloop' effect is specifed
-	ColorLoopSpeed int `json:"colorloopspeed,omitempty"`
+	ColorLoopSpeed *int `json:"colorloopspeed,omitempty"`
 	// TransitionTime is represented in 1/10th of a second between states
-	TransitionTime int `json:"transitiontime,omitempty"`
+	TransitionTime *int `json:"transitiontime,omitempty"`
 }
 
 // SetLightConfigRequest lets a user update certain properties of the light.

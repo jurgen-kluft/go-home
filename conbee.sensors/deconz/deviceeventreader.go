@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/jurgen-kluft/go-home/conbee/deconz/event"
+	"github.com/jurgen-kluft/go-home/conbee.sensors/deconz/event"
 )
 
 // DeviceLookup represents an interface for device lookup
@@ -33,10 +33,10 @@ type DeviceEventReader struct {
 func (r *DeviceEventReader) Start(out chan *DeviceEvent) error {
 
 	if r.lookup == nil {
-		return errors.New("Cannot run without a SensorLookup from which to lookup sensors")
+		return errors.New("cannot run without a SensorLookup from which to lookup sensors")
 	}
 	if r.reader == nil {
-		return errors.New("Cannot run without a EventReader from which to read events")
+		return errors.New("cannot run without a EventReader from which to read events")
 	}
 
 	if r.running {

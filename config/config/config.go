@@ -51,8 +51,10 @@ func (c *context) configFromJSON(configname string, jsondata []byte) (config.Con
 		ci, err = config.BraviaTVConfigFromJSON(jsondata)
 	case "calendar":
 		ci, err = config.CalendarConfigFromJSON(jsondata)
-	case "conbee":
-		ci, err = config.ConbeeConfigFromJSON(jsondata)
+	case "conbee.lights":
+		ci, err = config.ConbeeLightsConfigFromJSON(jsondata)
+	case "conbee.sensors":
+		ci, err = config.ConbeeSensorsConfigFromJSON(jsondata)
 	case "flux":
 		ci, err = config.FluxConfigFromJSON(jsondata)
 	case "huebridge":
@@ -148,13 +150,13 @@ func (c *context) sendConfigOnChannel(configtype string) (err error) {
 					}
 				}
 			} else {
-				err = fmt.Errorf("Configuration %s did not have JSON data", configtype)
+				err = fmt.Errorf("configuration %s did not have JSON data", configtype)
 			}
 		} else {
-			err = fmt.Errorf("Configuration %s does not exist", configtype)
+			err = fmt.Errorf("configuration %s does not exist", configtype)
 		}
 	} else {
-		err = fmt.Errorf("Haven't received configuration, so cannot send configuration requests")
+		err = fmt.Errorf("haven't received configuration, so cannot send configuration requests")
 	}
 	return
 }

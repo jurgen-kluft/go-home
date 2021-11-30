@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/jurgen-kluft/go-home/conbee/deconz/event"
+	"github.com/jurgen-kluft/go-home/conbee.sensors/deconz/event"
 )
 
 // API represents the deCONZ rest api

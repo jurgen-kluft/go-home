@@ -7,11 +7,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
-	"github.com/rmrobinson/deconz-go"
+	"github.com/jurgen-kluft/go-home/conbee.lights/deconz"
 )
 
-func main() {
+func Process() {
 	var (
 		// ./lights -apiKey 0A498B9909 -host 10.0.0.18 -ct 500 -bri 150 -setState -id 18 (-isOn -1)
 		host   = flag.String("host", "", "The IP or hostname of the gateway")
@@ -52,12 +51,11 @@ func main() {
 
 	// No resource ID, get all groups
 	if *resourceID < 1 {
-		resp, err := c.GetGroups(context.Background())
+		_, err := c.GetGroups(context.Background())
 		if err != nil {
 			fmt.Printf("error getting groups: %s\n", err.Error())
 			return
 		}
-		spew.Dump(resp)
 		return
 	}
 
@@ -129,10 +127,9 @@ func main() {
 		fmt.Printf("delete complete\n")
 	}
 
-	resp, err := c.GetGroup(context.Background(), *resourceID)
+	_, err := c.GetGroup(context.Background(), *resourceID)
 	if err != nil {
 		fmt.Printf("error getting group %d: %s\n", *resourceID, err.Error())
 		return
 	}
-	spew.Dump(resp)
 }

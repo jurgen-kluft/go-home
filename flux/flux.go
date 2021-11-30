@@ -99,9 +99,9 @@ func (c *context) updateSeasonFromName(season string) {
 // States are both input and output, for example as input
 // there are Season/Weather states like 'Season':'Winter'
 // and 'Clouds':0.5
-func (c *context) Process() error {
+func (c *context) process() error {
 	if c.config == nil || c.suncalc == nil {
-		return fmt.Errorf("No configuration or no suncalc information received")
+		return fmt.Errorf("no configuration or no suncalc information received")
 	}
 
 	now := time.Now()
@@ -151,7 +151,7 @@ func (c *context) Process() error {
 		}
 	}
 	if !bcurrent {
-		return fmt.Errorf("Unable to identify the current light time window")
+		return fmt.Errorf("unable to identify the current light time window")
 	}
 
 	// Time interpolation factor, where are we between startMoment - endMoment
@@ -309,7 +309,7 @@ func main() {
 	tickCount := 0
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
 		if (tickCount % 30) == 0 {
-			err := c.Process()
+			err := c.process()
 			if err != nil {
 				m.Logger.LogError(c.name, err.Error())
 			}

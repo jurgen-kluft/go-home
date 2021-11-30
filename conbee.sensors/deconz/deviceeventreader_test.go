@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/jurgen-kluft/go-home/conbee/deconz/event"
+	"github.com/jurgen-kluft/go-home/conbee.sensors/deconz/event"
 )
 
 const smokeDetectorNoFireEventPayload = `{	"e": "changed",	"id": "5",	"r": "sensors",	"state": {	  "fire": false,	  "lastupdated": "2018-03-13T19:46:03",	  "lowbattery": false,	  "tampered": false	},	"t": "event"  }`
@@ -47,15 +47,6 @@ func TestSensorEventReader(t *testing.T) {
 	}
 	e := <-channel
 	if strconv.Itoa(e.Event.ID) != "5" {
-		t.Fail()
-	}
-	fields, err := e.Fields()
-	if err != nil {
-		t.Logf(err.Error())
-		t.FailNow()
-	}
-
-	if fields["fire"] != false {
 		t.Fail()
 	}
 

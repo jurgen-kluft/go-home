@@ -6,8 +6,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/jurgen-kluft/go-home/conbee/deconz"
-	"github.com/jurgen-kluft/go-home/conbee/deconz/event"
+	"github.com/jurgen-kluft/go-home/conbee.sensors/deconz"
+	"github.com/jurgen-kluft/go-home/conbee.sensors/deconz/event"
 	"github.com/jurgen-kluft/go-home/config"
 	microservice "github.com/jurgen-kluft/go-home/micro-service"
 )
@@ -56,15 +56,13 @@ type fullState struct {
 	switches       map[string]switchState
 	motionSensors  map[string]motionSensorState
 	contactSensors map[string]contactSensorState
-	lights         map[string]*lightState
 }
 
-func fullStateFromConfig(c *config.ConbeeConfig) fullState {
+func fullStateFromConfig(c *config.ConbeeSensorsConfig) fullState {
 	full := fullState{}
 	full.switches = make(map[string]switchState)
 	full.motionSensors = make(map[string]motionSensorState)
 	full.contactSensors = make(map[string]contactSensorState)
-	full.lights = make(map[string]*lightState)
 
 	for _, e := range c.Switches {
 		state := switchState{Name: e.Name, ID: e.ID, LastSeen: time.Now(), Button: "", Conbee: e}
@@ -77,12 +75,6 @@ func fullStateFromConfig(c *config.ConbeeConfig) fullState {
 	for _, e := range c.Contact {
 		state := contactSensorState{Name: e.Name, ID: e.ID, LastSeen: time.Now(), Contact: false, Conbee: e}
 		full.contactSensors[state.ID] = state
-	}
-	for _, e := range c.Lights {
-		state := &lightState{Name: e.Name, IDs: e.IDS, LastSeen: time.Now(), Reachable: false, OnOff: false, Conbee: e}
-		for _, id := range state.IDs {
-			full.lights[id] = state
-		}
 	}
 
 	return full
@@ -104,7 +96,7 @@ func (b *signal_t) is_not_true() bool {
 	return atomic.LoadInt32((*int32)(b)) == 0
 }
 
-func async_conbee(ctx context.Context, sg *signal_t, cc *config.ConbeeConfig, mm *microservice.Service) {
+func async_conbee(ctx context.Context, sg *signal_t, cc *config.ConbeeSensorsConfig, mm *microservice.Service) {
 	mm.Logger.LogInfo(mm.Name, fmt.Sprintf("Connecting to deCONZ at %s with API key %s", cc.Addr, cc.APIKey))
 
 	defer sg.set(true)

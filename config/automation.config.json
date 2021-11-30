@@ -3,7 +3,6 @@
         "state/presence/",
         "state/sensor/conbee/",
         "state/switch/conbee/",
-        "state/light/conbee/",
         "state/switch/ahk/",
         "state/bravia.tv/",
         "state/samsung.tv/"

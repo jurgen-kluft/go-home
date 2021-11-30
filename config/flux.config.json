@@ -124,7 +124,7 @@
     ],
     "lighttype": [
         {
-            "name": "hue",
+            "name": "conbee",
             "channel": "state/light/conbee/flux/",
             "ct": {
                 "min": 154.0,

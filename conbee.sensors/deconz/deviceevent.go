@@ -1,7 +1,7 @@
 package deconz
 
 import (
-	"github.com/jurgen-kluft/go-home/conbee/deconz/event"
+	"github.com/jurgen-kluft/go-home/conbee.sensors/deconz/event"
 )
 
 // DeviceEvent is a sensor and a event embedded
