@@ -2,15 +2,6 @@
 	"folders": [
 		{
 			"path": "."
-		},
-		{
-			"path": "../go-conbee"
-		},
-		{
-			"path": "../go-icloud-calendar"
-		},
-		{
-			"path": "../go-deconz"
 		}
 	],
 	"settings": {
