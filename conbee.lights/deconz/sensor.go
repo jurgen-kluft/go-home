@@ -31,17 +31,29 @@ func (c *Client) GetSensor(ctx context.Context, id string) (*Sensor, error) {
 
 // SetSensorState specifies the new state of a sensor
 func (c *Client) SetSensorState(ctx context.Context, id string, newState *SetSensorStateRequest) error {
-	return c.put(ctx, "sensors/"+id+"/state", newState)
+	req, err := json.Marshal(newState)
+	if err != nil {
+		return err
+	}
+	return c.put(ctx, "sensors/"+id+"/state", req)
 }
 
 // SetSensor specifies the new options for a sensor
 func (c *Client) SetSensor(ctx context.Context, id string, newConfig *SetSensorRequest) error {
-	return c.put(ctx, "sensors/"+id, newConfig)
+	req, err := json.Marshal(newConfig)
+	if err != nil {
+		return err
+	}
+	return c.put(ctx, "sensors/"+id, req)
 }
 
 // SetSensorConfig specifies the new config of a sensor
 func (c *Client) SetSensorConfig(ctx context.Context, id string, newConfig *SetSensorConfigRequest) error {
-	return c.put(ctx, "sensors/"+id+"/config", newConfig)
+	req, err := json.Marshal(newConfig)
+	if err != nil {
+		return err
+	}
+	return c.put(ctx, "sensors/"+id+"/config", req)
 }
 
 // DeleteSensor removes the specified sensor from the gateway
