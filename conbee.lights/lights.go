@@ -1,9 +1,12 @@
 package main
 
 import (
-	"sync/atomic"
+	"context"
+	"fmt"
+	"net/http"
 	"time"
 
+	"github.com/jurgen-kluft/go-home/conbee.lights/deconz"
 	"github.com/jurgen-kluft/go-home/config"
 	microservice "github.com/jurgen-kluft/go-home/micro-service"
 )
@@ -14,55 +17,31 @@ sensor states over NATS.
 */
 
 type lightState struct {
-	Name      string
-	IDs       []string
-	LastSeen  time.Time
-	CT        float32
-	BRI       float32
-	Reachable bool
-	OnOff     bool
-	Conbee    config.ConbeeLightGroup
+	Name   string
+	Conbee config.ConbeeLightGroup
 }
 
 type fullState struct {
 	lights map[string]*lightState
 }
 
-func fullStateFromConfig(c *config.ConbeeLightsConfig) fullState {
-	full := fullState{}
+func fullStateFromConfig(c *config.ConbeeLightsConfig) *fullState {
+	full := &fullState{}
 	full.lights = make(map[string]*lightState)
-
 	for _, e := range c.Lights {
-		state := &lightState{Name: e.Name, IDs: e.IDS, LastSeen: time.Now(), Reachable: false, OnOff: false, Conbee: e}
-		for _, id := range state.IDs {
-			full.lights[id] = state
-		}
+		full.lights[e.Name] = &lightState{Name: e.Name, Conbee: e}
 	}
-
 	return full
-}
-
-type signal_t int32
-
-func (b *signal_t) set(value bool) {
-	var i int32 = 0
-	if value {
-		i = 1
-	}
-	atomic.StoreInt32((*int32)(b), int32(i))
-}
-func (b *signal_t) is_true() bool {
-	return atomic.LoadInt32((*int32)(b)) != 0
-}
-func (b *signal_t) is_not_true() bool {
-	return atomic.LoadInt32((*int32)(b)) == 0
 }
 
 func main() {
 	var cc *config.ConbeeLightsConfig = nil
 	var nc *config.ConbeeLightsConfig = nil
 
-	var alive signal_t
+	var fullState *fullState = nil
+	var conbee *deconz.Client = nil
+
+	var ctx context.Context
 
 	for {
 		var err error
@@ -74,6 +53,8 @@ func main() {
 
 		if cc != nil {
 			subscribe = append(subscribe, cc.LightsIn...)
+			fullState = fullStateFromConfig(cc)
+			conbee = deconz.NewClient(&http.Client{}, cc.Addr, cc.Port, cc.APIKey)
 		}
 
 		m := microservice.New("conbee")
@@ -91,21 +72,50 @@ func main() {
 			return true
 		})
 
+		m.RegisterHandler("state/light/*/", func(m *microservice.Service, topic string, msg []byte) bool {
+			sensor, err := config.SensorStateFromJSON(msg)
+			if err == nil {
+				m.Logger.LogInfo(m.Name, "received state")
+				lightname := sensor.Name
+				if lightname != "" && conbee != nil {
+					if topic == "state/light/ahk/" || topic == "state/light/automation/" {
+						lstate, exist := fullState.lights[lightname]
+						if exist {
+							sensor.ExecValueAttr("power", func(power string) {
+								if power == "on" {
+									fmt.Println(lightname + " turning On")
+									conbee.SetGroupStateFromJSON(ctx, lstate.Conbee.Group, lstate.Conbee.On)
+								} else if power == "off" {
+									fmt.Println(lightname + " turning Off")
+									conbee.SetGroupStateFromJSON(ctx, lstate.Conbee.Group, lstate.Conbee.Off)
+								}
+							})
+						} else {
+							fmt.Println(lightname + " doesn't exist")
+						}
+					} else if topic == "state/light/flux/" {
+						lstate, exist := fullState.lights[lightname]
+						if exist {
+							ct := sensor.GetFloatAttr("ct", 500)
+							bri := sensor.GetFloatAttr("bri", 500)
+							conbee.SetGroupStateFromJSON(ctx, lstate.Conbee.Group, fmt.Sprintf(lstate.Conbee.CT, ct, bri))
+						} else {
+							fmt.Println(lightname + " doesn't exist")
+						}
+					} else {
+						fmt.Println(lightname + " doesn't exist")
+					}
+				}
+			}
+			return true
+		})
+
 		tickCount := 0
 		m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
 			if (tickCount % 30) == 0 {
 				if nc == nil {
 					m.Logger.LogInfo(m.Name, "Requesting configuration..")
 					m.Pubsub.PublishStr("config/request/", m.Name)
-				}
-			} else if (tickCount % 9) == 0 {
-				if cc != nil {
-					if alive.is_not_true() {
-						m.Logger.LogInfo(m.Name, "Conbee routine is not running, schedule restart..")
-						// seems that async_conbee go routine is not running
-						// micro-service exit and restart
-						return false
-					}
 				}
 			}
 			tickCount++

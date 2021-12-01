@@ -130,11 +130,7 @@ func (c *Client) post(ctx context.Context, path string, reqType interface{}) (*R
 	return &deconzResp, nil
 }
 
-func (c *Client) put(ctx context.Context, path string, reqType interface{}) error {
-	req, err := json.Marshal(reqType)
-	if err != nil {
-		return err
-	}
+func (c *Client) put(ctx context.Context, path string, req []byte) error {
 
 	r, err := http.NewRequest(http.MethodPut, c.getURLBase()+path, bytes.NewBuffer(req))
 	if err != nil {

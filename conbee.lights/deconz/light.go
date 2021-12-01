@@ -2,6 +2,7 @@ package deconz
 
 import (
 	"context"
+	"encoding/json"
 )
 
 // GetLights retrieves all the lights available on the gatway
@@ -30,12 +31,20 @@ func (c *Client) GetLight(ctx context.Context, id string) (*Light, error) {
 
 // SetLightState specifies the new state of a light
 func (c *Client) SetLightState(ctx context.Context, id string, newState *SetLightStateRequest) error {
-	return c.put(ctx, "lights/"+id+"/state", newState)
+	req, err := json.Marshal(newState)
+	if err != nil {
+		return err
+	}
+	return c.put(ctx, "lights/"+id+"/state", req)
 }
 
 // SetLightConfig specifies the new config of a light
 func (c *Client) SetLightConfig(ctx context.Context, id string, newConfig *SetLightConfigRequest) error {
-	return c.put(ctx, "lights/"+id, newConfig)
+	req, err := json.Marshal(newConfig)
+	if err != nil {
+		return err
+	}
+	return c.put(ctx, "lights/"+id, req)
 }
 
 // DeleteLight removes the specified light from the gateway

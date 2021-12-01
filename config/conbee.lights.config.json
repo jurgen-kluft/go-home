@@ -1,5 +1,6 @@
 {
   "Addr": "http://10.0.0.18",
+  "Port": 80,
   "APIKey": "0A498B9909",
   "channels.in": [
     "state/light/conbee/flux/",
@@ -9,6 +10,11 @@
   "lights": [
     {
       "name": "Kitchen",
+      "group": 20,
+      "on": "{ \"on\": true }",
+      "off": "{ \"on\": false }",
+      "ct": "{ \"ct\": 000, \"bri\": 000 }",
+      "alert": "{ “xy”: [0.675,0.322] }",
       "ids": [
         "00:17:88:01:02:31:dd:0d-0b",
         "00:17:88:01:02:31:db:8c-0b"

@@ -46,6 +46,7 @@ func LoadConfig(filename string) (*ConbeeLightsConfig, error) {
 // ConbeeLightsConfig contains information to connect to a Conbee-II device
 type ConbeeLightsConfig struct {
 	Addr     string             `json:"Addr"`
+	Port     int                `json:"Port"`
 	APIKey   string             `json:"APIKey"`
 	LightsIn []string           `json:"lights.in"`
 	Lights   []ConbeeLightGroup `json:"lights"`
@@ -53,6 +54,11 @@ type ConbeeLightsConfig struct {
 
 // ConbeeLight is a structure that references a light object at Conbee
 type ConbeeLightGroup struct {
-	Name string   `json:"name"`
-	IDS  []string `json:"ids"`
+	Name  string   `json:"name"`
+	Group int      `json:"group"`
+	On    string   `json:"on"`
+	Off   string   `json:"off"`
+	CT    string   `json:"ct"`
+	Alert string   `json:"alert"`
+	IDS   []string `json:"ids"`
 }

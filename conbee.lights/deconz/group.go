@@ -2,6 +2,7 @@ package deconz
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strconv"
 )
@@ -52,12 +53,23 @@ func (c *Client) GetGroup(ctx context.Context, id int) (*Group, error) {
 
 // SetGroupState specifies the new state of a group
 func (c *Client) SetGroupState(ctx context.Context, id int, newState *SetGroupStateRequest) error {
-	return c.put(ctx, "groups/"+strconv.Itoa(id)+"/action", newState)
+	req, err := json.Marshal(newState)
+	if err != nil {
+		return err
+	}
+	return c.put(ctx, "groups/"+strconv.Itoa(id)+"/action", req)
+}
+func (c *Client) SetGroupStateFromJSON(ctx context.Context, id int, json string) error {
+	return c.put(ctx, "groups/"+strconv.Itoa(id)+"/action", []byte(json))
 }
 
 // SetGroupConfig specifies the new config of a group
 func (c *Client) SetGroupConfig(ctx context.Context, id int, newConfig *SetGroupConfigRequest) error {
-	return c.put(ctx, "groups/"+strconv.Itoa(id), newConfig)
+	req, err := json.Marshal(newConfig)
+	if err != nil {
+		return err
+	}
+	return c.put(ctx, "groups/"+strconv.Itoa(id), req)
 }
 
 // DeleteGroup removes the specified group from the gateway
