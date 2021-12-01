@@ -6,16 +6,15 @@ import (
 	"github.com/jurgen-kluft/go-home/config"
 	microservice "github.com/jurgen-kluft/go-home/micro-service"
 	"github.com/slack-go/slack"
-	"github.com/slack-go/slack/socketmode"
 )
 
 // Instance is our instant-messenger instance (currently Slack)
 type instance struct {
-	name          string
-	config        *config.ShoutConfig
-	client        *slack.Client
-	socket_client *socketmode.Client
-	service       *microservice.Service
+	name   string
+	config *config.ShoutConfig
+	client *slack.Client
+	//socket_client *socketmode.Client
+	service *microservice.Service
 }
 
 func new() *instance {
@@ -30,9 +29,7 @@ func (s *instance) initialize(jsondata []byte) error {
 	config, err := config.ShoutConfigFromJSON(jsondata)
 	if err == nil {
 		s.config = config
-
-		appToken := "xapp-1-A02NUBR5D1S-2771273565429-edcd9030cbe075430dc64866fbe93a1ab1b54fe0577a6b7a224264be5d6f0cd7"
-		s.client = slack.New("xoxp-127881268723-345678036321-2776483268436-89b407d7e179ec728a5c3f17e440ff02", slack.OptionDebug(true), slack.OptionAppLevelToken(appToken))
+		s.client = slack.New(s.config.UserToken.String, slack.OptionDebug(true), slack.OptionAppLevelToken(s.config.AppToken.String))
 
 		/// The below does work, we can receive messages :-)
 
