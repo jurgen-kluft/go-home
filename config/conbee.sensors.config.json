@@ -1,5 +1,6 @@
 {
-  "Addr": "http://10.0.0.18/api",
+  "Host": "10.0.0.18",
+  "Port": 80,
   "APIKey": "0A498B9909",
   "sensors.out": "state/sensor/conbee/",
   "switches.out": "state/switch/conbee/",

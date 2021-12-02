@@ -46,6 +46,7 @@ func LoadConbeeSensorsConfig(filename string) (*ConbeeSensorsConfig, error) {
 // ConbeeSensorsConfig contains information to connect to a Conbee-II device
 type ConbeeSensorsConfig struct {
 	Addr        string          `json:"Addr"`
+	Port        int             `json:"Port"`
 	APIKey      string          `json:"APIKey"`
 	SwitchesOut string          `json:"switches.out"`
 	SensorsOut  string          `json:"sensors.out"`
