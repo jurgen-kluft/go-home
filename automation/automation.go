@@ -68,7 +68,7 @@ func main() {
 	tickCount := 0
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
 		if (tickCount % 5) == 0 {
-			// Every 10 seconds
+			// Every 5 seconds
 			if auto.config != nil {
 				auto.now = time.Now()
 				auto.presenceDetection()
@@ -111,7 +111,8 @@ func newPresence() *homePresence {
 
 // reset() should be called when the front-door is opened->closed because this
 // can indicate people have left the house. This will start a procedure:
-// - Wait for 10 minutes to start an evaluation window
+// - Wait for 15 minutes
+// - Start an evaluation window
 // - In the evaluation window we determine if there are people home by Wifi and Motion
 // - If after the evaluation window nothing is detected we mark 'peopleAreHome' as false
 // - After the evaluation state a scan state is started that will keep looking at
@@ -130,7 +131,7 @@ func (h *homePresence) determineIfPeopleAreHome(now time.Time) {
 
 		if now.Sub(h.detectionStamp) > h.detectionDelayDuration {
 			h.detectionState = "Evaluate"
-			h.detectionStamp = time.Now()
+			h.detectionStamp = now
 			h.detectionEvalResult = false
 		}
 	} else if h.detectionState == "Evaluate" {
@@ -159,7 +160,7 @@ func (h *homePresence) determineIfPeopleAreHome(now time.Time) {
 	}
 }
 
-// reportCausation() should be called when a causation is detected like a button press, light switch press or movement
+// reportCausation() should be called when a causation is detected like a button press, light switch press or motion detection
 func (h *homePresence) reportCausation(now time.Time) {
 	if h.detectionState == "Evaluate" {
 		// Any detected presence after the detection window but within the evaluation
@@ -400,14 +401,11 @@ func (a *automation) handleSwitch(name string, state *config.SensorState) {
 		if value == config.SwitchDoubleClick {
 			a.presence.reportCausation(a.now)
 			a.toggleDevice(config.BedroomLightMain)
-		}
-		if value == config.SwitchSingleClick {
+		} else if value == config.SwitchSingleClick {
 			a.presence.reportCausation(a.now)
 			a.toggleDevice(config.BedroomLightStand)
-		}
-		if value == config.SwitchLongPress {
+		} else if value == config.SwitchTrippleClick {
 			a.presence.reportCausation(a.now)
-			a.toggleDevice(config.BedroomPowerPlug)
 		}
 	} else if name == config.SophiaRoomSwitch {
 		value := state.GetValueAttr("click", "")

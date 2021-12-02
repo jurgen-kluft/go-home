@@ -71,8 +71,6 @@ func (c *context) configFromJSON(configname string, jsondata []byte) (config.Con
 		ci, err = config.WeatherConfigFromJSON(jsondata)
 	case "wemo":
 		ci, err = config.WemoConfigFromJSON(jsondata)
-	case "xiaomi":
-		ci, err = config.XiaomiConfigFromJSON(jsondata)
 	case "yee":
 		ci, err = config.YeeConfigFromJSON(jsondata)
 	}

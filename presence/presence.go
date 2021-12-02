@@ -103,7 +103,7 @@ func NewPresence(configdata []byte) (presence *Presence, err error) {
 
 	presence = &Presence{}
 	presence.config = presenceConfig
-	presence.provider = newProvider(presence.config.Name, presence.config.Host, presence.config.User, presence.config.Password)
+	presence.provider = newProvider(presence.config.Name, presence.config.Host, presence.config.User.String, presence.config.Password.String)
 	presence.macToIndex = map[string]int{}
 	presence.macToPresence = map[string]bool{}
 
@@ -124,8 +124,8 @@ func NewPresence(configdata []byte) (presence *Presence, err error) {
 		for j := range member.detect {
 			member.detect[j] = Detect{Time: time.Now(), State: away}
 		}
-		presence.macToIndex[device.Mac] = i
-		presence.macToPresence[device.Mac] = false
+		presence.macToIndex[device.Mac.String] = i
+		presence.macToPresence[device.Mac.String] = false
 		presence.members = append(presence.members, member)
 
 		metricFields[member.name] = float64(away)

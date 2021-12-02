@@ -1,0 +1,6 @@
+{
+    "name": "conbee",
+    "command": "../conbee.lights/conbee_lights",
+    "redirect_stderr": true,
+    "stdout_logfile": "log/conbee_lights"
+}
