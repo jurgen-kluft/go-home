@@ -23,6 +23,9 @@ The following micro services could run on an ESP32:
 Still need to test the following processes:
 
 * ahk
+
+## Implemented
+
 * conbee (state reader)
 * wemo
 

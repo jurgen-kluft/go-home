@@ -70,11 +70,6 @@
       "filename": "wemo.config.json",
       "channel": "config/wemo/"
     },
-    "xiaomi": {
-      "name": "xiaomi",
-      "filename": "xiaomi.config.json",
-      "channel": "config/xiaomi/"
-    },
     "yee": {
       "name": "yee",
       "filename": "yee.config.json",
