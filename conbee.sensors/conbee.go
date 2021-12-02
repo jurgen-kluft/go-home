@@ -17,17 +17,6 @@ This process will scan for events from Conbee, mainly sensors and will send thos
 sensor states over NATS.
 */
 
-type lightState struct {
-	Name      string
-	IDs       []string
-	LastSeen  time.Time
-	CT        float32
-	BRI       float32
-	Reachable bool
-	OnOff     bool
-	Conbee    config.ConbeeLightGroup
-}
-
 type motionSensorState struct {
 	Name     string
 	ID       string
@@ -170,18 +159,6 @@ func async_conbee(ctx context.Context, sg *signal_t, cc *config.ConbeeSensorsCon
 									mm.ProcessMessages <- msg
 								}
 							}
-						} else {
-							lstate, exist := fullState.lights[ev.UniqueID]
-							if exist {
-								dstate1 := ev.State.(*event.LightState)
-								if dstate1 != nil {
-									mm.Logger.LogInfo(mm.Name, fmt.Sprintf("light:  %s -> %v = %v", lstate.Name, lstate.OnOff, dstate1.On))
-									lstate.OnOff = dstate1.On
-									fullState.lights[ev.UniqueID] = lstate
-								}
-							} else {
-								mm.Logger.LogInfo(mm.Name, fmt.Sprintf("unknown:  %s", ev.UniqueID))
-							}
 						}
 					}
 				}
@@ -191,8 +168,8 @@ func async_conbee(ctx context.Context, sg *signal_t, cc *config.ConbeeSensorsCon
 }
 
 func main() {
-	var cc *config.ConbeeConfig = nil
-	var nc *config.ConbeeConfig = nil
+	var cc *config.ConbeeSensorsConfig = nil
+	var nc *config.ConbeeSensorsConfig = nil
 
 	var alive signal_t
 
@@ -205,8 +182,6 @@ func main() {
 		subscribe := []string{"config/conbee/"}
 
 		if cc != nil {
-			subscribe = append(subscribe, cc.LightsIn...)
-			register = append(register, cc.LightsOut)
 			register = append(register, cc.SensorsOut)
 		}
 
@@ -220,7 +195,7 @@ func main() {
 
 		m.RegisterHandler("config/conbee/", func(m *microservice.Service, topic string, msg []byte) bool {
 			m.Logger.LogInfo(m.Name, "Received configuration, schedule restart")
-			nc, err = config.ConbeeConfigFromJSON(msg)
+			nc, err = config.ConbeeSensorsConfigFromJSON(msg)
 			if err != nil {
 				m.Logger.LogError(m.Name, err.Error())
 			} else {
