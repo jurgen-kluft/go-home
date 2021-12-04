@@ -51,9 +51,9 @@ func (c *context) configFromJSON(configname string, jsondata []byte) (config.Con
 		ci, err = config.BraviaTVConfigFromJSON(jsondata)
 	case "calendar":
 		ci, err = config.CalendarConfigFromJSON(jsondata)
-	case "conbee.lights":
+	case "conbee/lights":
 		ci, err = config.ConbeeLightsConfigFromJSON(jsondata)
-	case "conbee.sensors":
+	case "conbee/sensors":
 		ci, err = config.ConbeeSensorsConfigFromJSON(jsondata)
 	case "flux":
 		ci, err = config.FluxConfigFromJSON(jsondata)

@@ -287,13 +287,13 @@ func main() {
 				m.Pubsub.PublishStr("config/request/", m.Name)
 			}
 		}
-		if tickCount%150 == 0 {
+		if tickCount%450 == 0 {
 			if c != nil && c.config != nil {
 				c.load()
 				m.Logger.LogInfo(m.Name, "(re)loaded calendars")
 			}
 		}
-		if tickCount%30 == 0 {
+		if tickCount%60 == 0 {
 			if c != nil && c.config != nil {
 				if err := c.process(); err != nil {
 					m.Logger.LogError(m.Name, err.Error())

@@ -48,8 +48,8 @@ func main() {
 
 		cc = nc
 
-		register := []string{"config/request/", "config/light/conbee/"}
-		subscribe := []string{"config/light/conbee/"}
+		register := []string{"config/request/", "config/conbee/lights/"}
+		subscribe := []string{"config/conbee/lights/"}
 
 		if cc != nil {
 			subscribe = append(subscribe, cc.LightsIn...)
@@ -57,10 +57,10 @@ func main() {
 			conbee = deconz.NewClient(&http.Client{}, cc.Addr, cc.Port, cc.APIKey)
 		}
 
-		m := microservice.New("conbee")
+		m := microservice.New("conbee/lights")
 		m.RegisterAndSubscribe(register, subscribe)
 
-		m.RegisterHandler("config/light/conbee/", func(m *microservice.Service, topic string, msg []byte) bool {
+		m.RegisterHandler("config/conbee/lights/", func(m *microservice.Service, topic string, msg []byte) bool {
 			m.Logger.LogInfo(m.Name, "Received configuration, schedule restart")
 			nc, err = config.ConbeeLightsConfigFromJSON(msg)
 			if err != nil {

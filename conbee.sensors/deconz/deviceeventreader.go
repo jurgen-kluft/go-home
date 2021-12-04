@@ -2,7 +2,6 @@ package deconz
 
 import (
 	"errors"
-	"log"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/conbee.sensors/deconz/event"
@@ -52,10 +51,10 @@ func (r *DeviceEventReader) Start(out chan *DeviceEvent) error {
 			for r.running {
 				err := r.reader.Dial()
 				if err != nil {
-					log.Printf("Error connecting Deconz websocket: %s\nAttempting reconnect in 5s...", err)
+					//log.Printf("Error connecting Deconz websocket: %s\nAttempting reconnect in 5s...", err)
 					time.Sleep(5 * time.Second) // TODO configurable delay
 				} else {
-					log.Printf("Deconz websocket connected")
+					//log.Printf("Deconz websocket connected")
 					break
 				}
 			}
@@ -64,14 +63,14 @@ func (r *DeviceEventReader) Start(out chan *DeviceEvent) error {
 				e, err := r.reader.ReadEvent()
 				if err != nil {
 					if eerr, ok := err.(event.EventError); ok && eerr.Recoverable() {
-						log.Printf("Dropping event due to error: %s", err)
+						//log.Printf("Dropping event due to error: %s", err)
 						continue
 					}
 					continue REDIAL
 				}
 				// we only care about sensor events
 				if !r.lookup.SupportsResource(e.Resource) {
-					log.Printf("unsupported resource %s with id: %d, type: %s, event: %s, rawstate: %s", e.Resource, e.ID, e.Type, e.Event, e.RawState)
+					//log.Printf("unsupported resource %s with id: %d, type: %s, event: %s, rawstate: %s", e.Resource, e.ID, e.Type, e.Event, e.RawState)
 					continue
 				}
 
@@ -79,7 +78,7 @@ func (r *DeviceEventReader) Start(out chan *DeviceEvent) error {
 				device, err := r.lookup.LookupDevice(e.UniqueID)
 
 				if err != nil {
-					log.Printf("Dropping event. Could not lookup device for id %s: %s", e.UniqueID, err)
+					//log.Printf("Dropping event. Could not lookup device for id %s: %s", e.UniqueID, err)
 					continue
 				}
 				// send event on channel
@@ -88,7 +87,7 @@ func (r *DeviceEventReader) Start(out chan *DeviceEvent) error {
 		}
 		// if not running, close connection and return from goroutine
 		r.reader.Close()
-		log.Printf("Deconz websocket closed")
+		//log.Printf("Deconz websocket closed")
 	}()
 	return nil
 }

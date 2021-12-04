@@ -3,7 +3,6 @@ package deconz
 import (
 	"errors"
 	"fmt"
-	"log"
 )
 
 // CachedDeviceStore is a cached typestore which provides LookupType for event passing
@@ -67,7 +66,7 @@ func (c *CachedDeviceStore) populateCache() error {
 		return err
 	}
 
-	log.Printf("DeviceStore updated, found %d devices", len((*c.cache)))
+	//log.Printf("DeviceStore updated, found %d devices", len((*c.cache)))
 
 	return nil
 }

@@ -20,15 +20,15 @@
       "filename": "calendar.config.json",
       "channel": "config/calendar/"
     },
-    "conbee.lights": {
-      "name": "conbee.lights",
+    "conbee/lights": {
+      "name": "conbee/lights",
       "filename": "conbee.lights.config.json",
-      "channel": "config/conbee/lights"
+      "channel": "config/conbee/lights/"
     },
-    "conbee.sensors": {
-      "name": "conbee.sensors",
+    "conbee/sensors": {
+      "name": "conbee/sensors",
       "filename": "conbee.sensors.config.json",
-      "channel": "config/conbee/sensors"
+      "channel": "config/conbee/sensors/"
     },
     "flux": {
       "name": "flux",

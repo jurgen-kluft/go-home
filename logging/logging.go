@@ -1,6 +1,8 @@
 package logging
 
 import (
+	"time"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -22,6 +24,7 @@ func (log *Logger) AddEntry(context string) {
 	log.context[context] = logrus.WithFields(logrus.Fields{
 		"process":  log.process,
 		"category": context,
+		"time":     time.Now(),
 	})
 }
 

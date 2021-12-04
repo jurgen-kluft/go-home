@@ -86,17 +86,17 @@ func (b *signal_t) is_not_true() bool {
 }
 
 func async_conbee(ctx context.Context, sg *signal_t, cc *config.ConbeeSensorsConfig, mm *microservice.Service) {
-	mm.Logger.LogInfo(mm.Name, fmt.Sprintf("Connecting to deCONZ at %s with API key %s", cc.Addr, cc.APIKey))
+	mm.Logger.LogInfo(mm.Name, fmt.Sprintf("Connecting to deCONZ at %s with API key %s", fmt.Sprintf("http://%s/api", cc.Host), cc.APIKey))
 
-	defer sg.set(true)
+	defer sg.set(false)
 
-	eventChan, err := eventChan(cc.Addr, cc.APIKey)
+	eventChan, err := eventChan(fmt.Sprintf("http://%s/api", cc.Host), cc.APIKey)
 	if err != nil {
 		return
 	}
 	defer close(eventChan)
 
-	mm.Logger.LogInfo(mm.Name, fmt.Sprintf("Connected to deCONZ at %s", cc.Addr))
+	mm.Logger.LogInfo(mm.Name, fmt.Sprintf("Connected to deCONZ at %s", fmt.Sprintf("http://%s/api", cc.Host)))
 
 	fullState := fullStateFromConfig(cc)
 	for {
@@ -178,8 +178,8 @@ func main() {
 
 		cc = nc
 
-		register := []string{"config/request/", "config/conbee/"}
-		subscribe := []string{"config/conbee/"}
+		register := []string{"config/request/", "config/conbee/sensors/"}
+		subscribe := []string{"config/conbee/sensors/"}
 
 		if cc != nil {
 			register = append(register, cc.SensorsOut)
@@ -190,10 +190,10 @@ func main() {
 		// context's Done channel is closed, whichever happens first.
 		ctx, cancel := context.WithCancel(context.Background())
 
-		m := microservice.New("conbee")
+		m := microservice.New("conbee/sensors")
 		m.RegisterAndSubscribe(register, subscribe)
 
-		m.RegisterHandler("config/conbee/", func(m *microservice.Service, topic string, msg []byte) bool {
+		m.RegisterHandler("config/conbee/sensors/", func(m *microservice.Service, topic string, msg []byte) bool {
 			m.Logger.LogInfo(m.Name, "Received configuration, schedule restart")
 			nc, err = config.ConbeeSensorsConfigFromJSON(msg)
 			if err != nil {
