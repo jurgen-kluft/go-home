@@ -129,7 +129,6 @@ func (netgear *Router) Get(mac *map[string]bool) error {
 
 			deviceStrs := strings.Split(filteredDevicesStr, "@")
 			for _, deviceStr := range deviceStrs {
-				fmt.Printf("Mac: %s\n", deviceStr)
 				fields := strings.Split(deviceStr, ";")
 				if len(fields) >= 4 {
 					macStr := fields[3]

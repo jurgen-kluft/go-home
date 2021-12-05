@@ -172,8 +172,6 @@ func (p *Presence) presence(now time.Time) (updated bool, result error) {
 			}
 			// For any member registered at the Router mark them as 'home'
 			for mac, presence := range p.macToPresence {
-				fmt.Printf("Presence: %s = %v\n", mac, presence)
-
 				mi, exists := p.macToIndex[mac]
 				if exists {
 					m := p.members[mi]

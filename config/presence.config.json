@@ -10,7 +10,8 @@
 		{
 			"name": "Faith",
 			"macs": [
-				"8w6VcCHNWfqqqQNolv8VRlLXVwU62RH3l4cBs32_kFN4"
+				"8w6VcCHNWfqqqQNolv8VRlLXVwU62RH3l4cBs32_kFN4",
+				"RAE_VmhuEYcwPS94RBfEmzc3Ghd3g04pjPcp6KC-ubp-"
 			]
 		},
 		{
@@ -18,6 +19,12 @@
 			"macs": [
 				"Cfd8hY-UJmDC1Up5LE_kqq1DjZOPYehYm4dfwC1jGnsP",
 				"z208b6LT60N87rzKYehkAFwouHaq1TIhX294jUrpi8Do"
+			]
+		},
+		{
+			"name": "Jennifer",
+			"macs": [
+				"QafGLcJlVOoIVzXFOfrxQfErbggL2BLQZEw7xebXOiVO"
 			]
 		},
 		{
