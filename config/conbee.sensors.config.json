@@ -9,25 +9,25 @@
       "id": "00:15:8d:00:01:5d:b3:2c-01-0006",
       "name": "Bedroom Switch",
       "battery_type": "cr2032",
-      "single_click": "{ \"Name\": \"Bedroom Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"single click\" } ] }",
-      "double_click": "{ \"Name\": \"Bedroom Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"double click\" } ] }",
-      "tripple_click": "{ \"Name\": \"Bedroom Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"tripple click\" } ] }"
+      "single_click": "{ \"Name\": \"Bedroom Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"click\", \"Value\": \"single click\" } ] }",
+      "double_click": "{ \"Name\": \"Bedroom Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"click\", \"Value\": \"double click\" } ] }",
+      "tripple_click": "{ \"Name\": \"Bedroom Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"click\", \"Value\": \"tripple click\" } ] }"
     },
     {
       "id": "00:15:8d:00:02:24:48:f2-01-0006",
       "name": "Sophia Switch",
       "battery_type": "cr2032",
-      "single_click": "{ \"Name\": \"Sophia Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"single click\" } ] }",
-      "double_click": "{ \"Name\": \"Sophia Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"double click\" } ] }",
-      "tripple_click": "{ \"Name\": \"Sophia Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"tripple click\" } ] }"
+      "single_click": "{ \"Name\": \"Sophia Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"click\", \"Value\": \"single click\" } ] }",
+      "double_click": "{ \"Name\": \"Sophia Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"click\", \"Value\": \"double click\" } ] }",
+      "tripple_click": "{ \"Name\": \"Sophia Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"click\", \"Value\": \"tripple click\" } ] }"
     },
     {
       "id": "14:b4:57:ff:fe:36:99:8a-01-1000",
       "name": "Master Switch",
       "battery_type": "cr2032",
-      "single_click": "{ \"Name\": \"Master Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"single click\" } ] }",
-      "double_click": "{ \"Name\": \"Master Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"double click\" } ] }",
-      "tripple_click": "{ \"Name\": \"Master Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"click\": \"tripple click\" } ] }"
+      "single_click": "{ \"Name\": \"Master Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"click\", \"Value\": \"single click\" } ] }",
+      "double_click": "{ \"Name\": \"Master Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"click\", \"Value\": \"double click\" } ] }",
+      "tripple_click": "{ \"Name\": \"Master Switch\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"click\", \"Value\": \"tripple click\" } ] }"
     }
   ],
   "motion": [
@@ -35,29 +35,29 @@
       "id": "00:15:8d:00:01:a9:11:3b-01-0406",
       "name": "Kitchen Motion",
       "battery_type": "cr2450",
-      "on": "{ \"Name\": \"Kitchen Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"on\" } ] }",
-      "off": "{ \"Name\": \"Kitchen Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"off\" } ] }"
+      "on": "{ \"Name\": \"Kitchen Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"motion\", \"Value\": \"on\" } ] }",
+      "off": "{ \"Name\": \"Kitchen Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"motion\", \"Value\": \"off\" } ] }"
     },
     {
       "id": "00:0b:57:ff:fe:9b:be:e2-01-0006",
       "name": "Livingroom Motion",
       "battery_type": "cr2450",
-      "on": "{ \"Name\": \"Livingroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"on\" } ] }",
-      "off": "{ \"Name\": \"Livingroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"off\" } ] }"
+      "on": "{ \"Name\": \"Livingroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"motion\", \"Value\": \"on\" } ] }",
+      "off": "{ \"Name\": \"Livingroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"motion\", \"Value\": \"off\" } ] }"
     },
     {
       "id": "00:15:8d:00:01:e1:4e:04-01-0406",
       "name": "Livingroom Motion",
       "battery_type": "cr2450",
-      "on": "{ \"Name\": \"Livingroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"on\" } ] }",
-      "off": "{ \"Name\": \"Livingroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"off\" } ] }"
+      "on": "{ \"Name\": \"Livingroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"motion\", \"Value\": \"on\" } ] }",
+      "off": "{ \"Name\": \"Livingroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"motion\", \"Value\": \"off\" } ] }"
     },
     {
       "id": "00:15:8d:00:01:aa:98:bc-01-0406",
       "name": "Bedroom Motion",
       "battery_type": "cr2450",
-      "on": "{ \"Name\": \"Bedroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"on\" } ] }",
-      "off": "{ \"Name\": \"Bedroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"off\" } ] }"
+      "on": "{ \"Name\": \"Bedroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"motion\", \"Value\": \"on\" } ] }",
+      "off": "{ \"Name\": \"Bedroom Motion\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"motion\", \"Value\": \"off\" } ] }"
     }
   ],
   "contact": [
@@ -65,8 +65,8 @@
       "id": "00:15:8d:00:01:21:47:63-01-0006",
       "name": "Front Door Magnet",
       "battery_type": "cr1632",
-      "open": "{ \"Name\": \"Front Door Magnet\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"open\" } ] }",
-      "close": "{ \"Name\": \"Front Door Magnet\", \"Type\": \"switch\", \"StringAttrs\": [ { \"motion\": \"close\" } ] }"
+      "open": "{ \"Name\": \"Front Door Magnet\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"state\", \"Value\": \"open\" } ] }",
+      "close": "{ \"Name\": \"Front Door Magnet\", \"Type\": \"switch\", \"StringAttrs\": [ { \"Name\": \"state\", \"Value\": \"close\" } ] }"
     }
   ]
 }
