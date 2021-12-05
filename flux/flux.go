@@ -80,7 +80,7 @@ func new() *context {
 	c.metrics, _ = metrics.New()
 	c.metrics.Register("hue", map[string]string{"CT": "Color Temperature", "BRI": "Brightness"}, map[string]interface{}{"CT": 200.0, "BRI": 200.0})
 	c.metrics.Register("yee", map[string]string{"CT": "Color Temperature", "BRI": "Brightness"}, map[string]interface{}{"CT": 200.0, "BRI": 200.0})
-	c.seasonName = "spring"
+	c.seasonName = "winter"
 	c.averageCT = NewFilter(8)
 	c.averageBRI = NewFilter(8)
 	return c
@@ -211,19 +211,19 @@ func (c *context) process() error {
 	//  - Sensor.Light.DarkOrLight = string(Dark)
 
 	for _, ltype := range c.config.Lighttype {
-		sensor := config.NewSensorState("all", "flux")
+		sensor := config.NewSensorState(ltype.LightName, ltype.LightType)
 
-		c.metrics.Begin(ltype.Name)
+		c.metrics.Begin(ltype.MetricsName)
 
 		lct := ltype.CT.LinearInterpolated(CT)
 		sensor.AddFloatAttr("CT", math.Floor(lct))
-		c.metrics.Set(ltype.Name, "CT", lct)
+		c.metrics.Set(ltype.MetricsName, "CT", lct)
 
 		lbri := ltype.BRI.LinearInterpolated(BRI)
 		sensor.AddFloatAttr("BRI", math.Floor(lbri))
-		c.metrics.Set(ltype.Name, "BRI", lbri)
+		c.metrics.Set(ltype.MetricsName, "BRI", lbri)
 
-		c.metrics.Send(ltype.Name)
+		c.metrics.Send(ltype.MetricsName)
 
 		jsonbytes, err := sensor.ToJSON()
 		if err == nil {
@@ -254,6 +254,8 @@ func main() {
 	c := new()
 	c.service = m
 
+	tickCount := 0
+
 	m.RegisterHandler("config/flux/", func(m *microservice.Service, topic string, msg []byte) bool {
 		var err error
 		c.config, err = config.FluxConfigFromJSON(msg)
@@ -262,11 +264,12 @@ func main() {
 			for _, ltype := range c.config.Lighttype {
 				m.Register(ltype.Channel)
 				if err == nil {
-					m.Logger.LogInfo(c.name, fmt.Sprintf("registered pubsub channel %s for lighttype %s", ltype.Channel, ltype.Name))
+					m.Logger.LogInfo(c.name, fmt.Sprintf("registered pubsub channel %s for lighttype %s", ltype.Channel, ltype.LightType))
 				} else {
 					m.Logger.LogError(c.name, err.Error())
 				}
 			}
+			tickCount = 0
 		} else {
 			m.Logger.LogError(m.Name, err.Error())
 		}
@@ -306,14 +309,14 @@ func main() {
 		return true
 	})
 
-	tickCount := 0
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
 		if (tickCount % 30) == 0 {
 			err := c.process()
 			if err != nil {
 				m.Logger.LogError(c.name, err.Error())
 			}
-		} else if (tickCount % 59) == 0 {
+		}
+		if (tickCount % 59) == 0 {
 			if c.config == nil {
 				m.Pubsub.PublishStr("config/request/", m.Name)
 			}
