@@ -204,11 +204,6 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("*", func(m *microservice.Service, topic string, msg []byte) bool {
-		fmt.Printf("message received, topic:'%s', msg:'%s'\n", topic, string(msg))
-		return true
-	})
-
 	tickCount := 0
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
 		if tickCount%5 == 0 {
