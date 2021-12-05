@@ -429,6 +429,8 @@ func main() {
 	register := []string{"state/sensor/sun/", "config/request/"}
 	subscribe := []string{"config/suncalc/"}
 
+	tickCount := 0
+
 	m := microservice.New("suncalc")
 	m.RegisterAndSubscribe(register, subscribe)
 
@@ -437,11 +439,12 @@ func main() {
 		err := suncalc.initialize(msg)
 		if err != nil {
 			m.Logger.LogError(m.Name, err.Error())
+		} else {
+			tickCount = 0
 		}
 		return true
 	})
 
-	tickCount := 0
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
 		if tickCount%30 == 0 { // every 30 seconds
 			if suncalc.config == nil {
