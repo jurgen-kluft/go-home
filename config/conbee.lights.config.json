@@ -2,7 +2,7 @@
   "Host": "10.0.0.18",
   "Port": 80,
   "APIKey": "0A498B9909",
-  "channels.in": [
+  "lights.in": [
     "state/light/conbee/flux/",
     "state/light/automation/",
     "state/light/ahk/"

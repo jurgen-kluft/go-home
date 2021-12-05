@@ -54,7 +54,7 @@ func main() {
 		if cc != nil {
 			subscribe = append(subscribe, cc.LightsIn...)
 			fullState = fullStateFromConfig(cc)
-			conbee = deconz.NewClient(&http.Client{}, cc.Addr, cc.Port, cc.APIKey)
+			conbee = deconz.NewClient(&http.Client{}, cc.Host, cc.Port, cc.APIKey)
 		}
 
 		m := microservice.New("conbee/lights")
@@ -72,7 +72,7 @@ func main() {
 			return true
 		})
 
-		m.RegisterHandler("state/light/*/", func(m *microservice.Service, topic string, msg []byte) bool {
+		m.RegisterHandler("state/light/automation/", func(m *microservice.Service, topic string, msg []byte) bool {
 			sensor, err := config.SensorStateFromJSON(msg)
 			if err == nil {
 				m.Logger.LogInfo(m.Name, "received state")
