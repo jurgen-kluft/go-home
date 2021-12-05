@@ -1,8 +1,6 @@
 package logging
 
 import (
-	"time"
-
 	"github.com/sirupsen/logrus"
 )
 
@@ -15,17 +13,27 @@ type Logger struct {
 func New(process string) *Logger {
 	logger := &Logger{}
 	logger.log = logrus.New()
+	logger.log.Formatter.(*logrus.TextFormatter).DisableColors = false
+	logger.log.Formatter.(*logrus.TextFormatter).FullTimestamp = true
+	logger.log.Formatter.(*logrus.TextFormatter).DisableTimestamp = false
+	logger.log.Formatter.(*logrus.TextFormatter).TimestampFormat = "Mon 15:04:05"
 	logger.process = process
 	logger.context = map[string]*logrus.Entry{}
 	return logger
 }
 
 func (log *Logger) AddEntry(context string) {
-	log.context[context] = logrus.WithFields(logrus.Fields{
+	logentry := logrus.WithFields(logrus.Fields{
 		"process":  log.process,
 		"category": context,
-		"time":     time.Now(),
 	})
+
+	logentry.Logger.Formatter.(*logrus.TextFormatter).DisableColors = false
+	logentry.Logger.Formatter.(*logrus.TextFormatter).FullTimestamp = true
+	logentry.Logger.Formatter.(*logrus.TextFormatter).DisableTimestamp = false
+	logentry.Logger.Formatter.(*logrus.TextFormatter).TimestampFormat = "Mon 15:04:05"
+
+	log.context[context] = logentry
 }
 
 func (log *Logger) LogInfo(context string, line string) {
