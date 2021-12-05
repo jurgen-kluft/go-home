@@ -41,7 +41,7 @@ func main() {
 	var fullState *fullState = nil
 	var conbee *deconz.Client = nil
 
-	var ctx context.Context
+	ctx := context.Background()
 
 	for {
 		var err error
@@ -72,6 +72,26 @@ func main() {
 			return true
 		})
 
+		m.RegisterHandler("state/light/conbee/flux/", func(m *microservice.Service, topic string, msg []byte) bool {
+			sensor, err := config.SensorStateFromJSON(msg)
+			if err == nil {
+				m.Logger.LogInfo(m.Name, "received state from flux: "+string(msg))
+				lightname := sensor.Name
+				if lightname != "" && conbee != nil {
+					lstate, exist := fullState.lights[lightname]
+					if exist {
+						ct := sensor.GetFloatAttr("CT", 500.0)
+						bri := sensor.GetFloatAttr("BRI", 500.0)
+						fmt.Printf("Flux adjust for %s: CT=%f, BRI=%f\n", lightname, ct, bri)
+						conbee.SetGroupStateFromJSON(ctx, lstate.Conbee.Group, fmt.Sprintf(lstate.Conbee.CT, ct, bri))
+					} else {
+						fmt.Println(lightname + " doesn't exist")
+					}
+				}
+			}
+			return true
+		})
+
 		m.RegisterHandler("state/light/automation/", func(m *microservice.Service, topic string, msg []byte) bool {
 			sensor, err := config.SensorStateFromJSON(msg)
 			if err == nil {
@@ -93,17 +113,8 @@ func main() {
 						} else {
 							fmt.Println(lightname + " doesn't exist")
 						}
-					} else if topic == "state/light/flux/" {
-						lstate, exist := fullState.lights[lightname]
-						if exist {
-							ct := sensor.GetFloatAttr("ct", 500)
-							bri := sensor.GetFloatAttr("bri", 500)
-							conbee.SetGroupStateFromJSON(ctx, lstate.Conbee.Group, fmt.Sprintf(lstate.Conbee.CT, ct, bri))
-						} else {
-							fmt.Println(lightname + " doesn't exist")
-						}
 					} else {
-						fmt.Println(lightname + " doesn't exist")
+						fmt.Println("topic: " + topic + " is not handled.")
 					}
 				}
 			}
