@@ -47,8 +47,6 @@ func (c *context) configFromJSON(configname string, jsondata []byte) (config.Con
 		ci, err = config.AqiConfigFromJSON(jsondata)
 	case "automation":
 		ci, err = config.AutomationConfigFromJSON(jsondata)
-	case "bravia.tv":
-		ci, err = config.BraviaTVConfigFromJSON(jsondata)
 	case "calendar":
 		ci, err = config.CalendarConfigFromJSON(jsondata)
 	case "conbee/lights":
@@ -61,12 +59,14 @@ func (c *context) configFromJSON(configname string, jsondata []byte) (config.Con
 		ci, err = config.HueBridgeConfigFromJSON(jsondata)
 	case "presence":
 		ci, err = config.PresenceConfigFromJSON(jsondata)
-	case "samsung.tv":
-		ci, err = config.SamsungTVConfigFromJSON(jsondata)
 	case "shout":
 		ci, err = config.ShoutConfigFromJSON(jsondata)
 	case "suncalc":
 		ci, err = config.SuncalcConfigFromJSON(jsondata)
+	case "tv/bravia":
+		ci, err = config.BraviaTVConfigFromJSON(jsondata)
+	case "tv/samsung":
+		ci, err = config.SamsungTVConfigFromJSON(jsondata)
 	case "weather":
 		ci, err = config.WeatherConfigFromJSON(jsondata)
 	case "wemo":

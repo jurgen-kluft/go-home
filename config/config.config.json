@@ -10,8 +10,8 @@
       "filename": "automation.config.json",
       "channel": "config/automation/"
     },
-    "bravia.tv": {
-      "name": "bravia.tv",
+    "tv/bravia": {
+      "name": "tv/bravia",
       "filename": "bravia.tv.config.json",
       "channel": "config/bravia.tv/"
     },
@@ -45,8 +45,8 @@
       "filename": "presence.config.json",
       "channel": "config/presence/"
     },
-    "samsung.tv": {
-      "name": "samsung.tv",
+    "tv/samsung": {
+      "name": "tv/samsung",
       "filename": "samsung.tv.config.json",
       "channel": "config/samsung.tv/"
     },

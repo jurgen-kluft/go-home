@@ -9,19 +9,28 @@
 	"devices": [
 		{
 			"name": "Faith",
-			"mac": "8w6VcCHNWfqqqQNolv8VRlLXVwU62RH3l4cBs32_kFN4"
+			"macs": [
+				"8w6VcCHNWfqqqQNolv8VRlLXVwU62RH3l4cBs32_kFN4"
+			]
 		},
 		{
 			"name": "Jurgen",
-			"mac": "Cfd8hY-UJmDC1Up5LE_kqq1DjZOPYehYm4dfwC1jGnsP"
+			"macs": [
+				"Cfd8hY-UJmDC1Up5LE_kqq1DjZOPYehYm4dfwC1jGnsP",
+				"z208b6LT60N87rzKYehkAFwouHaq1TIhX294jUrpi8Do"
+			]
 		},
 		{
 			"name": "GrandPa",
-			"mac": "_eWM6U7cmiK_5SVMwwHf9H24bag3v_1X7mV4jmKmjyf_"
+			"macs": [
+				"_eWM6U7cmiK_5SVMwwHf9H24bag3v_1X7mV4jmKmjyf_"
+			]
 		},
 		{
 			"name": "GrandMa",
-			"mac": "Cku3kuhsaadvsvIyJmi_qwt5f1LIZ_i_neWPFJT384hv"
+			"macs": [
+				"Cku3kuhsaadvsvIyJmi_qwt5f1LIZ_i_neWPFJT384hv"
+			]
 		}
 	]
 }

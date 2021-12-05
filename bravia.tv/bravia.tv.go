@@ -27,7 +27,7 @@ type instance struct {
 func new() *instance {
 	c := &instance{}
 	c.name = "bravia.tv"
-	c.ccfg = "config/bravia.tv/"
+	c.ccfg = "config/tv/bravia/"
 	c.tvs = make(map[string]*bravia.Bravia)
 	return c
 }
@@ -80,13 +80,13 @@ func main() {
 	c := new()
 	defer c.Close()
 
-	register := []string{c.ccfg, "state/bravia.tv/"}
-	subscribe := []string{c.ccfg, "state/bravia.tv/automation/", "state/bravia.tv/ahk/"}
+	register := []string{c.ccfg, "state/tv/bravia/", "config/request/"}
+	subscribe := []string{c.ccfg, "state/tv/bravia/"}
 
-	m := microservice.New("bravia.tv")
+	m := microservice.New("tv/bravia")
 	m.RegisterAndSubscribe(register, subscribe)
 
-	m.RegisterHandler("config/bravia.tv/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("config/tv/bravia/", func(m *microservice.Service, topic string, msg []byte) bool {
 		var err error
 		c.config, err = config.BraviaTVConfigFromJSON(msg)
 		m.Logger.LogInfo(m.Name, "received configuration")
@@ -101,7 +101,7 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("state/bravia.tv/*/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("state/tv/bravia/", func(m *microservice.Service, topic string, msg []byte) bool {
 		m.Logger.LogInfo(m.Name, "received state")
 		state, err := config.SensorStateFromJSON(msg)
 		if err == nil {

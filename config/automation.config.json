@@ -2,19 +2,20 @@
     "subscribe": [
         "state/presence/",
         "state/sensor/conbee/",
+        "state/sensor/calendar/",
         "state/switch/conbee/",
         "state/switch/ahk/",
-        "state/bravia.tv/",
-        "state/samsung.tv/"
+        "state/tv/bravia/",
+        "state/tv/samsung/"
     ],
     "register": [
         "state/presence/automation/",
         "state/light/automation/",
-        "state/bravia.tv/automation/",
-        "state/samsung.tv/automation/",
+        "state/tv/bravia/",
+        "state/tv/samsung/",
         "shout/message/"
     ],
-    "device_control_json_cache": {
+    "devices": {
         "Kitchen": {
             "channel": "state/light/automation/",
             "on": "{\"name\": \"Kitchen\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
@@ -72,12 +73,12 @@
             "toggle": "{\"name\": \"Bedroom Plug\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"toggle\"}]}"
         },
         "Bedroom TV": {
-            "channel": "state/samsung.tv/automation/",
+            "channel": "state/tv/samsung/",
             "on": "{\"name\": \"Bedroom Samsung-TV\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Bedroom Samsung-TV\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
         "Livingroom TV": {
-            "channel": "state/bravia.tv/automation/",
+            "channel": "state/tv/bravia/",
             "on": "{\"name\": \"Livingroom Sony Bravia-TV\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Livingroom Sony Bravia-TV\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         }

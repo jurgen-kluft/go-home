@@ -21,7 +21,7 @@ const (
 )
 
 func main() {
-	register := []string{}
+	register := []string{"config/request/", "config/automation/"}
 	subscribe := []string{"config/automation/"}
 
 	m := microservice.New("automation")
@@ -32,19 +32,24 @@ func main() {
 
 	m.RegisterHandler("config/automation/", func(m *microservice.Service, topic string, msg []byte) bool {
 		// Register used channels and subscribe to channels we are interested in
+		m.Logger.LogInfo(m.Name, "Received configuration")
 		config, err := config.AutomationConfigFromJSON(msg)
 		if err == nil {
 			auto.config = config
 			// Register used channels
-			for _, ss := range auto.config.ChannelsToRegister {
+			for _, ss := range auto.config.Register {
 				if err = m.Pubsub.Register(ss); err != nil {
 					m.Logger.LogError(m.Name, err.Error())
+				} else {
+					m.Logger.LogInfo(m.Name, "Registered channel: "+ss)
 				}
 			}
 			// Subscribe channels
-			for _, ss := range auto.config.SubChannels {
+			for _, ss := range auto.config.Subscribe {
 				if err = m.Pubsub.Subscribe(ss); err != nil {
 					m.Logger.LogError(m.Name, err.Error())
+				} else {
+					m.Logger.LogInfo(m.Name, "Subscribed to channel: "+ss)
 				}
 			}
 		} else {
@@ -53,7 +58,31 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("*", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("state/sensor/conbee/", func(m *microservice.Service, topic string, msg []byte) bool {
+		if strings.HasPrefix(topic, "state") {
+			state, err := config.SensorStateFromJSON(msg)
+			if err == nil {
+				auto.handleEvent(topic, state)
+			} else {
+				m.Logger.LogError(m.Name, err.Error())
+			}
+		}
+		return true
+	})
+
+	m.RegisterHandler("state/sensor/calendar/", func(m *microservice.Service, topic string, msg []byte) bool {
+		if strings.HasPrefix(topic, "state") {
+			state, err := config.SensorStateFromJSON(msg)
+			if err == nil {
+				auto.handleEvent(topic, state)
+			} else {
+				m.Logger.LogError(m.Name, err.Error())
+			}
+		}
+		return true
+	})
+
+	m.RegisterHandler("state/presence/", func(m *microservice.Service, topic string, msg []byte) bool {
 		if strings.HasPrefix(topic, "state") {
 			state, err := config.SensorStateFromJSON(msg)
 			if err == nil {
@@ -77,6 +106,7 @@ func main() {
 		}
 		if (tickCount % 30) == 0 {
 			if auto.config == nil {
+				m.Logger.LogInfo(m.Name, "Request configuration")
 				m.Pubsub.PublishStr("config/request/", m.Name)
 			}
 		}
@@ -207,24 +237,27 @@ func (a *automation) sensorHasValue(name string, value string) bool {
 }
 
 func (a *automation) turnOnDevice(name string) error {
-	dc, exists := a.config.DeviceControlCache[name]
+	dc, exists := a.config.DeviceCache[name]
 	if exists {
+		a.service.Logger.LogInfo(a.service.Name, "Turn on device: "+name)
 		err := a.service.Pubsub.PublishStr(dc.Channel, dc.On)
 		return err
 	}
 	return fmt.Errorf("device with name %s doesn't exist", name)
 }
 func (a *automation) turnOffDevice(name string) error {
-	dc, exists := a.config.DeviceControlCache[name]
+	dc, exists := a.config.DeviceCache[name]
 	if exists {
+		a.service.Logger.LogInfo(a.service.Name, "Turn off device: "+name)
 		err := a.service.Pubsub.PublishStr(dc.Channel, dc.Off)
 		return err
 	}
 	return fmt.Errorf("device with name %s doesn't exist", name)
 }
 func (a *automation) toggleDevice(name string) error {
-	dc, exists := a.config.DeviceControlCache[name]
+	dc, exists := a.config.DeviceCache[name]
 	if exists {
+		a.service.Logger.LogInfo(a.service.Name, "Toggle on/off device: "+name)
 		err := a.service.Pubsub.PublishStr(dc.Channel, dc.Toggle)
 		return err
 	}
@@ -270,8 +303,8 @@ func (a *automation) presenceDetection() {
 func (a *automation) handleEvent(channel string, state *config.SensorState) {
 	sensortype := state.Type
 	sensorname := state.Name
-	if sensortype == "sensor" {
-		a.sensors[sensorname] = state.GetValueAttr("state", "")
+	if sensortype == "calendar" {
+		a.sensors[sensorname] = state.GetValueAttr("value", "")
 		if sensorname == "timeofday" {
 			a.handleTimeOfDay(a.sensors[sensorname])
 		}
@@ -494,6 +527,7 @@ func (a *automation) handleMagnetSensor(name string, state *config.SensorState) 
 }
 
 func (a *automation) sendNotification(message string) {
+	a.service.Logger.LogInfo(a.service.Name, message)
 	a.service.Pubsub.PublishStr("shout/message/", message)
 }
 
@@ -513,9 +547,9 @@ func (a *automation) handlePresence(state *config.SensorState) {
 			presence, previous := a.updatePresence(attr.Name, attr.Value == "home")
 			if presence != previous {
 				if presence {
-					a.sendNotification(fmt.Sprintf("%s is not home", attr.Name))
-				} else {
 					a.sendNotification(fmt.Sprintf("%s is home", attr.Name))
+				} else {
+					a.sendNotification(fmt.Sprintf("%s is not home", attr.Name))
 				}
 			}
 		}

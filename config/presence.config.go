@@ -32,7 +32,7 @@ type PresenceConfig struct {
 	UpdateHistory     int         `json:"update_history"`
 	UpdateIntervalSec int         `json:"update_interval_sec"`
 	Devices           []struct {
-		Name string      `json:"name"`
-		Mac  CryptString `json:"mac"`
+		Name string        `json:"name"`
+		Mac  []CryptString `json:"macs"`
 	} `json:"devices"`
 }

@@ -159,6 +159,8 @@ func async_conbee(ctx context.Context, sg *signal_t, cc *config.ConbeeSensorsCon
 									mm.ProcessMessages <- msg
 								}
 							}
+						} else {
+							mm.Logger.LogInfo(mm.Name, fmt.Sprintf("device:  %s -> %v", ev.UniqueID, string(ev.RawState)))
 						}
 					}
 				}
@@ -183,6 +185,7 @@ func main() {
 
 		if cc != nil {
 			register = append(register, cc.SensorsOut)
+			register = append(register, cc.SwitchesOut)
 		}
 
 		// context.WithCancel returns a copy of parent with a new Done channel.
@@ -206,6 +209,7 @@ func main() {
 		})
 
 		m.RegisterHandler("state/sensor/", func(m *microservice.Service, topic string, sensor_state_payload []byte) bool {
+			m.Logger.LogInfo(m.Name, "Publish: "+cc.SensorsOut+", "+string(sensor_state_payload))
 			m.Pubsub.PublishStr(cc.SensorsOut, string(sensor_state_payload))
 			return true
 		})

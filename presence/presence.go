@@ -124,8 +124,10 @@ func NewPresence(configdata []byte) (presence *Presence, err error) {
 		for j := range member.detect {
 			member.detect[j] = Detect{Time: time.Now(), State: away}
 		}
-		presence.macToIndex[device.Mac.String] = i
-		presence.macToPresence[device.Mac.String] = false
+		for _, mac := range device.Mac {
+			presence.macToIndex[mac.String] = i
+			presence.macToPresence[mac.String] = false
+		}
 		presence.members = append(presence.members, member)
 
 		metricFields[member.name] = float64(away)
@@ -153,13 +155,14 @@ func (c *Presence) computeNextTick(now time.Time, err error) {
 	}
 }
 
-func (p *Presence) presence(now time.Time) (result error) {
+func (p *Presence) presence(now time.Time) (updated bool, result error) {
 	if p.shouldTick(now, false) {
 
 		// First reset the presence of every entry in the 'macToPresence' map
 		for k := range p.macToPresence {
 			p.macToPresence[k] = false
 		}
+
 		// Ask the router to update the presence
 		result = p.provider.get(&p.macToPresence)
 		if result == nil {
@@ -169,6 +172,8 @@ func (p *Presence) presence(now time.Time) (result error) {
 			}
 			// For any member registered at the Router mark them as 'home'
 			for mac, presence := range p.macToPresence {
+				fmt.Printf("Presence: %s = %v\n", mac, presence)
+
 				mi, exists := p.macToIndex[mac]
 				if exists {
 					m := p.members[mi]
@@ -193,8 +198,10 @@ func (p *Presence) presence(now time.Time) (result error) {
 		p.metrics.Send("presence")
 
 		p.computeNextTick(now, result)
+
+		return true, result
 	}
-	return result
+	return false, result
 }
 
 func (p *Presence) publish(now time.Time, client *pubsub.Context) {
@@ -235,12 +242,11 @@ func main() {
 	micro.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
 		if presence != nil {
 			now := time.Now()
-			err = presence.presence(now)
-			m.Logger.LogInfo(m.Name, "tick")
-			if err == nil {
-				presence.publish(now, m.Pubsub)
-			} else {
+			updated, err := presence.presence(now)
+			if err != nil {
 				m.Logger.LogError(m.Name, err.Error())
+			} else if updated {
+				presence.publish(now, m.Pubsub)
 			}
 		} else {
 			m.Logger.LogInfo(m.Name, "request configuration")

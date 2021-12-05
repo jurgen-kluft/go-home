@@ -119,17 +119,17 @@ func (e *Event) ParseState(tl TypeLookuper) error {
 		e.State = &s
 	case "Extended color light":
 		var s LightState
-		fmt.Printf("light-state: %s\n", string(e.RawState))
+		//fmt.Printf("light-state: %s\n", string(e.RawState))
 		err = json.Unmarshal(e.RawState, &s)
 		e.State = &s
 	case "Dimmable light":
 		var s LightState
-		fmt.Printf("light-state: %s\n", string(e.RawState))
+		//fmt.Printf("light-state: %s\n", string(e.RawState))
 		err = json.Unmarshal(e.RawState, &s)
 		e.State = &s
 	default:
 		e.Resource = "Unknown"
-		fmt.Printf("event state: %s is not a known type", t)
+		//fmt.Printf("event state: %s is not a known type", t)
 		//err = fmt.Errorf("unable to unmarshal event state: %s is not a known type", t)
 	}
 
