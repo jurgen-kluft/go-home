@@ -9,7 +9,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
@@ -27,8 +26,7 @@ func main() {
 	m := microservice.New("automation")
 	m.RegisterAndSubscribe(register, subscribe)
 
-	auto := new()
-	auto.service = m
+	auto := new(m)
 
 	m.RegisterHandler("config/automation/", func(m *microservice.Service, topic string, msg []byte) bool {
 		// Register used channels and subscribe to channels we are interested in
@@ -59,37 +57,32 @@ func main() {
 	})
 
 	m.RegisterHandler("state/sensor/conbee/", func(m *microservice.Service, topic string, msg []byte) bool {
-		if strings.HasPrefix(topic, "state") {
-			state, err := config.SensorStateFromJSON(msg)
-			if err == nil {
-				auto.handleEvent(topic, state)
-			} else {
-				m.Logger.LogError(m.Name, err.Error())
-			}
+		//m.Logger.LogInfo(m.Name, "conbee sensor state: "+string(msg))
+		state, err := config.SensorStateFromJSON(msg)
+		if err == nil {
+			auto.handleEvent(topic, state)
+		} else {
+			m.Logger.LogError(m.Name, err.Error())
 		}
 		return true
 	})
 
 	m.RegisterHandler("state/sensor/calendar/", func(m *microservice.Service, topic string, msg []byte) bool {
-		if strings.HasPrefix(topic, "state") {
-			state, err := config.SensorStateFromJSON(msg)
-			if err == nil {
-				auto.handleEvent(topic, state)
-			} else {
-				m.Logger.LogError(m.Name, err.Error())
-			}
+		state, err := config.SensorStateFromJSON(msg)
+		if err == nil {
+			auto.handleEvent(topic, state)
+		} else {
+			m.Logger.LogError(m.Name, err.Error())
 		}
 		return true
 	})
 
 	m.RegisterHandler("state/presence/", func(m *microservice.Service, topic string, msg []byte) bool {
-		if strings.HasPrefix(topic, "state") {
-			state, err := config.SensorStateFromJSON(msg)
-			if err == nil {
-				auto.handleEvent(topic, state)
-			} else {
-				m.Logger.LogError(m.Name, err.Error())
-			}
+		state, err := config.SensorStateFromJSON(msg)
+		if err == nil {
+			auto.handleEvent(topic, state)
+		} else {
+			m.Logger.LogError(m.Name, err.Error())
 		}
 		return true
 	})
@@ -118,6 +111,7 @@ func main() {
 }
 
 type homePresence struct {
+	service                *microservice.Service
 	peopleAreHome          bool
 	detectionStamp         time.Time
 	detectionState         string
@@ -127,8 +121,9 @@ type homePresence struct {
 	presence               map[string]bool
 }
 
-func newPresence() *homePresence {
+func newPresence(service *microservice.Service) *homePresence {
 	h := &homePresence{}
+	h.service = service
 	h.peopleAreHome = true
 	h.detectionState = "Open/Closed"
 	h.detectionStamp = time.Now()
@@ -192,6 +187,8 @@ func (h *homePresence) determineIfPeopleAreHome(now time.Time) {
 
 // reportCausation() should be called when a causation is detected like a button press, light switch press or motion detection
 func (h *homePresence) reportCausation(now time.Time) {
+	h.service.Logger.LogInfo(h.service.Name, "home presence: causation detected")
+
 	if h.detectionState == "Evaluate" {
 		// Any detected presence after the detection window but within the evaluation
 		// window means that there are people home. Indicate this by setting the
@@ -220,10 +217,18 @@ type automation struct {
 	service                     *microservice.Service
 }
 
-func new() *automation {
+func new(service *microservice.Service) *automation {
 	auto := &automation{}
+	auto.now = time.Now()
+	auto.timeofday = "undefined"
+	auto.lastseenMotionInHouse = auto.now
+	auto.lastseenMotionInKitchenArea = auto.now
+	auto.lastseenMotionInBedroom = auto.now
+	auto.service = service
 	auto.sensors = map[string]string{}
-	auto.presence = newPresence()
+	auto.timedActions = make(map[string]*timedBasedAction)
+	auto.motionBasedActions = make(map[string]*motionBasedAction)
+	auto.presence = newPresence(service)
 	return auto
 }
 
@@ -454,6 +459,7 @@ func (a *automation) handleSwitch(name string, state *config.SensorState) {
 
 // HandleMotionSensor deals with motion detected
 func (a *automation) handleMotionSensor(name string, state *config.SensorState) {
+	a.service.Logger.LogInfo(a.service.Name, "handling motion sensor: "+name+" with value: "+state.GetValueAttr("motion", "unknown"))
 	now := time.Now()
 	if name == config.KitchenMotionSensor || name == config.LivingroomMotionSensor {
 		value := state.GetValueAttr("motion", "")
@@ -462,7 +468,6 @@ func (a *automation) handleMotionSensor(name string, state *config.SensorState) 
 			a.lastseenMotionInHouse = now // Update the time we last detected motion
 			if name == config.KitchenMotionSensor {
 				a.lastseenMotionInKitchenArea = now
-				a.setDelayTimeAction("Turnoff front door hall light", 4*time.Minute, func(ta *timedBasedAction, a *automation) { a.turnOffDevice(config.FrontdoorHallLight) })
 			}
 			if a.timeofday == "breakfast" {
 				a.turnOnDevice(config.KitchenLights)
@@ -536,8 +541,8 @@ func (a *automation) updatePresence(name string, presence bool) (current bool, p
 	previous, exists = a.presence.presence[name]
 	if !exists {
 		previous = false
-		a.presence.presence[name] = presence
 	}
+	a.presence.presence[name] = presence
 	return presence, previous
 }
 
