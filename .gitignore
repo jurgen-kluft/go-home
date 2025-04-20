@@ -19,11 +19,14 @@ tags
 !*.inl
 
 !*.go
+!go.mod
+!go.sum
 !*.json
 !*.md
 
-!*.ino
+!*.sh
 
+!*.ino
 !*.code-workspace
 !*.iotworkbenchproject
 
