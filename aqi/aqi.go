@@ -109,18 +109,14 @@ func main() {
 	subscribe := []string{"config/aqi/"}
 
 	c := construct()
-	m := microservice.New("aqi")
+	m := microservice.New("aqi", time.Minute*10)
 	m.RegisterAndSubscribe(register, subscribe)
 
-	pollCount := int64(0)
-	maxPollCount := int64(150)
-
 	m.RegisterHandler("config/aqi/", func(m *microservice.Service, topic string, msg []byte) bool {
-		config, err := config.AqiConfigFromJSON(msg)
+		configAqi, err := config.AqiConfigFromJSON(msg)
 		if err == nil {
 			m.Logger.LogInfo(m.Name, "received configuration")
-			c.config = config
-			pollCount = maxPollCount
+			c.config = configAqi
 		} else {
 			m.Logger.LogError(m.Name, "received bad configuration, "+err.Error())
 		}
@@ -129,24 +125,17 @@ func main() {
 
 	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
 		if c != nil && c.config != nil {
-			if pollCount >= maxPollCount {
-				pollCount = 0
-				m.Logger.LogInfo(m.Name, "polling Aqi")
-				jsonstate, err := c.Poll()
-				if err == nil {
-					m.Logger.LogInfo(m.Name, "publish Aqi")
-					m.Pubsub.Publish("state/sensor/aqi/", jsonstate)
-				} else {
-					m.Logger.LogError(m.Name, err.Error())
-				}
-				pollCount++
-				c.computeNextPoll(time.Now(), err)
+			m.Logger.LogInfo(m.Name, "polling Aqi")
+			stateAsJson, err := c.Poll()
+			if err == nil {
+				m.Logger.LogInfo(m.Name, "publish Aqi")
+				_ = m.Pubsub.Publish("state/sensor/aqi/", stateAsJson)
 			} else {
-				pollCount++
+				m.Logger.LogError(m.Name, err.Error())
 			}
 		} else if c != nil && c.config == nil {
 			// Try and request our configuration
-			m.Pubsub.PublishStr("config/request/", "aqi")
+			_ = m.Pubsub.PublishStr("config/request/", "aqi")
 		}
 		return true
 	})

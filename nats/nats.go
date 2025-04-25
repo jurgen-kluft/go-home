@@ -35,6 +35,7 @@ type Context struct {
 	SubChannels   []string
 	Client        *server.Conn
 	Connected     *AtomBool
+	TickFrequency time.Duration
 	Tick          *server.Msg
 }
 
@@ -45,6 +46,7 @@ func New(config map[string]string) *Context {
 	ctx.Subscriptions = make([]*server.Subscription, 0, 10)
 	ctx.SubChannels = make([]string, 0, 10)
 	ctx.Connected = new(AtomBool)
+	ctx.TickFrequency = time.Duration(1) * time.Second
 	ctx.Tick = &server.Msg{Subject: "tick/", Data: nil}
 	return ctx
 }
@@ -94,7 +96,7 @@ func (ctx *Context) Connect(username string, register, subscribe []string) error
 		ctx.Connected.Set(true)
 		go func() {
 			for ctx.Connected.IsTrue() {
-				time.Sleep(time.Duration(1) * time.Second)
+				time.Sleep(ctx.TickFrequency)
 				ctx.InMsgs <- ctx.Tick
 			}
 		}()

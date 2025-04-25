@@ -6,7 +6,7 @@ import (
 
 	"github.com/jurgen-kluft/go-home/config"
 	logpkg "github.com/jurgen-kluft/go-home/logging"
-	pubsub "github.com/jurgen-kluft/go-home/nats"
+	pubsub "github.com/jurgen-kluft/go-home/mqtt"
 )
 
 // Delegate is a handler that the user can register on a certain received topic
@@ -27,9 +27,10 @@ type Service struct {
 	Handlers        map[string]Delegate
 	CatchHandler    Delegate
 	ProcessMessages chan *Message
+	TickFrequency   time.Duration
 }
 
-func New(name string) *Service {
+func New(name string, tickFrequency time.Duration) *Service {
 	service := &Service{}
 
 	service.Name = name
@@ -42,6 +43,7 @@ func New(name string) *Service {
 	service.Handlers = make(map[string]Delegate)
 
 	service.ProcessMessages = make(chan *Message, 128)
+	service.TickFrequency = tickFrequency
 	return service
 }
 
@@ -129,7 +131,7 @@ func (m *Service) FindHandler(itopic string) (delegate Delegate, exists bool) {
 func (m *Service) Loop() {
 	quit := false
 	for !quit {
-		m.Pubsub = pubsub.New(config.PubSubCfg)
+		m.Pubsub = pubsub.New(config.PubSubCfg, m.TickFrequency)
 		err := m.Pubsub.Connect(m.Name, m.PubsubRegister, m.PubsubSubscribe)
 		if err == nil {
 			m.Logger.LogInfo("pubsub", "connected")
@@ -164,7 +166,7 @@ func (m *Service) Loop() {
 							}
 						}
 
-						if topic == "client/disconnected/" || topic == "client.disconnected" {
+						if topic == "client/disconnected" {
 							m.Logger.LogInfo("pubsub", "disconnected")
 							connected = false
 						}

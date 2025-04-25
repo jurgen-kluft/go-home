@@ -7,26 +7,10 @@ Setup the following on my Mac Mini:
 * NATS       [DONE]
 * Influx DB  [DONE]
 * Grafana    [WIP]
-
-## ESP32
-
-The following micro services could run on an ESP32:
-
-* SunCalc
-* Flux
-* Calendar
-* Zigbee HUB
-* BLE Scan??
-
-## Test
-
-Still need to test the following processes:
-
-* ahk
+* Zigbee2MQTT [WIP]
 
 ## Implemented
 
-* conbee (state reader)
 * wemo
 
 ## Fix
@@ -43,5 +27,4 @@ Still need to test the following processes:
 * shout
 * suncalc
 * weather
-* xiaomi (obsolete)
 * yee
