@@ -20,8 +20,19 @@ Can measure power consumption and control devices remotely. For example it can d
 
 ## Room Presense Sensors
 
-I have bought 3 `LinknLink eMotion Pro` sensors on `Amazon.nl`, they are Wifi IP based and should be connected to a MQTT broker. I will also order 2 presence sensors from `SmartHomeShop`, these also include CO2, VOC, PM, Lux, NOx, and are based on ESPHome, we can write a process that will read the data from the sensors and send it to the MQTT broker.
-They can be exposed to HomeKit (if necessary) through the use of Golang, however we can also just expose switches that indicate presence in a room/area.
+I have bought 3 `LinknLink eMotion Pro` sensors on `Amazon.nl`, they are Wifi IP based and should be connected to a MQTT broker. 
+
+We will also build them ourselves using
+
+ESP32 devices on WiFi can easily be exposed to HomeKit (if necessary) through the use of Golang, however we can also just expose switches that indicate presence in a room/area.
+
+Appartment:
+
+- Kitchen
+- Living Room
+- Bedroom
+
+Villa:
 
 - Living Room (1st floor)
 - Living Room (2nd floor)
@@ -72,16 +83,16 @@ Can serve as an iPhone wireless charger but also can detect if it is charging, s
 
 - Wi-Fi 2.4GHz, Bluetooth 4.2
 - 5V1A, USB
-- ESPHome
+- ESPHome or Custom
 - DFRobot 24GHz, 100°, 25m
 
 Cost: 
 
 - DFRobot C4001 = 180 RMB
-- ESP32 = 25 RMB
+- ESP32 = 30 RMB
 - USB cable = 10 RMB
 - Power supply = 20 RMB
-- Total = 235 RMB
+- Total = 240 RMB
 
 ### ESP32 with LD2410C
 
@@ -89,13 +100,30 @@ Can only track one person at a time, but it is cheaper than the DFRobot C4001. I
 
 - Wi-Fi 2.4GHz, Bluetooth 4.2
 - 5V1A, USB
-- ESPHome
+- ESPHome or Custom
 - LD2410B/C 24GHz, 60°, 6m
 
 Cost:
 
 - LD2410B/C = 50 RMB
-- ESP32 = 25 RMB
+- ESP32 = 30 RMB
 - USB cable = 10 RMB
 - Power supply = 20 RMB
-- Total = 105 RMB
+- Total = 110 RMB
+
+### ESP32 with Rd-03D millimeter-Wave Human Detection Sensor by Ai-Thinker
+
+Can track 3 persons at a time, but it is cheaper than the DFRobot C4001. It can thus easily be used to detect if the room is occupied or not and even detect areas of the room where people are located. It can also be used to detect if a person is sitting or laying down.
+
+- Wi-Fi 2.4GHz, Bluetooth 4.2
+- 5V1A, USB
+- ESPHome or Custom
+- Rd-03D 24GHz, 60°, 8m
+
+Cost:
+
+- Rd-03D = 30 RMB
+- ESP32 = 30 RMB
+- USB cable = 10 RMB
+- Power supply = 20 RMB
+- Total = 85 RMB
