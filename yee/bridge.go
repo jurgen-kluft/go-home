@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/brutella/hc/accessory"
-	"github.com/oleggator/goyeelight"
 	"log"
 	"strconv"
+
+	"github.com/brutella/hc/accessory"
+	"github.com/oleggator/goyeelight"
 )
 
 // Accessory factory
@@ -46,7 +47,7 @@ func NewYeelight(info accessory.Info, ip, port string) *accessory.ColoredLightbu
 	})
 
 	acc.Lightbulb.Brightness.OnValueRemoteUpdate(func(brightness int) {
-		result, err := yeelight.SetBright(strconv.Itoa(brightness), "smooth", "500")
+		result, err := yeelight.SetBright(strconv.Itoa(brightness), "smooth", "100")
 		if err != nil {
 			log.Println(err)
 		}
@@ -57,7 +58,7 @@ func NewYeelight(info accessory.Info, ip, port string) *accessory.ColoredLightbu
 	acc.Lightbulb.Hue.OnValueRemoteUpdate(func(hueInput float64) {
 		hue = strconv.Itoa(int(hueInput))
 
-		result, err := yeelight.SetHSV(hue, saturation, "smooth", "500")
+		result, err := yeelight.SetHSV(hue, saturation, "smooth", "100")
 		if err != nil {
 			log.Println(err)
 		}
@@ -68,7 +69,7 @@ func NewYeelight(info accessory.Info, ip, port string) *accessory.ColoredLightbu
 	acc.Lightbulb.Saturation.OnValueRemoteUpdate(func(saturationInput float64) {
 		saturation = strconv.Itoa(int(saturationInput))
 
-		result, err := yeelight.SetHSV(hue, saturation, "smooth", "500")
+		result, err := yeelight.SetHSV(hue, saturation, "smooth", "100")
 		if err != nil {
 			log.Println(err)
 		}
