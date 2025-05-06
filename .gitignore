@@ -21,8 +21,11 @@ tags
 !*.go
 !go.mod
 !go.sum
-!*.json
+
 !*.md
+!*.png
+
+!*.json
 
 !*.sh
 
