@@ -1,17 +1,35 @@
 # Sensors
 
+Here a, incomplete, list of sensors that are very practical:
+
 - Light (lux)
+  - BH1750
 - Temperature (°C)
+  - BME280
+  - BMP280
+  - SCD41
 - Humidity (%)
+  - BME280
+  - SCD41
 - Pressure (hPa)
-- Sound (dB)
+  - BME280
+  - BMP280
+- Magnetic field (uT)
+  - HMC5883L
+- Acceleration (g)
+- Gyroscope (°/s)
 - Vibration
+  - 801s
+- Sound (dB)
 - CO2 (ppm)
+  - SCD41
 - PM2.5 (ppm)
 - PM10 (ppm)
 - VOC (ppb)
 - Motion, PIR (detection)
+  - HC-SR501
 - Presence, mmWave (detection)
+  - RD-03D
 
 ## Modules
 
@@ -27,6 +45,9 @@
     - Voltage: 3.3V - 5V, most important is a stable power supply
     - I2C address: 0x68
     - URL: https://github.com/Sensirion/arduino-i2c-scd4x
+- HC-SR501 PIR motion sensor
+    - Voltage: 5V
+    - URL: https://github.com/helenhoffman/ESP32_MotionSensor
 - RD-03D mmWave sensor 
     - Voltage: 5V, and the power ripple is required to be controlled within 100mV
     - I2C address: 0x10
