@@ -90,6 +90,7 @@ struct rd03d_data {
 	uint8_t tx_data[RD03D_TX_BUF_MAX_LEN];
 
 	uint16_t rx_bytes;
+	uint8_t rx_len;   /* Length of the buffer to receive (header begin + 2 + intra-frame data length) + header end*/
 	uint8_t rx_data[RD03D_RX_BUF_MAX_LEN];
 
 	uint8_t has_rsp;
