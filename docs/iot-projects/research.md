@@ -11,7 +11,11 @@
     - URL: https://github.com/Sensirion/arduino-i2c-scd4x
 - RD-03D mmWave sensor 
     - I2C address: 0x10
-    - URL: https://github.com/Gjorgjevikj/Ai-Thinker-RD-03
+    - URL: 
+      - https://github.com/javier-fg/arduino_rd-03d
+      - https://github.com/MauricioOrtega10/Rd-03
+      - https://github.com/bertrik/aithinker-rd03
+      - https://github.com/Gjorgjevikj/Ai-Thinker-RD-03
 
 # Breadboard prototype, soldering
 
