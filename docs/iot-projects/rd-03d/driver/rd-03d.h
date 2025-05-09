@@ -7,44 +7,35 @@
 #include <zephyr/drivers/sensor/rd-03d.h>
 
 #define RD03D_TX_BUF_MAX_LEN 18
-#define RD03D_RX_BUF_MAX_LEN 30
+#define RD03D_RX_BUF_MAX_LEN 64
 #define RD03D_UART_BAUD_RATE 115200
 
-/* Arbitrary max duration to wait for the response */
-#define RD03D_WAIT K_SECONDS(1)
+/* Arbitrary max duration to wait on a semaphore */
+#define RD03D_SEMA_MAX_WAIT K_SECONDS(1)
 
 enum rd03d_protocol_cmd_idx {
-	RD03D_PROTOCOL_CMD_IDX_OPEN_CMD_MODE,
-	RD03D_PROTOCOL_CMD_IDX_CLOSE_CMD_MODE,
-	RD03D_PROTOCOL_CMD_IDX_DEBUGGING_MODE,
-	RD03D_PROTOCOL_CMD_IDX_REPORTING_MODE,
-	RD03D_PROTOCOL_CMD_IDX_RUNNING_MODE,
+	RD03D_CMD_IDX_OPEN_CMD_MODE,
+	RD03D_CMD_IDX_CLOSE_CMD_MODE,
+	RD03D_CMD_IDX_DEBUGGING_MODE,
+	RD03D_CMD_IDX_REPORTING_MODE,
+	RD03D_CMD_IDX_RUNNING_MODE,
 
-	RD03D_PROTOCOL_CMD_IDX_SET_MIN_DISTANCE,
-	RD03D_PROTOCOL_CMD_IDX_SET_MAX_DISTANCE,
-	RD03D_PROTOCOL_CMD_IDX_SET_MIN_FRAMES, // Minimum number of frames for being considered as
-					       // appearing
-	RD03D_PROTOCOL_CMD_IDX_SET_MAX_FRAMES, // Maximum number of frames for being considered as
-					       // dissapearing
-	RD03D_PROTOCOL_CMD_IDX_SET_DELAY_TIME, // The delay time to use for considering the object
-					       // as dissapearing
+	RD03D_CMD_IDX_SET_MIN_DISTANCE,
+	RD03D_CMD_IDX_SET_MAX_DISTANCE,
+	RD03D_CMD_IDX_SET_MIN_FRAMES, // Min number of frames considered as appearing
+	RD03D_CMD_IDX_SET_MAX_FRAMES, // Max number of frames considered as dissapearing
+	RD03D_CMD_IDX_SET_DELAY_TIME, // The delay time for considering as dissapeared
 
-	RD03D_PROTOCOL_CMD_IDX_GET_MIN_DISTANCE,
-	RD03D_PROTOCOL_CMD_IDX_GET_MAX_DISTANCE,
-	RD03D_PROTOCOL_CMD_IDX_GET_MIN_FRAMES,
-	RD03D_PROTOCOL_CMD_IDX_GET_MAX_FRAMES,
-	RD03D_PROTOCOL_CMD_IDX_GET_DELAY_TIME,
+	RD03D_CMD_IDX_GET_MIN_DISTANCE,
+	RD03D_CMD_IDX_GET_MAX_DISTANCE,
+	RD03D_CMD_IDX_GET_MIN_FRAMES,
+	RD03D_CMD_IDX_GET_MAX_FRAMES,
+	RD03D_CMD_IDX_GET_DELAY_TIME,
 
-	RD03D_PROTOCOL_CMD_IDX_SINGLE_TARGET_MODE, // Detection mode single target
-	RD03D_PROTOCOL_CMD_IDX_MULTI_TARGET_MODE,  // Detection mode multiple targets
+	RD03D_CMD_IDX_SINGLE_TARGET_MODE, // Detection mode single target
+	RD03D_CMD_IDX_MULTI_TARGET_MODE,  // Detection mode multiple targets
 
-	RD03D_PROTOCOL_CMD_IDX_MAX,
-};
-
-enum rd03d_protocol_ack_idx {
-	RD03D_PROTOCOL_CMD_ACK_IDX_OPEN_CMD_MODE,
-	RD03D_PROTOCOL_CMD_ACK_IDX_CLOSE_CMD_MODE,
-	RD03D_PROTOCOL_CMD_ACK_IDX_MAX,
+	RD03D_CMD_IDX_MAX,
 };
 
 enum rd03d_detection_mode {
@@ -69,39 +60,35 @@ enum rd03d_property {
 	RD03D_PROP_OPERATION_MODE,
 };
 
+/** @brief Information collected from the sensor on each fetch. */
+
 #define RD03D_MAX_TARGETS 3
 
-/** @brief Information collected from the sensor on each fetch. */
-struct rd03d_report {
-
-	struct rd03d_target {
-		uint16_t x;        /**< X coordinate in mm */
-		uint16_t y;        /**< Y coordinate in mm */
-		uint16_t distance; /**< Distance in mm, 0 means target is invalid */
-		uint16_t speed;    /**< Speed of the target in cm/s */
-	};
-
-	rd03d_target targets[RD03D_MAX_TARGETS]; /**< Array of targets detected */
+struct rd03d_target {
+	uint16_t x;        /**< X coordinate in mm */
+	uint16_t y;        /**< Y coordinate in mm */
+	uint16_t distance; /**< Distance in mm, 0 means target is invalid */
+	uint16_t speed;    /**< Speed of the target in cm/s */
 };
 
 struct rd03d_data {
-	uint8_t tx_bytes;    /* Number of bytes that are send */
-	uint8_t tx_data_len; /* Length of the buffer to send */
+	struct k_sem tx_sem;
+	struct k_sem rx_sem;
+
+	uint8_t tx_bytes;    /* Number of bytes send so far */
+	uint8_t tx_data_len; /* Number of bytes to send */
 	uint8_t tx_data[RD03D_TX_BUF_MAX_LEN];
 
-	uint16_t rx_bytes;
-	uint8_t rx_len;   /* Length of the buffer to receive (header begin + 2 + intra-frame data length) + header end*/
+	uint8_t rx_bytes;       /* Number of bytes received so far */
+	uint8_t rx_frame_start; /* Start of an ACK or Report in the buffer */
+	uint8_t rx_data_len;    /* Number of bytes to receive */
+	uint8_t padding0;
 	uint8_t rx_data[RD03D_RX_BUF_MAX_LEN];
-
-	uint8_t has_rsp;
 
 	uint8_t operation_mode;
 	uint8_t detection_mode;
 
-	struct k_sem tx_sem;
-	struct k_sem rx_sem;
-
-	rd03d_report report;
+	struct rd03d_target targets[RD03D_MAX_TARGETS];
 };
 
 struct rd03d_cfg {

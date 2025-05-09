@@ -34,30 +34,30 @@ LOG_MODULE_REGISTER(rd03d, CONFIG_SENSOR_LOG_LEVEL);
 // |  Command Word (2 bytes)   |    Command value (N bytes)  |
 // |----------------------------------------------------------
 
-// 	RD03D_PROTOCOL_CMD_IDX_OPEN_CMD_MODE      = { RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0xFF, 0x00, 0x01, 0x00, RD03D_CMD_HEADER_END }
-// 	RD03D_PROTOCOL_CMD_IDX_CLOSE_CMD_MODE     = { RD03D_CMD_HEADER_BEGIN, 0x02, 0x00, 0xFE, 0x00, RD03D_CMD_HEADER_END }
-// 	RD03D_PROTOCOL_CMD_IDX_DEBUGGING_MODE     = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END }
-// 	RD03D_PROTOCOL_CMD_IDX_REPORTING_MODE     = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END }
-// 	RD03D_PROTOCOL_CMD_IDX_RUNNING_MODE       = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END }
-// 	RD03D_PROTOCOL_CMD_IDX_SET_MIN_DISTANCE   = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END }
-// 	RD03D_PROTOCOL_CMD_IDX_SET_MAX_DISTANCE   = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x07, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END },
-// 	RD03D_PROTOCOL_CMD_IDX_SET_MIN_FRAMES     = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x07, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END }
-// 	RD03D_PROTOCOL_CMD_IDX_SET_MAX_FRAMES     = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x07, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END }
-// 	RD03D_PROTOCOL_CMD_IDX_SET_DELAY_TIME     = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x07, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END }
-// 	RD03D_PROTOCOL_CMD_IDX_GET_MIN_DISTANCE   = { RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0x08, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END }
-// 	RD03D_PROTOCOL_CMD_IDX_GET_MAX_DISTANCE   = { RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0x08, 0x00, 0x01, 0x00, RD03D_CMD_HEADER_END }
-// 	RD03D_PROTOCOL_CMD_IDX_GET_MIN_FRAMES     = { RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0x08, 0x00, 0x02, 0x00, RD03D_CMD_HEADER_END }
-// 	RD03D_PROTOCOL_CMD_IDX_GET_MAX_FRAMES     = { RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0x08, 0x00, 0x03, 0x00, RD03D_CMD_HEADER_END }
-// 	RD03D_PROTOCOL_CMD_IDX_GET_DELAY_TIME     = { RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0x08, 0x00, 0x04, 0x00, RD03D_CMD_HEADER_END }
-// 	RD03D_PROTOCOL_CMD_IDX_SINGLE_TARGET_MODE = { RD03D_CMD_HEADER_BEGIN, 0x02, 0x00, 0x80, 0x00, RD03D_CMD_HEADER_END }
-// 	RD03D_PROTOCOL_CMD_IDX_MULTI_TARGET_MODE  = { RD03D_CMD_HEADER_BEGIN, 0x02, 0x00, 0x90, 0x00, RD03D_CMD_HEADER_END },
+// 	RD03D_CMD_IDX_OPEN_CMD_MODE      = { RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0xFF, 0x00, 0x01, 0x00, RD03D_CMD_HEADER_END }
+// 	RD03D_CMD_IDX_CLOSE_CMD_MODE     = { RD03D_CMD_HEADER_BEGIN, 0x02, 0x00, 0xFE, 0x00, RD03D_CMD_HEADER_END }
+// 	RD03D_CMD_IDX_DEBUGGING_MODE     = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END }
+// 	RD03D_CMD_IDX_REPORTING_MODE     = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END }
+// 	RD03D_CMD_IDX_RUNNING_MODE       = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END }
+// 	RD03D_CMD_IDX_SET_MIN_DISTANCE   = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END }
+// 	RD03D_CMD_IDX_SET_MAX_DISTANCE   = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x07, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END },
+// 	RD03D_CMD_IDX_SET_MIN_FRAMES     = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x07, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END }
+// 	RD03D_CMD_IDX_SET_MAX_FRAMES     = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x07, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END }
+// 	RD03D_CMD_IDX_SET_DELAY_TIME     = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x07, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END }
+// 	RD03D_CMD_IDX_GET_MIN_DISTANCE   = { RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0x08, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END }
+// 	RD03D_CMD_IDX_GET_MAX_DISTANCE   = { RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0x08, 0x00, 0x01, 0x00, RD03D_CMD_HEADER_END }
+// 	RD03D_CMD_IDX_GET_MIN_FRAMES     = { RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0x08, 0x00, 0x02, 0x00, RD03D_CMD_HEADER_END }
+// 	RD03D_CMD_IDX_GET_MAX_FRAMES     = { RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0x08, 0x00, 0x03, 0x00, RD03D_CMD_HEADER_END }
+// 	RD03D_CMD_IDX_GET_DELAY_TIME     = { RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0x08, 0x00, 0x04, 0x00, RD03D_CMD_HEADER_END }
+// 	RD03D_CMD_IDX_SINGLE_TARGET_MODE = { RD03D_CMD_HEADER_BEGIN, 0x02, 0x00, 0x80, 0x00, RD03D_CMD_HEADER_END }
+// 	RD03D_CMD_IDX_MULTI_TARGET_MODE  = { RD03D_CMD_HEADER_BEGIN, 0x02, 0x00, 0x90, 0x00, RD03D_CMD_HEADER_END },
 
 // return the length of the command
 static int prepare_cmd(rd03d_protocol_cmd_idx, uint8_t *cmd_buffer, int value) {
 	// Assume the header is already set
 	int l = 4; // Skip header
 
-	if (cmd_idx  == RD03D_PROTOCOL_CMD_IDX_OPEN_CMD_MODE) 
+	if (cmd_idx  == RD03D_CMD_IDX_OPEN_CMD_MODE) 
 	{
 		cmd_buffer[l++] = 0x04; // Intra-frame data length
 		cmd_buffer[l++] = 0x00; //
@@ -66,14 +66,14 @@ static int prepare_cmd(rd03d_protocol_cmd_idx, uint8_t *cmd_buffer, int value) {
 		cmd_buffer[l++] = 0x01; // 
 		cmd_buffer[l++] = 0x00; //
 	}
-	else if (cmd_idx == RD03D_PROTOCOL_CMD_IDX_CLOSE_CMD_MODE) 
+	else if (cmd_idx == RD03D_CMD_IDX_CLOSE_CMD_MODE) 
 	{
 		cmd_buffer[l++] = 0x02; // Intra-frame data length
 		cmd_buffer[l++] = 0x00; //
 		cmd_buffer[l++] = 0xFE; // Command word
 		cmd_buffer[l++] = 0x00; //
 	} 
-	else if (cmd_idx >= RD03D_PROTOCOL_CMD_IDX_DEBUGGING_MODE && cmd_idx <= RD03D_PROTOCOL_CMD_IDX_RUNNING_MODE) 
+	else if (cmd_idx >= RD03D_CMD_IDX_DEBUGGING_MODE && cmd_idx <= RD03D_CMD_IDX_RUNNING_MODE) 
 	{
 		cmd_buffer[l++] = 0x08; // Intra-frame data length
 		cmd_buffer[l++] = 0x00; //
@@ -87,33 +87,33 @@ static int prepare_cmd(rd03d_protocol_cmd_idx, uint8_t *cmd_buffer, int value) {
 		cmd_buffer[l++] = 0x00; //
 		cmd_buffer[l++] = 0x00; //
 	}
-	else if (cmd_idx >= RD03D_PROTOCOL_CMD_IDX_SET_MIN_DISTANCE && cmd_idx <= RD03D_PROTOCOL_CMD_IDX_SET_DELAY_TIME) 
+	else if (cmd_idx >= RD03D_CMD_IDX_SET_MIN_DISTANCE && cmd_idx <= RD03D_CMD_IDX_SET_DELAY_TIME) 
 	{
 		cmd_buffer[l++] = 0x08; // Intra-frame data length
 		cmd_buffer[l++] = 0x00; //
 		cmd_buffer[l++] = 0x07; // Command word
 		cmd_buffer[l++] = 0x00; //
-		cmd_buffer[l++] = cmd_index - RD03D_PROTOCOL_CMD_IDX_SET_MIN_DISTANCE; // Command value
+		cmd_buffer[l++] = cmd_index - RD03D_CMD_IDX_SET_MIN_DISTANCE; // Command value
 		cmd_buffer[l++] = 0x00; //
 		cmd_buffer[l++] = value & 0xFF; // Set value, 32-bit
 		cmd_buffer[l++] = (value >> 8) & 0xFF;
 		cmd_buffer[l++] = (value >> 16) & 0xFF;
 		cmd_buffer[l++] = (value >> 24) & 0xFF;
 	}
-	else if (cmd_idx >= RD03D_PROTOCOL_CMD_IDX_GET_MIN_DISTANCE && cmd_idx <= RD03D_PROTOCOL_CMD_IDX_GET_DELAY_TIME) 
+	else if (cmd_idx >= RD03D_CMD_IDX_GET_MIN_DISTANCE && cmd_idx <= RD03D_CMD_IDX_GET_DELAY_TIME) 
 	{
 		cmd_buffer[l++] = 0x04; // Intra-frame data length
 		cmd_buffer[l++] = 0x00; //
 		cmd_buffer[l++] = 0x08; // Command word
 		cmd_buffer[l++] = 0x00; //
-		cmd_buffer[l++] = cmd_index - RD03D_PROTOCOL_CMD_IDX_GET_MIN_DISTANCE; // Command value
+		cmd_buffer[l++] = cmd_index - RD03D_CMD_IDX_GET_MIN_DISTANCE; // Command value
 		cmd_buffer[l++] = 0x00; //
 	}
-	else if (cmd_idx >= RD03D_PROTOCOL_CMD_IDX_SINGLE_TARGET_MODE && cmd_idx <= RD03D_PROTOCOL_CMD_IDX_MULTI_TARGET_MODE) 
+	else if (cmd_idx >= RD03D_CMD_IDX_SINGLE_TARGET_MODE && cmd_idx <= RD03D_CMD_IDX_MULTI_TARGET_MODE) 
 	{
 		cmd_buffer[l++] = 0x02; // Intra-frame data length
 		cmd_buffer[l++] = 0x00; //
-		cmd_buffer[l++] = RD03D_PROTOCOL_CMD_IDX_SINGLE_TARGET_MODE ? 0x80 : 0x90; // Command word
+		cmd_buffer[l++] = RD03D_CMD_IDX_SINGLE_TARGET_MODE ? 0x80 : 0x90; // Command word
 		cmd_buffer[l++] = 0x00; //
 	}
 
@@ -139,13 +139,64 @@ static int prepare_cmd(rd03d_protocol_cmd_idx, uint8_t *cmd_buffer, int value) {
 // |  Send Command Word | 0x0100 (2 bytes)  | Return value (N bytes)  |
 // |------------------------------------------------------------------
 
+static const uint8_t RD03D_CMD_ACK_IDX_OPEN_CMD_MODE[]   = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0xFF, 0x01, 0x00, 0x00, 0x01, 0x00, 0x40, 0x00, RD03D_CMD_HEADER_END };
+static const uint8_t RD03D_CMD_ACK_IDX_CLOSE_CMD_MODE[]  = { RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0xFE, 0x01, 0x00, 0x00, RD03D_CMD_HEADER_END };
 
-static const uint8_t rd03d_acks[][1 + 18] = {
-    // Protocol, acks for open and close cmd
-	[RD03D_PROTOCOL_CMD_ACK_IDX_OPEN_CMD_MODE]    = { 0, RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0xFF, 0x01, 0x00, 0x00, 0x01, 0x00, 0x40, 0x00, RD03D_CMD_HEADER_END },
-	[RD03D_PROTOCOL_CMD_ACK_IDX_CLOSE_CMD_MODE]   = { 0, RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0xFF, 0x01, 0x00, 0x00, RD03D_CMD_HEADER_END },
-};
+// Protocol, ACKS we get for set and get commands, the ACK related to the get cmd contains a 4 byte variable at (rx_buffer[10] to rx_buffer[13])
+// static const uint8_t RD03D_CMD_ACK_IDX_SET_XXX[] = { RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0x07, 0x01, 0x00, 0x00, RD03D_CMD_HEADER_END },
+// static const uint8_t RD03D_CMD_ACK_IDX_GET_XXX[] = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x08, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END },
+
 // clang-format on
+
+static int verify_open_cmd_ack(const uint8_t *data, int data_len)
+{
+	if (data_len != sizeof(RD03D_CMD_ACK_IDX_OPEN_CMD_MODE)) {
+		return -1;
+	}
+
+	return memcmp(data, RD03D_CMD_ACK_IDX_OPEN_CMD_MODE,
+		      sizeof(RD03D_CMD_ACK_IDX_OPEN_CMD_MODE)) == 0
+		       ? 0
+		       : -1;
+}
+
+static int verify_close_cmd_ack(const uint8_t *data, int data_len)
+{
+	if (data_len != sizeof(RD03D_CMD_ACK_IDX_CLOSE_CMD_MODE)) {
+		return -1;
+	}
+
+	return memcmp(data, RD03D_CMD_ACK_IDX_CLOSE_CMD_MODE,
+		      sizeof(RD03D_CMD_ACK_IDX_CLOSE_CMD_MODE)) == 0
+		       ? 0
+		       : -1;
+}
+
+static int verify_set_cmd_ack(const uint8_t *data, int data_len)
+{
+	if (data_len != sizeof(RD03D_CMD_ACK_IDX_SET_XXX)) {
+		return -1;
+	}
+
+	return memcmp(data, RD03D_CMD_ACK_IDX_SET_XXX, sizeof(RD03D_CMD_ACK_IDX_SET_XXX)) == 0 ? 0
+											       : -1;
+}
+
+static int verify_get_cmd_ack(const uint8_t *data, int data_len, int *value)
+{
+	*value = 0;
+	if (data_len != sizeof(RD03D_CMD_ACK_IDX_GET_XXX)) {
+		return -1;
+	}
+
+	if (memcmp(data, RD03D_CMD_ACK_IDX_GET_XXX, sizeof(RD03D_CMD_ACK_IDX_GET_XXX)) == 0) {
+		// read the 4 byte variable
+		*value = data[10] | (data[11] << 8) | (data[12] << 16) | (data[13] << 24);
+		return 0;
+	}
+
+	return -1;
+}
 
 static void rd03d_uart_flush(const struct device *uart_dev)
 {
@@ -156,19 +207,7 @@ static void rd03d_uart_flush(const struct device *uart_dev)
 	}
 }
 
-static uint8_t rd03d_checksum(const uint8_t *data)
-{
-	uint8_t cs = 0;
-
-	for (uint8_t i = 1; i < RD03D_BUF_LEN - 1; i++) {
-		cs += data[i];
-	}
-
-	return 0xff - cs + 1;
-}
-
-static int rd03d_send_cmd(const struct device *dev, enum rd03d_cmd_idx cmd_idx, int value,
-			  bool has_rsp)
+static int rd03d_send_cmd(const struct device *dev, enum rd03d_cmd_idx cmd_idx, int value)
 {
 	struct rd03d_data *data = dev->data;
 	const struct rd03d_cfg *cfg = dev->config;
@@ -179,22 +218,21 @@ static int rd03d_send_cmd(const struct device *dev, enum rd03d_cmd_idx cmd_idx, 
 	}
 
 	/* Make sure last command has been transferred */
-	ret = k_sem_take(&data->tx_sem, RD03D_WAIT);
+	ret = k_sem_take(&data->tx_sem, RD03D_SEMA_MAX_WAIT);
 	if (ret) {
 		return ret;
 	}
 
 	data->tx_data_len = prepare_cmd(cmd_idx, data->tx_data, value);
-	data->cmd_idx = cmd_idx;
-	data->has_rsp = has_rsp;
+
 	k_sem_reset(&data->rx_sem);
 
+	// all the rd03d commands have a response
 	uart_irq_tx_enable(cfg->uart_dev);
+	uart_irq_rx_enable(cfg->uart_dev);
 
-	if (has_rsp) {
-		uart_irq_rx_enable(cfg->uart_dev);
-		ret = k_sem_take(&data->rx_sem, RD03D_WAIT);
-	}
+	// wait for the tx and rx to be done
+	ret = k_sem_take(&data->rx_sem, RD03D_SEMA_MAX_WAIT);
 
 	return ret;
 }
@@ -205,13 +243,13 @@ static int rd03d_open_cmd_mode(const struct device *dev)
 	int ret;
 
 	// Open command mode
-	ret = rd03d_send_cmd(dev, RD03D_PROTOCOL_CMD_IDX_OPEN_CMD_MODE, true);
+	ret = rd03d_send_cmd(dev, RD03D_CMD_IDX_OPEN_CMD_MODE, 1);
 	if (ret < 0) {
 		return ret;
 	}
 
 	// Check if the command was acknowledged
-	if (data->rd_data[0] != RD03D_PROTOCOL_CMD_ACK_IDX_OPEN_CMD_MODE) {
+	if (verify_open_cmd_ack(data->rx_data, data->rx_data_len) != 0) {
 		LOG_ERR("Failed to open command mode");
 		return -EIO;
 	}
@@ -225,13 +263,13 @@ static int rd03d_close_cmd_mode(const struct device *dev)
 	int ret;
 
 	// Close command mode
-	ret = rd03d_send_cmd(dev, RD03D_PROTOCOL_CMD_IDX_CLOSE_CMD_MODE, true);
+	ret = rd03d_send_cmd(dev, RD03D_CMD_IDX_CLOSE_CMD_MODE, 1);
 	if (ret < 0) {
 		return ret;
 	}
 
-	// Check if the command was acknowledged
-	if (data->rd_data[0] != RD03D_PROTOCOL_CMD_ACK_IDX_CLOSE_CMD_MODE) {
+	// Verify the command was acknowledged successfully
+	if (verify_close_cmd_ack(data->rx_data, data->rx_data_len) != 0) {
 		LOG_ERR("Failed to close command mode");
 		return -EIO;
 	}
@@ -239,43 +277,11 @@ static int rd03d_close_cmd_mode(const struct device *dev)
 	return 0;
 }
 
-static inline int rd03d_get_attribute(const struct device *dev, enum rd03d_attribute attr)
-{
-	struct rd03d_data *data = dev->data;
-	uint8_t checksum;
-	int ret;
-
-	// get attribute cmd, has a reponse
-	ret = rd03d_send_cmd(dev, cmd_idx, 0, true);
-	if (ret < 0) {
-		return ret;
-	}
-
-	// Decode the response
-
-	return 0;
-}
-
-static int rd03d_channel_get(const struct device *dev, enum sensor_channel chan,
-			     struct sensor_value *val)
+static int rd03d_set_attribute(const struct device *dev, enum rd03d_protocol_cmd_idx cmd_idx,
+			       int value)
 {
 	struct rd03d_data *data = dev->data;
 
-	// TODO, for any custom channels that need to read from the
-
-	if (chan != SENSOR_CHAN_ALL) {
-		return -ENOTSUP;
-	}
-
-	val->val1 = (int32_t)data->data;
-	val->val2 = 0;
-
-	return 0;
-}
-
-static int rd03d_set_attribute(const struct device *dev, rd03d_protocol_cmd_idx cmd_idx, int value)
-{
-	struct rd03d_data *data = dev->data;
 	int ret;
 
 	// This is always a mutable command, so we need to copy the command into
@@ -286,22 +292,31 @@ static int rd03d_set_attribute(const struct device *dev, rd03d_protocol_cmd_idx 
 	if ((data->operation_mode & RD03D_OPERATION_MODE_CMD) == 0) {
 		ret = rd03d_open_cmd_mode(dev);
 		if (ret < 0) {
+			LOG_ERR("Failure, open command mode");
 			return -EINVAL;
 		}
 		data->operation_mode |= RD03D_OPERATION_MODE_CMD;
 	}
 
 	// Set the attribute value in the command
-	rd03d_send_cmd(dev, cmd_idx, value, true);
+	ret = rd03d_send_cmd(dev, cmd_idx, value, 1) if (ret < 0)
+	{
+		LOG_ERR("Failure, set attribute command (%d)", cmd_idx);
+		return ret;
+	}
 
-	// TODO Decode the ACK response, did the command succeed?
+	// Verify the command was acknowledged successfully
+	ret = verify_set_cmd_ack(data->rx_data, data->rx_data_len);
+	if (ret < 0) {
+		LOG_ERR("Failure, set attribute command (%d) did not get valid ACK", cmd_idx);
+		return ret;
+	}
 
 	// Note: When setting RD03D_ATTR_OPERATION_MODE to any of the reporting
 	//       modes, the sensor will close the command mode.
 	//       This means that the command mode will be closed automatically
 	//       and the sensor will enter the reporting mode.
-	if ((cmd_idx >= RD03D_PROTOCOL_CMD_IDX_DEBUGGING_MODE &&
-	     cmd_idx <= RD03D_PROTOCOL_CMD_IDX_RUNNING_MODE)) {
+	if ((cmd_idx >= RD03D_CMD_IDX_DEBUGGING_MODE && cmd_idx <= RD03D_CMD_IDX_RUNNING_MODE)) {
 		if ((data->operation_mode & RD03D_OPERATION_MODE_CMD) == RD03D_OPERATION_MODE_CMD) {
 			ret = rd03d_close_cmd_mode(dev);
 			if (ret < 0) {
@@ -310,7 +325,35 @@ static int rd03d_set_attribute(const struct device *dev, rd03d_protocol_cmd_idx 
 			data->operation_mode &= ~RD03D_OPERATION_MODE_CMD;
 		}
 	}
+
+	return ret;
 }
+
+/*
+enum sensor_channel_rd03d {
+	SENSOR_CHAN_RD03D_CONFIG_DISTANCE = SENSOR_CHAN_PRIV_START,
+	SENSOR_CHAN_RD03D_CONFIG_FRAMES,
+	SENSOR_CHAN_RD03D_CONFIG_DELAY_TIME,
+	SENSOR_CHAN_RD03D_CONFIG_DETECTION_MODE,
+	SENSOR_CHAN_RD03D_CONFIG_OPERATION_MODE,
+	SENSOR_CHAN_RD03D_POS,
+	SENSOR_CHAN_RD03D_SPEED,
+	SENSOR_CHAN_RD03D_DISTANCE,
+};
+
+enum sensor_attribute_rd03d {
+	SENSOR_ATTR_RD03D_TARGETS = SENSOR_ATTR_PRIV_START,
+
+	SENSOR_ATTR_RD03D_TARGET_0,
+	SENSOR_ATTR_RD03D_TARGET_1,
+	SENSOR_ATTR_RD03D_TARGET_2,
+
+	SENSOR_ATTR_RD03D_CONFIG_VALUE,
+	SENSOR_ATTR_RD03D_CONFIG_MINIMUM,
+	SENSOR_ATTR_RD03D_CONFIG_MAXIMUM,
+};
+
+*/
 
 static int rd03d_attr_set(const struct device *dev, enum sensor_channel chan,
 			  enum sensor_attribute attr, const struct sensor_value *val)
@@ -319,155 +362,323 @@ static int rd03d_attr_set(const struct device *dev, enum sensor_channel chan,
 	struct rd03d_cfg *cfg = dev->config;
 	int ret;
 
-	if (!(chan >= SENSOR_CHAN_RD03D_MIN_DISTANCE && chan <= SENSOR_CHAN_RD03D_OPERATION_MODE)) {
+	if (!(chan >= SENSOR_CHAN_RD03D_CONFIG_DISTANCE &&
+	      chan <= SENSOR_CHAN_RD03D_CONFIG_OPERATION_MODE)) {
+		return -ENOTSUP;
+	}
+	if (!(chan >= SENSOR_ATTR_RD03D_CONFIG_VALUE && chan <= SENSOR_ATTR_RD03D_CONFIG_MAXIMUM)) {
 		return -ENOTSUP;
 	}
 
 	switch (chan) {
-	case SENSOR_CHAN_RD03D_MIN_DISTANCE:
-		ret = rd03d_set_attribute(dev, RD03D_PROTOCOL_CMD_IDX_SET_MIN_DISTANCE, val->val1);
-		if (ret >= 0) {
-			cfg->min_distance = val->val1;
+	case SENSOR_CHAN_RD03D_CONFIG_DISTANCE:
+		switch (attr) {
+		case SENSOR_ATTR_RD03D_CONFIG_MINIMUM:
+			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MIN_DISTANCE, val->val1) >=
+			    0) {
+				cfg->min_distance = val->val1;
+			}
+			break;
+		case SENSOR_ATTR_RD03D_CONFIG_MAXIMUM:
+			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MAX_DISTANCE, val->val1) >=
+			    0) {
+				cfg->max_distance = val->val1;
+			}
+			break;
 		}
-	case SENSOR_CHAN_RD03D_MAX_DISTANCE:
-		ret = rd03d_set_attribute(dev, RD03D_PROTOCOL_CMD_IDX_SET_MAX_DISTANCE, val->val1);
-		if (ret >= 0) {
-			cfg->max_distance = val->val1;
+		break;
+	case SENSOR_CHAN_RD03D_CONFIG_FRAMES:
+		switch (attr) {
+		case SENSOR_ATTR_RD03D_CONFIG_MINIMUM:
+			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MIN_FRAMES, val->val1) >=
+			    0) {
+				cfg->min_frames = val->val1;
+			}
+			break;
+		case SENSOR_ATTR_RD03D_CONFIG_MAXIMUM:
+			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MAX_FRAMES, val->val1) >=
+			    0) {
+				cfg->max_frames = val->val1;
+			}
+			break;
 		}
-	case SENSOR_CHAN_RD03D_MIN_FRAMES:
-		ret = rd03d_set_attribute(dev, RD03D_PROTOCOL_CMD_IDX_SET_MIN_FRAMES, val->val1);
-		if (ret >= 0) {
-			cfg->min_frames = val->val1;
-		}
-	case SENSOR_CHAN_RD03D_MAX_FRAMES:
-		ret = rd03d_set_attribute(dev, RD03D_PROTOCOL_CMD_IDX_SET_MAX_FRAMES, val->val1);
-		if (ret >= 0) {
-			cfg->max_frames = val->val1;
-		}
-	case SENSOR_CHAN_RD03D_DELAY_TIME:
-		ret = rd03d_set_attribute(dev, RD03D_PROTOCOL_CMD_IDX_SET_DELAY_TIME, val->val1);
-		if (ret >= 0) {
+		break;
+	case SENSOR_CHAN_RD03D_CONFIG_DELAY_TIME:
+		if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_DELAY_TIME, val->val1) >= 0) {
 			cfg->delay_time = val->val1;
 		}
+		break;
 	case SENSOR_CHAN_RD03D_DETECTION_MODE:
 		switch (val->val1) {
 		case RD03D_DETECTION_MODE_SINGLE_TARGET:
-			return rd03d_set_attribute(dev, RD03D_PROTOCOL_CMD_IDX_SINGLE_TARGET_MODE,
-						   0);
+			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SINGLE_TARGET_MODE, val->val1) >=
+			    0) {
+				data->detection_mode = RD03D_DETECTION_MODE_SINGLE_TARGET;
+			}
+			break;
 		case RD03D_DETECTION_MODE_MULTI_TARGET:
-			return rd03d_set_attribute(dev, RD03D_PROTOCOL_CMD_IDX_MULTI_TARGET_MODE,
-						   0);
+			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_MULTI_TARGET_MODE, val->val1) >=
+			    0) {
+				data->detection_mode = RD03D_DETECTION_MODE_MULTI_TARGET;
+			}
+			break;
+		default:
+			ret = -EINVAL;
+			break;
 		}
-		return -EINVAL;
+		break;
 	case SENSOR_CHAN_RD03D_OPERATION_MODE:
 		switch (val->val1) {
 		case RD03D_OPERATION_MODE_DEBUG:
-			return rd03d_set_attribute(dev, RD03D_PROTOCOL_CMD_IDX_DEBUGGING_MODE, 0);
+			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_DEBUGGING_MODE, val->val1) >=
+			    0) {
+				data->operation_mode = RD03D_OPERATION_MODE_DEBUG;
+			}
+			break;
 		case RD03D_OPERATION_MODE_REPORT:
-			return rd03d_set_attribute(dev, RD03D_PROTOCOL_CMD_IDX_REPORTING_MODE, 0);
+			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_REPORTING_MODE, val->val1) >=
+			    0) {
+				data->operation_mode = RD03D_OPERATION_MODE_REPORT;
+			}
+			break;
 		case RD03D_OPERATION_MODE_RUN:
-			return rd03d_set_attribute(dev, RD03D_PROTOCOL_CMD_IDX_RUNNING_MODE, 0);
+			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_RUNNING_MODE, val->val1) >= 0) {
+				data->operation_mode = RD03D_OPERATION_MODE_RUN;
+			}
+			break;
+		default:
+			ret = -EINVAL;
+			break;
 		}
-		return -EINVAL;
+		break;
 	}
+
+	return ret;
+}
+
+static inline int rd03d_get_attribute(const struct device *dev, rd03d_protocol_cmd_idx cmd_idx,
+				      int *value)
+{
+	struct rd03d_data *data = dev->data;
+	int ret;
+
+	// get attribute cmd, has a reponse
+	ret = rd03d_send_cmd(dev, cmd_idx, 0);
+	if (ret < 0) {
+		return ret;
+	}
+
+	// Decode the response and write 'value'
+
+	return 0;
 }
 
 static int rd03d_attr_get(const struct device *dev, enum sensor_channel chan,
 			  enum sensor_attribute attr, struct sensor_value *val)
 {
 	struct rd03d_data *data = dev->data;
-	struct rd03d_cfg *cfg = dev->config;
-
 	int ret;
 
-	if (chan != SENSOR_CHAN_ALL ||
-	    !(chan >= SENSOR_CHAN_RD03D_MIN_DISTANCE && chan <= SENSOR_CHAN_RD03D_OPERATION_MODE) ||
-	    !(attr >= SENSOR_CHAN_RD03D_T0_POS && attr <= SENSOR_CHAN_RD03D_T2_POS) ||
-	    !(attr >= SENSOR_CHAN_RD03D_T0_SPEED && attr <= SENSOR_CHAN_RD03D_T2_SPEED) ||
-	    !(attr >= SENSOR_CHAN_RD03D_T0_DISTANCE && attr <= SENSOR_CHAN_RD03D_T2_DISTANCE)) {
+	if (!(chan >= SENSOR_CHAN_RD03D_CONFIG_DISTANCE &&
+	      chan <= SENSOR_CHAN_RD03D_CONFIG_OPERATION_MODE)) {
+		return -ENOTSUP;
+	}
+	if (!(chan >= SENSOR_ATTR_RD03D_CONFIG_VALUE && chan <= SENSOR_ATTR_RD03D_CONFIG_MAXIMUM)) {
 		return -ENOTSUP;
 	}
 
-	if (!(chan >= SENSOR_CHAN_RD03D_MIN_DISTANCE && chan <= SENSOR_CHAN_RD03D_OPERATION_MODE)) {
-		return -ENOTSUP;
-	}
-
-	ret = 0;
+	int ti = 0;
 
 	switch (chan) {
-	case SENSOR_CHAN_RD03D_MIN_DISTANCE:
-		val->val1 = cfg->min_distance;
-		val->val2 = cfg->max_distance;
+	case SENSOR_CHAN_RD03D_POS:
+		ti = attr - SENSOR_ATTR_RD03D_TARGET_0;
+		if (ti < 0 || ti >= RD03D_MAX_TARGETS) {
+			return -EINVAL;
+		}
+		val->val1 = data->targets[ti].x;
+		val->val2 = data->targets[ti].y;
 		break;
-	case SENSOR_CHAN_RD03D_MAX_DISTANCE:
-		val->val1 = cfg->min_distance;
-		val->val2 = cfg->max_distance;
-		break;
-	case SENSOR_CHAN_RD03D_MIN_FRAMES:
-		val->val1 = cfg->min_frames;
-		val->val2 = cfg->max_frames;
-		break;
-	case SENSOR_CHAN_RD03D_MAX_FRAMES:
-		val->val1 = cfg->min_frames;
-		val->val2 = cfg->max_frames;
-		break;
-	case SENSOR_CHAN_RD03D_DELAY_TIME:
-		val->val1 = cfg->delay_time;
+	case SENSOR_CHAN_RD03D_SPEED:
+		ti = attr - SENSOR_ATTR_RD03D_TARGET_0;
+		if (ti < 0 || ti >= RD03D_MAX_TARGETS) {
+			return -EINVAL;
+		}
+		val->val1 = data->targets[ti].speed;
 		val->val2 = 0;
 		break;
+	case SENSOR_CHAN_RD03D_DISTANCE:
+		ti = attr - SENSOR_ATTR_RD03D_TARGET_0;
+		if (ti < 0 || ti >= RD03D_MAX_TARGETS) {
+			return -EINVAL;
+		}
+		val->val1 = data->targets[ti].distance;
+		val->val2 = 0;
+		break;
+
+	case SENSOR_CHAN_PROX:
+		val->val1 = 0;
+		for (int ti = 0; ti < RD03D_MAX_TARGETS; ti++) {
+			if (data->targets[ti].x != 0 && data->targets[ti].y != 0) {
+				val->val1 |= (1 << ti);
+			}
+		}
+		val->val2 = 0;
+		break;
+	case SENSOR_CHAN_DISTANCE:
+		val->val1 = data->targets[target].distance;
+		val->val2 = 0;
+		break;
+
+	case SENSOR_CHAN_RD03D_CONFIG_DISTANCE:
+		switch (attr) {
+		case SENSOR_ATTR_RD03D_CONFIG_MINIMUM:
+			ret = rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_MIN_DISTANCE, &val->val1);
+			if (ret >= 0) {
+				data->min_distance = val->val1;
+			}
+			break;
+		case SENSOR_ATTR_RD03D_CONFIG_MAXIMUM:
+			ret = rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_MAX_DISTANCE, &val->val1);
+			if (ret >= 0) {
+				data->max_distance = val->val1;
+			}
+			break;
+		}
+		break;
+	case SENSOR_CHAN_RD03D_CONFIG_FRAMES:
+		switch (attr) {
+		case SENSOR_ATTR_RD03D_CONFIG_MINIMUM:
+			ret = rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_MIN_FRAMES, &val->val1);
+			if (ret >= 0) {
+				data->min_frames = val->val1;
+			}
+			break;
+		case SENSOR_ATTR_RD03D_CONFIG_MAXIMUM:
+			ret = rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_MAX_FRAMES, &val->val1);
+			if (ret >= 0) {
+				data->max_frames = val->val1;
+			}
+			break;
+		}
+		break;
+	case SENSOR_CHAN_RD03D_CONFIG_DELAY_TIME:
+		ret = rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_DELAY_TIME, &val->val1);
+		if (ret >= 0) {
+			data->delay_time = val->val1;
+		}
+		break;
 	case SENSOR_CHAN_RD03D_DETECTION_MODE:
-		switch (data->detection_mode) {
-		case RD03D_DETECTION_MODE_SINGLE_TARGET:
+		if (data->detection_mode == RD03D_DETECTION_MODE_SINGLE_TARGET) {
 			val->val1 = RD03D_DETECTION_MODE_SINGLE_TARGET;
-			val->val2 = 0;
-			break;
-		case RD03D_DETECTION_MODE_MULTI_TARGET:
+		} else {
 			val->val1 = RD03D_DETECTION_MODE_MULTI_TARGET;
-			val->val2 = 0;
-			break;
 		}
 		break;
 	case SENSOR_CHAN_RD03D_OPERATION_MODE:
 		switch (data->operation_mode & ~RD03D_OPERATION_MODE_CMD) {
 		case RD03D_OPERATION_MODE_DEBUG:
 			val->val1 = RD03D_OPERATION_MODE_DEBUG;
-			val->val2 = 0;
 			break;
 		case RD03D_OPERATION_MODE_REPORT:
 			val->val1 = RD03D_OPERATION_MODE_REPORT;
-			val->val2 = 0;
 			break;
 		case RD03D_OPERATION_MODE_RUN:
 			val->val1 = RD03D_OPERATION_MODE_RUN;
-			val->val2 = 0;
 			break;
 		}
+		if ((data->operation_mode & RD03D_OPERATION_MODE_CMD) == RD03D_OPERATION_MODE_CMD) {
+			val->val2 = RD03D_OPERATION_MODE_CMD;
+		}
+		break;
+	}
+
+	return ret;
+}
+
+static int rd03d_channel_get(const struct device *dev, enum sensor_channel chan,
+			     struct sensor_value *val)
+{
+	struct rd03d_data *data = dev->data;
+	struct rd03d_cfg *cfg = dev->config;
+
+	int ret;
+	const int target = val->val1;
+
+	if (chan >= SENSOR_CHAN_RD03D_POS && chan <= SENSOR_CHAN_RD03D_DISTANCE) {
+		if (target < 0 || target >= RD03D_MAX_TARGETS) {
+			return -EINVAL;
+		}
+	} else if (chan == SENSOR_CHAN_PROX || chan == SENSOR_CHAN_DISTANCE) {
+		if (target < 0 || target >= RD03D_MAX_TARGETS) {
+			return -EINVAL;
+		}
+	}
+
+	switch (chan) {
+	case SENSOR_CHAN_RD03D_POS:
+		val->val1 = data->targets[target].x;
+		val->val2 = data->targets[target].y;
+		break;
+	case SENSOR_CHAN_RD03D_SPEED:
+		val->val1 = data->targets[target].speed;
+		break;
+	case SENSOR_CHAN_RD03D_DISTANCE:
+		val->val1 = data->targets[target].distance;
+		break;
+	case SENSOR_CHAN_RD03D_CONFIG_DISTANCE:
+		val->val1 = cfg->min_distance;
+		val->val2 = cfg->max_distance;
 		break;
 
-	case SENSOR_CHAN_RD03D_T0_POS:
-	case SENSOR_CHAN_RD03D_T1_POS:
-	case SENSOR_CHAN_RD03D_T2_POS: {
-		const int ti = chan - SENSOR_CHAN_RD03D_T0_POS;
-		val->val1 = data->targets[ti].x;
-		val->val2 = data->targets[ti].y;
-		break;
-	}
-	case SENSOR_CHAN_RD03D_T0_SPEED:
-	case SENSOR_CHAN_RD03D_T1_SPEED:
-	case SENSOR_CHAN_RD03D_T2_SPEED: {
-		const int ti = chan - SENSOR_CHAN_RD03D_T0_SPEED;
-		val->val1 = data->targets[ti].speed;
+	case SENSOR_CHAN_PROX:
+		val->val1 = 0;
+		for (int ti = 0; ti < RD03D_MAX_TARGETS; ti++) {
+			if (data->targets[ti].x != 0 && data->targets[ti].y != 0) {
+				val->val1 |= (1 << ti);
+			}
+		}
 		val->val2 = 0;
 		break;
-	}
-	case SENSOR_CHAN_RD03D_T0_DISTANCE:
-	case SENSOR_CHAN_RD03D_T1_DISTANCE:
-	case SENSOR_CHAN_RD03D_T2_DISTANCE: {
-		const int ti = chan - SENSOR_CHAN_RD03D_T0_DISTANCE;
-		val->val1 = data->targets[ti].distance;
+	case SENSOR_CHAN_DISTANCE:
+		val->val1 = data->targets[target].distance;
 		val->val2 = 0;
 		break;
-	}
+
+	case SENSOR_CHAN_RD03D_CONFIG_FRAMES:
+		val->val1 = cfg->min_frames;
+		val->val2 = cfg->max_frames;
+		break;
+	case SENSOR_CHAN_RD03D_CONFIG_DELAY_TIME:
+		val->val1 = cfg->delay_time;
+		val->val2 = 0;
+		break;
+	case SENSOR_CHAN_RD03D_CONFIG_DETECTION_MODE:
+		if (data->detection_mode == RD03D_DETECTION_MODE_SINGLE_TARGET) {
+			val->val1 = RD03D_DETECTION_MODE_SINGLE_TARGET;
+		} else {
+			val->val1 = RD03D_DETECTION_MODE_MULTI_TARGET;
+		}
+		val->val2 = 0;
+		break;
+	case SENSOR_CHAN_RD03D_CONFIG_OPERATION_MODE:
+		switch (data->operation_mode & ~RD03D_OPERATION_MODE_CMD) {
+		case RD03D_OPERATION_MODE_DEBUG:
+			val->val1 = RD03D_OPERATION_MODE_DEBUG;
+			break;
+		case RD03D_OPERATION_MODE_REPORT:
+			val->val1 = RD03D_OPERATION_MODE_REPORT;
+			break;
+		case RD03D_OPERATION_MODE_RUN:
+			val->val1 = RD03D_OPERATION_MODE_RUN;
+			break;
+		}
+		if ((data->operation_mode & RD03D_OPERATION_MODE_CMD) == RD03D_OPERATION_MODE_CMD) {
+			val->val2 = RD03D_OPERATION_MODE_CMD;
+		}
+		break;
+	default:
+		LOG_ERR("Unsupported channel %d", chan);
+		return -ENOTSUP;
 	}
 
 	return ret;
@@ -475,8 +686,8 @@ static int rd03d_attr_get(const struct device *dev, enum sensor_channel chan,
 
 static int rd03d_sample_fetch(const struct device *dev, enum sensor_channel chan)
 {
-	// When in 'reporting' mode, the sensor will send 'reports' very frequently
-	// and data will be available in the RX buffer.
+	// When in 'reporting' mode, the sensor will send 'reports' continuously
+	// and data will become available in the RX buffer.
 	struct rd03d_data *data = dev->data;
 
 	// We decode the rx buffer into data->targets
@@ -484,7 +695,7 @@ static int rd03d_sample_fetch(const struct device *dev, enum sensor_channel chan
 
 		uart_irq_rx_enable(cfg->uart_dev);
 
-		ret = k_sem_take(&data->rx_sem, RD03D_WAIT);
+		ret = k_sem_take(&data->rx_sem, RD03D_SEMA_MAX_WAIT);
 		if (ret < 0) {
 			return ret;
 		}
@@ -520,13 +731,6 @@ static int rd03d_sample_fetch(const struct device *dev, enum sensor_channel chan
 	return -ENOTSUP;
 }
 
-static DEVICE_API(sensor, rd03d_api_funcs) = {
-	.attr_set = rd03d_attr_set,
-	.attr_get = rd03d_attr_get,
-	.sample_fetch = rd03d_sample_fetch,
-	.channel_get = rd03d_channel_get,
-};
-
 static void rd03d_uart_isr(const struct device *uart_dev, void *user_data)
 {
 	const struct device *dev = user_data;
@@ -542,48 +746,83 @@ static void rd03d_uart_isr(const struct device *uart_dev, void *user_data)
 		return;
 	}
 
-	// With response == true, the flow is = Sending -> Receiving -> Signal that data has been
-	// send and data has been received
-
+	uint8_t *rxb = &data->rd_data[0];
 	if (uart_irq_rx_ready(uart_dev)) {
 
-		int byreq, byred;
-		do {
-			byreq = (data->rx_data_len == 0 ? 8 : data->rx_data_len) - data->rx_bytes;
-			byread = uart_fifo_read(uart_dev, &data->rd_data[data->rx_bytes], byreq);
-			if (byread == 0) {
-				break;
-			}
+		const int byreq = RD03D_RX_BUF_MAX_LEN - data->rx_bytes; /* Avoid buffer overrun */
+		const int byread = uart_fifo_read(uart_dev, rxb[data->rx_bytes], byreq);
 
-			data->rx_bytes += byread;
-			if (data->rx_data_len == 0 && (data->rx_bytes >= (4 + 2))) {
-				if (data->rd_data[0] == 0xFD && data->rd_data[1] == 0xFC) {
-					data->rx_data_len = 4 + 2 + data->rd_data[4] + 4;
-				} else if (data->rd_data[0] == 0xAA && data->rd_data[1] == 0xFF) {
-					data->rx_data_len = 30;
-				} else {
-					// TODO How to recover from this ?
-					data->LOG_ERR("Invalid response");
+		data->rx_bytes += byread;
+
+determine_rx_data_len:
+
+		/* The minimum data frame length is 14 bytes, and the maximum
+		   data frame length is a report which is 30 bytes.
+		   Our receive buffer has a size of 64 bytes, so we should be
+		   able to receive a full data frame within the buffer, if
+		   not then something is incorrect regarding the protocol.
+
+		   The command + ACK protocol should not pose any out-of-sync
+		   issues, as the ACK always follows the CMD.
+
+		   The report stream is a bit more tricky, as the sensor
+		   continuously sends frame data, and we need to be able to
+		   detect the start of a new report frame.
+		   The report frame starts with 0xAA, 0xFF, 0x03, 0x00 and
+		   ends with 0x55, 0xCC. So we might start receiving a report
+		   frame in the middle of a report frame, which we should
+		   ignore and continue to receive until we find the start
+		   of a new report frame.
+		*/
+		if (data->rx_data_len == 0 && (data->rx_bytes >= (4 + 2 + 4 + 4))) {
+			if (rxb[0] == 0xFD && rxb[1] == 0xFC && rxb[2] == 0xFB && rxb[3] == 0xFA) {
+				data->rx_data_len = 4 + 2 + rxb[4] + 4;
+			} else if (rxb[0] == 0xAA && rxb[1] == 0xFF && rxb[2] == 0x03 &&
+				   rxb[3] == 0x00) {
+				data->rx_data_len = 30;
+			} else {
+				// Scan rx-buffer until 'FD FC FB FA' or 'AA FF 03 00'
+				int i = 0;
+				for (i = 0; i < data->rx_bytes - 4; i++) {
+					if (rxb[i] == 0xFD && rxb[i + 1] == 0xFC &&
+					    rxb[i + 2] == 0xFB && rxb[i + 3] == 0xFA) {
+						data->rx_bytes -= i;
+						// TODO we might be able to avoid the memmove, by
+						// introducing data->rx_offset which indicates the
+						// start of the data frame in the buffer.
+						memmove(rxb, &rxb[i], data->rx_bytes);
+						goto determine_rx_data_len;
+						break;
+					} else if (rxb[i] == 0xAA && rxb[i + 1] == 0xFF &&
+						   rxb[i + 2] == 0x03 && rxb[i + 3] == 0x00) {
+						data->rx_bytes -= i;
+						// TODO we might be able to avoid the memmove, by
+						// introducing data->rx_offset which indicates the
+						// start of the data frame in the buffer.
+						memmove(rxb, &rxb[i], data->rx_bytes);
+						goto determine_rx_data_len;
+						break;
+					}
 				}
-			}
 
-			/* keep reading until the end of the message */
-			if (data->rx_bytes == data->rx_data_len) {
+				// TODO How to recover from this, reset rx_bytes ?
+				data->LOG_ERR("Critical: invalid response!");
 				data->rx_bytes = 0;
-				uart_irq_rx_disable(uart_dev);
-				k_sem_give(&data->rx_sem);
-				if (data->has_rsp) {
-					k_sem_give(&data->tx_sem);
-				}
 			}
+		}
 
-			// If the fifo read returned less bytes than requested, it means the fifo
-			// doesn't have more data
-			if (byreq > byread) {
-				break;
+		/* keep reading until the end of the message */
+		if (data->rx_bytes == data->rx_data_len) {
+			data->rx_bytes = 0;
+			uart_irq_rx_disable(uart_dev);
+			k_sem_give(&data->rx_sem);
+			if (rxb[0] == 0xFD && rxb[1] == 0xFC) {
+				/* Receiving an ACK, this means a command was send. Signal
+				 */
+				/* that the command + ACK is done. */
+				k_sem_give(&data->tx_sem);
 			}
-
-		} while (true);
+		}
 	}
 
 	if (uart_irq_tx_ready(uart_dev)) {
@@ -593,9 +832,6 @@ static void rd03d_uart_isr(const struct device *uart_dev, void *user_data)
 		if (data->tx_bytes == data->tx_data_len) {
 			data->tx_bytes = 0;
 			uart_irq_tx_disable(uart_dev);
-			if (!data->has_rsp) {
-				k_sem_give(&data->tx_sem);
-			}
 		}
 	}
 }
@@ -621,6 +857,13 @@ static int rd03d_init(const struct device *dev)
 	data->operation_mode = RD03D_OPERATION_MODE_CMD;
 	data->detection_mode = RD03D_DETECTION_MODE_MULTI_TARGET;
 
+	for (int i = 0; i < RD03D_MAX_TARGETS; i++) {
+		data->targets[i].x = 0;
+		data->targets[i].y = 0;
+		data->targets[i].distance = 0;
+		data->targets[i].speed = 0;
+	}
+
 	uart_irq_rx_disable(cfg->uart_dev);
 	uart_irq_tx_disable(cfg->uart_dev);
 
@@ -633,43 +876,86 @@ static int rd03d_init(const struct device *dev)
 
 	rd03d_open_cmd_mode(dev);
 
-	/* Configure default min and max range */
-	ret = rd03d_set_attribute(dev, RD03D_PROTOCOL_CMD_IDX_SET_MIN_DISTANCE, cfg->min_distance);
-	if (ret != 0) {
-		LOG_ERR("Error setting minimum range %d", cfg->range);
-		return ret;
-	}
-	ret = rd03d_set_attribute(dev, RD03D_PROTOCOL_CMD_IDX_SET_MAX_DISTANCE, cfg->max_distance);
-	if (ret != 0) {
-		LOG_ERR("Error setting maximum range %d", cfg->range);
-		return ret;
-	}
-	/* Configure default min and max frames */
-	ret = rd03d_set_attribute(dev, RD03D_PROTOCOL_CMD_IDX_SET_MIN_FRAMES, cfg->min_frames);
-	if (ret != 0) {
-		LOG_ERR("Error setting minimum frames %d", cfg->min_frames);
-		return ret;
-	}
-	ret = rd03d_set_attribute(dev, RD03D_PROTOCOL_CMD_IDX_SET_MAX_FRAMES, cfg->max_frames);
-	if (ret != 0) {
-		LOG_ERR("Error setting maximum frames %d", cfg->max_frames);
-		return ret;
-	}
-	/* Configure default delay time */
-	ret = rd03d_set_attribute(dev, RD03D_PROTOCOL_CMD_IDX_SET_DELAY_TIME, cfg->delay_time);
-	if (ret != 0) {
-		LOG_ERR("Error setting delay time %d", cfg->delay_time);
-		return ret;
+	bool read_config = true;
+
+	if (read_config) {
+		int value = 0;
+
+		/* Configure default min and max range */
+		if (rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_MIN_DISTANCE, &value) < 0) {
+			LOG_ERR("Error getting minimum range %d", cfg->range);
+			return ret;
+		}
+		cfg->min_distance = (uint16_t)value;
+
+		if (rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_MAX_DISTANCE, &value) < 0) {
+			LOG_ERR("Error getting maximum range %d", cfg->range);
+			return ret;
+		}
+		cfg->max_distance = (uint16_t)value;
+
+		/* Configure default min and max frames */
+		if (rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_MIN_FRAMES, &value) < 0) {
+			LOG_ERR("Error getting minimum frames %d", cfg->min_frames);
+			return ret;
+		}
+		cfg->min_frames = (uint16_t)value;
+
+		if (rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_MAX_FRAMES, &value) < 0) {
+			LOG_ERR("Error getting maximum frames %d", cfg->max_frames);
+			return ret;
+		}
+		cfg->max_frames = (uint16_t)value;
+
+		/* Configure default delay time */
+		if (rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_DELAY_TIME, &value) < 0) {
+			LOG_ERR("Error getting delay time %d", cfg->delay_time);
+			return ret;
+		}
+		cfg->delay_time = (uint16_t)value;
+
+	} else {
+		/* Configure default min and max range */
+		if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MIN_DISTANCE, cfg->min_distance) <
+		    0) {
+			LOG_ERR("Error setting minimum range %d", cfg->range);
+		}
+		if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MAX_DISTANCE, cfg->max_distance) <
+		    0) {
+			LOG_ERR("Error setting maximum range %d", cfg->range);
+			return ret;
+		}
+		/* Configure default min and max frames */
+		if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MIN_FRAMES, cfg->min_frames) < 0) {
+			LOG_ERR("Error setting minimum frames %d", cfg->min_frames);
+			return ret;
+		}
+		if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MAX_FRAMES, cfg->max_frames) < 0) {
+			LOG_ERR("Error setting maximum frames %d", cfg->max_frames);
+			return ret;
+		}
+		/* Configure default delay time */
+		if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_DELAY_TIME, cfg->delay_time) < 0) {
+			LOG_ERR("Error setting delay time %d", cfg->delay_time);
+			return ret;
+		}
 	}
 
-	/* Configure operation mode */
-	ret = rd03d_set_attribute(dev, RD03D_ATTR_OPERATION_MODE, RD03D_OPERATION_MODE_REPORTING);
-	if (ret != 0) {
+	/* Activate report mode */
+	if (rd03d_attr_set(dev, SENSOR_CHAN_RD03D_CONFIG_OPERATION_MODE,
+			   SENSOR_ATTR_RD03D_CONFIG_VALUE, RD03D_OPERATION_MODE_REPORT) < 0) {
 		LOG_ERR("Error setting default operation mode");
 	}
 
 	return ret;
 }
+
+static DEVICE_API(sensor, rd03d_api_funcs) = {
+	.attr_set = rd03d_attr_set,
+	.attr_get = rd03d_attr_get,
+	.sample_fetch = rd03d_sample_fetch,
+	.channel_get = rd03d_channel_get,
+};
 
 #define RD03D_INIT(inst)                                                                           \
                                                                                                    \
