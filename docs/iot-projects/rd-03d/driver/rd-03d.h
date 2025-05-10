@@ -8,8 +8,8 @@
 
 #define RD03D_TX_BUF_MAX_LEN 18
 #define RD03D_RX_BUF_MAX_LEN 64
-#define RD03D_UART_BAUD_RATE 115200
-#define RD03D_MAX_TARGETS 3
+#define RD03D_UART_BAUD_RATE 256000
+#define RD03D_MAX_TARGETS    3
 
 /* Arbitrary max duration to wait on a semaphore */
 #define RD03D_SEMA_MAX_WAIT K_SECONDS(1)
@@ -74,10 +74,10 @@ struct rd03d_data {
 	uint8_t tx_data_len; /* Number of bytes to send */
 	uint8_t tx_data[RD03D_TX_BUF_MAX_LEN];
 
+	uint8_t rx_enabled;     /* Flag to indicate if RX is enabled */
 	uint8_t rx_bytes;       /* Number of bytes received so far */
 	uint8_t rx_frame_start; /* Start of an ACK or Report in the buffer */
 	uint8_t rx_data_len;    /* Number of bytes to receive */
-	uint8_t padding0;
 	uint8_t rx_data[RD03D_RX_BUF_MAX_LEN];
 
 	uint8_t operation_mode;

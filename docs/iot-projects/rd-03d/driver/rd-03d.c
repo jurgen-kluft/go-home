@@ -54,7 +54,7 @@ static const uint8_t RD03D_REPORT_TAIL[] = {0x55, 0xCC};
 // 	RD03D_CMD_IDX_MULTI_TARGET_MODE  = { RD03D_CMD_HEADER_BEGIN, 0x02, 0x00, 0x90, 0x00, RD03D_CMD_HEADER_END },
 
 // return the length of the command
-static int prepare_cmd(enum rd03d_protocol_cmd_idx cmd_idx, uint8_t *cmd_buffer, int value) {
+static int rd03d_prepare_cmd(enum rd03d_protocol_cmd_idx cmd_idx, uint8_t *cmd_buffer, int value) {
 	// Assume the header is already set
 	int l = 4; // Skip header
 
@@ -83,7 +83,15 @@ static int prepare_cmd(enum rd03d_protocol_cmd_idx cmd_idx, uint8_t *cmd_buffer,
 		// 6 bytes of data
 		cmd_buffer[l++] = 0x00; //
 		cmd_buffer[l++] = 0x00; //
-		cmd_buffer[l++] = 0x00; //
+
+		if (cmd_idx == RD03D_CMD_IDX_REPORTING_MODE) {
+			cmd_buffer[l++] = 0x04; // Reporting mode
+		} else if (cmd_idx == RD03D_CMD_IDX_RUNNING_MODE) {
+			cmd_buffer[l++] = 0x64; // Running mode
+		} else {
+			cmd_buffer[l++] = 0x00; // Debugging mode			
+		}
+
 		cmd_buffer[l++] = 0x00; //
 		cmd_buffer[l++] = 0x00; //
 		cmd_buffer[l++] = 0x00; //
@@ -270,7 +278,12 @@ static void rd03d_uart_flush(const struct device *uart_dev)
 	}
 }
 
-static int rd03d_send_cmd(const struct device *dev, enum rd03d_protocol_cmd_idx cmd_idx, int value)
+#define RD03D_TX 2
+#define RD03D_RX 1
+#define RD03D_TXRX (RD03D_TX | RD03D_RX)
+
+static int rd03d_send_cmd(const struct device *dev, enum rd03d_protocol_cmd_idx cmd_idx,
+			  uint8_t txrx, int value)
 {
 	struct rd03d_data *data = dev->data;
 	const struct rd03d_cfg *cfg = dev->config;
@@ -280,33 +293,64 @@ static int rd03d_send_cmd(const struct device *dev, enum rd03d_protocol_cmd_idx 
 		return -EPERM;
 	}
 
-	/* Make sure last command has been transferred */
-	ret = k_sem_take(&data->tx_sem, RD03D_SEMA_MAX_WAIT);
-	if (ret) {
-		return ret;
+	data->tx_data_len = rd03d_prepare_cmd(cmd_idx, data->tx_data, value);
+
+	if (txrx & RD03D_TX) {
+		k_sem_reset(&data->tx_sem);
+	}
+	if (txrx & RD03D_RX) {
+		k_sem_reset(&data->rx_sem);
 	}
 
-	data->tx_data_len = prepare_cmd(cmd_idx, data->tx_data, value);
-
-	k_sem_reset(&data->rx_sem);
-
-	// all the rd03d commands have a response
-	uart_irq_tx_enable(cfg->uart_dev);
-	uart_irq_rx_enable(cfg->uart_dev);
+	if (txrx & RD03D_TX) {
+		uart_irq_tx_enable(cfg->uart_dev);
+	}
+	if (txrx & RD03D_RX) {
+		uart_irq_rx_enable(cfg->uart_dev);
+	}
 
 	// wait for the tx and rx to be done
-	ret = k_sem_take(&data->rx_sem, RD03D_SEMA_MAX_WAIT);
-
+	if (txrx & RD03D_TX) {
+		ret = k_sem_take(&data->tx_sem, RD03D_SEMA_MAX_WAIT);
+	}
+	if (txrx & RD03D_RX) {
+		ret = k_sem_take(&data->rx_sem, RD03D_SEMA_MAX_WAIT);
+	}
 	return ret;
 }
 
 static int rd03d_open_cmd_mode(const struct device *dev)
 {
 	struct rd03d_data *data = dev->data;
+	const struct rd03d_cfg *cfg = dev->config;
 	int ret;
 
+	/*
+	Note in the documentation:
+	   (1) Send "Open command mode" (because the chip may still output
+	       data, the data received by the serial port will contain
+		   waveform data)
+       (2) Empty serial port cache data (generally delay for around 100ms,
+	       to ensure that serial port data is empty)
+       (3) Send the Open Command Mode, once again, and analyze returned
+	       results.
+	*/
+
 	// Open command mode
-	ret = rd03d_send_cmd(dev, RD03D_CMD_IDX_OPEN_CMD_MODE, 1);
+	ret = rd03d_send_cmd(dev, RD03D_CMD_IDX_OPEN_CMD_MODE, RD03D_TX, 1);
+	if (ret < 0) {
+		return ret;
+	}
+
+	// Wait for 100ms to ensure that the serial port data is not
+	// receiving anymore report data
+	k_sleep(K_MSEC(100));
+
+	// Flush the serial port cache
+	rd03d_uart_flush(cfg->uart_dev);
+
+	// Open command mode again
+	ret = rd03d_send_cmd(dev, RD03D_CMD_IDX_OPEN_CMD_MODE, RD03D_TXRX, 1);
 	if (ret < 0) {
 		return ret;
 	}
@@ -322,7 +366,7 @@ static int rd03d_close_cmd_mode(const struct device *dev)
 	int ret;
 
 	// Close command mode
-	ret = rd03d_send_cmd(dev, RD03D_CMD_IDX_CLOSE_CMD_MODE, 1);
+	ret = rd03d_send_cmd(dev, RD03D_CMD_IDX_CLOSE_CMD_MODE, RD03D_TXRX, 1);
 	if (ret < 0) {
 		return ret;
 	}
@@ -354,7 +398,7 @@ static int rd03d_set_attribute(const struct device *dev, enum rd03d_protocol_cmd
 	}
 
 	// Set the attribute value in the command
-	ret = rd03d_send_cmd(dev, cmd_idx, value);
+	ret = rd03d_send_cmd(dev, cmd_idx, RD03D_TXRX, value);
 	if (ret < 0) {
 		LOG_ERR("Error, set attribute command (%d) failed", cmd_idx);
 		return ret;
@@ -375,6 +419,7 @@ static int rd03d_set_attribute(const struct device *dev, enum rd03d_protocol_cmd
 		if ((data->operation_mode & RD03D_OPERATION_MODE_CMD) == RD03D_OPERATION_MODE_CMD) {
 			ret = rd03d_close_cmd_mode(dev);
 			if (ret < 0) {
+				LOG_ERR("Error, close command mode failed");
 				return -EINVAL;
 			}
 			data->operation_mode &= ~RD03D_OPERATION_MODE_CMD;
@@ -485,7 +530,7 @@ static inline int rd03d_get_attribute(const struct device *dev, enum rd03d_proto
 	}
 
 	// Get command
-	ret = rd03d_send_cmd(dev, cmd_idx, 0);
+	ret = rd03d_send_cmd(dev, cmd_idx, RD03D_TXRX, 0);
 	if (ret < 0) {
 		LOG_ERR("Error, get attribute command (%d) failed", (int)cmd_idx);
 		return ret;
@@ -729,6 +774,8 @@ static int rd03d_sample_fetch(const struct device *dev, enum sensor_channel chan
 	// We decode the rx buffer into data->targets
 	if (data->operation_mode == RD03D_OPERATION_MODE_REPORT) {
 
+		k_sem_reset(&data->rx_sem);
+
 		uart_irq_rx_enable(cfg->uart_dev);
 
 		ret = k_sem_take(&data->rx_sem, RD03D_SEMA_MAX_WAIT);
@@ -796,15 +843,14 @@ static void rd03d_uart_isr(const struct device *uart_dev, void *user_data)
 		return;
 	}
 
-	uint8_t *rxb = &data->rx_data[0];
 	if (uart_irq_rx_ready(uart_dev)) {
 
-		const int byreq = RD03D_RX_BUF_MAX_LEN - data->rx_bytes; /* Avoid buffer overrun */
+		uint8_t *rxb = &data->rx_data[data->rx_frame_start];
+		const int byreq =
+			RD03D_RX_BUF_MAX_LEN -
+			(data->rx_frame_start + data->rx_bytes); /* Avoid buffer overrun */
 		const int byread = uart_fifo_read(uart_dev, &rxb[data->rx_bytes], byreq);
-
 		data->rx_bytes += byread;
-
-determine_rx_data_len:
 
 		/* The minimum data frame length is 14 bytes, and the maximum
 		   data frame length is a report which is 30 bytes.
@@ -818,60 +864,62 @@ determine_rx_data_len:
 		   The report stream is a bit more tricky, as the sensor
 		   continuously sends frame data, and we need to be able to
 		   detect the start of a new report frame.
-		   The report frame starts with 0xAA, 0xFF, 0x03, 0x00 and
-		   ends with 0x55, 0xCC. So we might start receiving a report
-		   frame in the middle of a report frame, which we should
-		   ignore and continue to receive until we find the start
-		   of a new report frame.
+		   We might start receiving a report frame in the middle
+		   of a report frame, which we should ignore and continue
+		   to receive until we find the start of a new report frame.
 		*/
+
+determine_rx_data_len:
 		if (data->rx_data_len == 0 && (data->rx_bytes >= (4 + 2 + 4 + 4))) {
-			if (rxb[0] == 0xFD && rxb[1] == 0xFC && rxb[2] == 0xFB && rxb[3] == 0xFA) {
+			const uint8_t h1 = rxb[0];
+			const uint8_t h2 = rxb[1];
+			const uint8_t h3 = rxb[2];
+			const uint8_t h4 = rxb[3];
+			if (h1 == 0xFD && h2 == 0xFC && h3 == 0xFB && h4 == 0xFA) {
 				data->rx_data_len = 4 + 2 + rxb[4] + 4;
-			} else if (rxb[0] == 0xAA && rxb[1] == 0xFF && rxb[2] == 0x03 &&
-				   rxb[3] == 0x00) {
+			} else if (h1 == 0xAA && h2 == 0xFF && h3 == 0x03 && h4 == 0x00) {
 				data->rx_data_len = 30;
 			} else {
 				// Scan rx-buffer until 'FD FC FB FA' or 'AA FF 03 00'
-				int i = 0;
-				for (i = 0; i < data->rx_bytes - 4; i++) {
+				int i;
+				for (i = 1; i <= data->rx_bytes - 4; i++) {
 					if (rxb[i] == 0xFD && rxb[i + 1] == 0xFC &&
 					    rxb[i + 2] == 0xFB && rxb[i + 3] == 0xFA) {
 						data->rx_bytes -= i;
-						// TODO we might be able to avoid the memmove, by
-						// introducing data->rx_offset which indicates the
-						// start of the data frame in the buffer.
-						memmove(rxb, &rxb[i], data->rx_bytes);
+						data->rx_frame_start = i;
+						rxb = &data->rx_data[i];
 						goto determine_rx_data_len;
 						break;
 					} else if (rxb[i] == 0xAA && rxb[i + 1] == 0xFF &&
 						   rxb[i + 2] == 0x03 && rxb[i + 3] == 0x00) {
 						data->rx_bytes -= i;
-						// TODO we might be able to avoid the memmove, by
-						// introducing data->rx_offset which indicates the
-						// start of the data frame in the buffer.
-						memmove(rxb, &rxb[i], data->rx_bytes);
+						data->rx_frame_start = i;
+						rxb = &data->rx_data[i];
 						goto determine_rx_data_len;
 						break;
 					}
 				}
 
-				// TODO How to recover from this, reset rx_bytes ?
-				LOG_ERR("Critical: invalid response!");
-				data->rx_bytes = 0;
+				// Scanning the rx buffer did not yield a valid frame start.
+				// So we can reset the rx buffer and continue reading data
+				// from the uart fifo.
+				data->rx_frame_start = 0;
+				// The last 4 bytes did not match any of the headers, so copy
+				// the last 3 bytes to the start of the buffer, and continue
+				// scanning from there.
+				data->rx_bytes = 3;
+				rxb[0] = rxb[data->rx_bytes - 3];
+				rxb[1] = rxb[data->rx_bytes - 2];
+				rxb[2] = rxb[data->rx_bytes - 1];
 			}
 		}
 
-		/* keep reading until the end of the message */
-		if (data->rx_bytes == data->rx_data_len) {
+		/* when we have identified the frame data length, we know we have a */
+		/* data frame when we have read enough to fullfill the length*/
+		if (data->rx_bytes >= data->rx_data_len) {
 			data->rx_bytes = 0;
 			uart_irq_rx_disable(uart_dev);
 			k_sem_give(&data->rx_sem);
-			if (rxb[0] == 0xFD && rxb[1] == 0xFC) {
-				/* Receiving an ACK, this means a command was send. Signal
-				 */
-				/* that the command + ACK is done. */
-				k_sem_give(&data->tx_sem);
-			}
 		}
 	}
 
@@ -882,6 +930,7 @@ determine_rx_data_len:
 		if (data->tx_bytes == data->tx_data_len) {
 			data->tx_bytes = 0;
 			uart_irq_tx_disable(uart_dev);
+			k_sem_give(&data->tx_sem);
 		}
 	}
 }
@@ -893,6 +942,7 @@ static int rd03d_init(const struct device *dev)
 
 	int ret = 0;
 
+	data->tx_bytes = 0;
 	data->tx_data_len = 0;
 	memset(data->tx_data, 0, RD03D_TX_BUF_MAX_LEN);
 	data->tx_data[0] = RD03D_CMD_HEAD[0];
@@ -900,10 +950,13 @@ static int rd03d_init(const struct device *dev)
 	data->tx_data[2] = RD03D_CMD_HEAD[2];
 	data->tx_data[3] = RD03D_CMD_HEAD[3];
 
+	data->rx_bytes = 0;
+	data->rx_frame_start = 0;
 	data->rx_data_len = 0;
 	memset(data->rx_data, 0, RD03D_RX_BUF_MAX_LEN);
 
-	data->operation_mode = RD03D_OPERATION_MODE_CMD;
+	/* Default operation mode when turning on the device */
+	data->operation_mode = RD03D_OPERATION_MODE_REPORT;
 	data->detection_mode = RD03D_DETECTION_MODE_MULTI_TARGET;
 
 	for (int i = 0; i < RD03D_MAX_TARGETS; i++) {
@@ -921,9 +974,7 @@ static int rd03d_init(const struct device *dev)
 	uart_irq_callback_user_data_set(cfg->uart_dev, cfg->cb, (void *)dev);
 
 	k_sem_init(&data->rx_sem, 0, 1);
-	k_sem_init(&data->tx_sem, 1, 1);
-
-	rd03d_open_cmd_mode(dev);
+	k_sem_init(&data->tx_sem, 0, 1);
 
 	// Set configured attributes
 	if (cfg->min_distance != 0xffff) {
@@ -943,12 +994,8 @@ static int rd03d_init(const struct device *dev)
 	}
 
 	/* Activate report mode */
-	struct sensor_value val;
-	val.val1 = RD03D_OPERATION_MODE_REPORT;
-	if (rd03d_attr_set(dev, SENSOR_CHAN_RD03D_CONFIG_OPERATION_MODE,
-			   SENSOR_ATTR_RD03D_CONFIG_VALUE, &val) < 0) {
-		LOG_ERR("Error setting default operation mode");
-	}
+	ret = rd03d_set_attribute(dev, SENSOR_CHAN_RD03D_CONFIG_OPERATION_MODE,
+				  SENSOR_ATTR_RD03D_CONFIG_VALUE);
 
 	return ret;
 }
@@ -960,22 +1007,22 @@ static DEVICE_API(sensor, rd03d_api_funcs) = {
 	.channel_get = rd03d_channel_get,
 };
 
-#define RD03D_INIT(inst)                                                               \
-                                                                                       \
-	static struct rd03d_data rd03d_data_##inst;                                        \
-                                                                                       \
-	static const struct rd03d_cfg rd03d_cfg_##inst = {                                 \
-		.uart_dev = DEVICE_DT_GET(DT_INST_BUS(inst)),                                  \
-		.min_distance = DT_INST_PROP_OR(inst, min_distance, 0xffff),                   \
-		.max_distance = DT_INST_PROP_OR(inst, max_distance, 0xffff),                   \
-		.min_frames = DT_INST_PROP_OR(inst, min_frames, 0xffff),                       \
-		.max_frames = DT_INST_PROP_OR(inst, max_frames, 0xffff),                       \
-		.delay_time = DT_INST_PROP_OR(inst, delay_time, 0xffff),                       \
-		.cb = rd03d_uart_isr,                                                          \
-	};                                                                                 \
-                                                                                       \
-	SENSOR_DEVICE_DT_INST_DEFINE(inst, rd03d_init, NULL, &rd03d_data_##inst,           \
-				     &rd03d_cfg_##inst, POST_KERNEL, CONFIG_SENSOR_INIT_PRIORITY,      \
+#define RD03D_INIT(inst)                                                                           \
+                                                                                                   \
+	static struct rd03d_data rd03d_data_##inst;                                                \
+                                                                                                   \
+	static const struct rd03d_cfg rd03d_cfg_##inst = {                                         \
+		.uart_dev = DEVICE_DT_GET(DT_INST_BUS(inst)),                                      \
+		.min_distance = DT_INST_PROP_OR(inst, min_distance, 0xffff),                       \
+		.max_distance = DT_INST_PROP_OR(inst, max_distance, 0xffff),                       \
+		.min_frames = DT_INST_PROP_OR(inst, min_frames, 0xffff),                           \
+		.max_frames = DT_INST_PROP_OR(inst, max_frames, 0xffff),                           \
+		.delay_time = DT_INST_PROP_OR(inst, delay_time, 0xffff),                           \
+		.cb = rd03d_uart_isr,                                                              \
+	};                                                                                         \
+                                                                                                   \
+	SENSOR_DEVICE_DT_INST_DEFINE(inst, rd03d_init, NULL, &rd03d_data_##inst,                   \
+				     &rd03d_cfg_##inst, POST_KERNEL, CONFIG_SENSOR_INIT_PRIORITY,  \
 				     &rd03d_api_funcs);
 
 DT_INST_FOREACH_STATUS_OKAY(RD03D_INIT)
