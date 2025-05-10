@@ -1,10 +1,10 @@
-#ifndef ZEPHYR_DRIVERS_SENSOR_RD_03D_H
-#define ZEPHYR_DRIVERS_SENSOR_RD_03D_H
+#ifndef ZEPHYR_DRIVERS_SENSOR_RD03D_H
+#define ZEPHYR_DRIVERS_SENSOR_RD03D_H
 
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/uart.h>
-#include <zephyr/drivers/sensor/rd-03d.h>
+#include <zephyr/drivers/sensor/rd03d.h>
 
 #define RD03D_TX_BUF_MAX_LEN 18
 #define RD03D_RX_BUF_MAX_LEN 64
@@ -84,6 +84,12 @@ struct rd03d_data {
 	uint8_t detection_mode;
 
 	struct rd03d_target targets[RD03D_MAX_TARGETS];
+
+	uint16_t min_distance;
+	uint16_t max_distance;
+	uint16_t min_frames;
+	uint16_t max_frames;
+	uint16_t delay_time;
 };
 
 struct rd03d_cfg {
@@ -96,4 +102,4 @@ struct rd03d_cfg {
 	uart_irq_callback_user_data_t cb;
 };
 
-#endif /* ZEPHYR_DRIVERS_SENSOR_RD_03D_H */
+#endif /* ZEPHYR_DRIVERS_SENSOR_RD03D_H */

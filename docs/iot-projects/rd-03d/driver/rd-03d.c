@@ -4,17 +4,17 @@
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/sys/util.h>
-#include "rd-03d.h"
+#include "rd03d.h"
 
-LOG_MODULE_REGISTER(rd03d, CONFIG_SENSOR_LOG_LEVEL);
+LOG_MODULE_REGISTER(RD03D, CONFIG_SENSOR_LOG_LEVEL);
 
 // Endianness is Little Endian
 
 // clang-format off
 
 // Protocol data frame format, head and tail
-static const uint8_t RD03D_CMD_BEGIN[]   = {0xFD, 0xFC, 0xFB, 0xFA};
-static const uint8_t RD03D_CMD_END[]     = {0x04, 0x03, 0x02, 0x01};
+static const uint8_t RD03D_CMD_HEAD[]    = {0xFD, 0xFC, 0xFB, 0xFA};
+static const uint8_t RD03D_CMD_TAIL[]    = {0x04, 0x03, 0x02, 0x01};
 static const uint8_t RD03D_FRAME_HEAD[]  = {0xF4, 0xF3, 0xF2, 0xF1};
 static const uint8_t RD03D_FRAME_TAIL[]  = {0xF8, 0xF7, 0xF6, 0xF5};
 static const uint8_t RD03D_REPORT_HEAD[] = {0xAA, 0xFF, 0x03, 0x00};
@@ -54,7 +54,7 @@ static const uint8_t RD03D_REPORT_TAIL[] = {0x55, 0xCC};
 // 	RD03D_CMD_IDX_MULTI_TARGET_MODE  = { RD03D_CMD_HEADER_BEGIN, 0x02, 0x00, 0x90, 0x00, RD03D_CMD_HEADER_END },
 
 // return the length of the command
-static int prepare_cmd(rd03d_protocol_cmd_idx, uint8_t *cmd_buffer, int value) {
+static int prepare_cmd(enum rd03d_protocol_cmd_idx cmd_idx, uint8_t *cmd_buffer, int value) {
 	// Assume the header is already set
 	int l = 4; // Skip header
 
@@ -94,7 +94,7 @@ static int prepare_cmd(rd03d_protocol_cmd_idx, uint8_t *cmd_buffer, int value) {
 		cmd_buffer[l++] = 0x00; //
 		cmd_buffer[l++] = 0x07; // Command word
 		cmd_buffer[l++] = 0x00; //
-		cmd_buffer[l++] = cmd_index - RD03D_CMD_IDX_SET_MIN_DISTANCE; // Command value
+		cmd_buffer[l++] = cmd_idx - RD03D_CMD_IDX_SET_MIN_DISTANCE; // Command value
 		cmd_buffer[l++] = 0x00; //
 		cmd_buffer[l++] = value & 0xFF; // Set value, 32-bit
 		cmd_buffer[l++] = (value >> 8) & 0xFF;
@@ -107,7 +107,7 @@ static int prepare_cmd(rd03d_protocol_cmd_idx, uint8_t *cmd_buffer, int value) {
 		cmd_buffer[l++] = 0x00; //
 		cmd_buffer[l++] = 0x08; // Command word
 		cmd_buffer[l++] = 0x00; //
-		cmd_buffer[l++] = cmd_index - RD03D_CMD_IDX_GET_MIN_DISTANCE; // Command value
+		cmd_buffer[l++] = cmd_idx - RD03D_CMD_IDX_GET_MIN_DISTANCE; // Command value
 		cmd_buffer[l++] = 0x00; //
 	}
 	else if (cmd_idx >= RD03D_CMD_IDX_SINGLE_TARGET_MODE && cmd_idx <= RD03D_CMD_IDX_MULTI_TARGET_MODE) 
@@ -270,7 +270,7 @@ static void rd03d_uart_flush(const struct device *uart_dev)
 	}
 }
 
-static int rd03d_send_cmd(const struct device *dev, enum rd03d_cmd_idx cmd_idx, int value)
+static int rd03d_send_cmd(const struct device *dev, enum rd03d_protocol_cmd_idx cmd_idx, int value)
 {
 	struct rd03d_data *data = dev->data;
 	const struct rd03d_cfg *cfg = dev->config;
@@ -354,8 +354,8 @@ static int rd03d_set_attribute(const struct device *dev, enum rd03d_protocol_cmd
 	}
 
 	// Set the attribute value in the command
-	ret = rd03d_send_cmd(dev, cmd_idx, value, 1) if (ret < 0)
-	{
+	ret = rd03d_send_cmd(dev, cmd_idx, value);
+	if (ret < 0) {
 		LOG_ERR("Error, set attribute command (%d) failed", cmd_idx);
 		return ret;
 	}
@@ -387,105 +387,83 @@ static int rd03d_set_attribute(const struct device *dev, enum rd03d_protocol_cmd
 static int rd03d_attr_set(const struct device *dev, enum sensor_channel chan,
 			  enum sensor_attribute attr, const struct sensor_value *val)
 {
-	struct rd03d_data *data = dev->data;
-	struct rd03d_cfg *cfg = dev->config;
 	int ret;
 
-	if (!(chan >= SENSOR_CHAN_RD03D_CONFIG_DISTANCE &&
-	      chan <= SENSOR_CHAN_RD03D_CONFIG_OPERATION_MODE)) {
+	if (!(chan >= (enum sensor_channel)SENSOR_CHAN_RD03D_CONFIG_DISTANCE &&
+	      chan <= (enum sensor_channel)SENSOR_CHAN_RD03D_CONFIG_OPERATION_MODE)) {
 		return -ENOTSUP;
 	}
-	if (!(chan >= SENSOR_ATTR_RD03D_CONFIG_VALUE && chan <= SENSOR_ATTR_RD03D_CONFIG_MAXIMUM)) {
+	if (!(attr >= (enum sensor_attribute)SENSOR_ATTR_RD03D_CONFIG_VALUE &&
+	      attr <= (enum sensor_attribute)SENSOR_ATTR_RD03D_CONFIG_MAXIMUM)) {
 		return -ENOTSUP;
 	}
 
-	switch (chan) {
+	switch ((enum sensor_channel_rd03d)chan) {
 	case SENSOR_CHAN_RD03D_CONFIG_DISTANCE:
-		switch (attr) {
+		switch ((enum sensor_attribute_rd03d)attr) {
 		case SENSOR_ATTR_RD03D_CONFIG_MINIMUM:
-			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MIN_DISTANCE, val->val1) >=
-			    0) {
-				cfg->min_distance = val->val1;
-			}
+			rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MIN_DISTANCE, val->val1);
 			break;
 		case SENSOR_ATTR_RD03D_CONFIG_MAXIMUM:
-			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MAX_DISTANCE, val->val1) >=
-			    0) {
-				cfg->max_distance = val->val1;
-			}
+			rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MAX_DISTANCE, val->val1);
+			break;
+		default:
 			break;
 		}
 		break;
 	case SENSOR_CHAN_RD03D_CONFIG_FRAMES:
-		switch (attr) {
+		switch ((enum sensor_attribute_rd03d)attr) {
 		case SENSOR_ATTR_RD03D_CONFIG_MINIMUM:
-			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MIN_FRAMES, val->val1) >=
-			    0) {
-				cfg->min_frames = val->val1;
-			}
+			rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MIN_FRAMES, val->val1);
 			break;
 		case SENSOR_ATTR_RD03D_CONFIG_MAXIMUM:
-			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MAX_FRAMES, val->val1) >=
-			    0) {
-				cfg->max_frames = val->val1;
-			}
+			rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MAX_FRAMES, val->val1);
+			break;
+		default:
 			break;
 		}
 		break;
 	case SENSOR_CHAN_RD03D_CONFIG_DELAY_TIME:
-		if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_DELAY_TIME, val->val1) >= 0) {
-			cfg->delay_time = val->val1;
-		}
+		rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_DELAY_TIME, val->val1);
 		break;
-	case SENSOR_CHAN_RD03D_DETECTION_MODE:
+	case SENSOR_CHAN_RD03D_CONFIG_DETECTION_MODE:
 		switch (val->val1) {
 		case RD03D_DETECTION_MODE_SINGLE_TARGET:
-			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SINGLE_TARGET_MODE, val->val1) >=
-			    0) {
-				data->detection_mode = RD03D_DETECTION_MODE_SINGLE_TARGET;
-			}
+			rd03d_set_attribute(dev, RD03D_CMD_IDX_SINGLE_TARGET_MODE, val->val1);
 			break;
 		case RD03D_DETECTION_MODE_MULTI_TARGET:
-			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_MULTI_TARGET_MODE, val->val1) >=
-			    0) {
-				data->detection_mode = RD03D_DETECTION_MODE_MULTI_TARGET;
-			}
+			rd03d_set_attribute(dev, RD03D_CMD_IDX_MULTI_TARGET_MODE, val->val1);
 			break;
 		default:
 			ret = -EINVAL;
 			break;
 		}
 		break;
-	case SENSOR_CHAN_RD03D_OPERATION_MODE:
+	case SENSOR_CHAN_RD03D_CONFIG_OPERATION_MODE:
 		switch (val->val1) {
 		case RD03D_OPERATION_MODE_DEBUG:
-			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_DEBUGGING_MODE, val->val1) >=
-			    0) {
-				data->operation_mode = RD03D_OPERATION_MODE_DEBUG;
-			}
+			rd03d_set_attribute(dev, RD03D_CMD_IDX_DEBUGGING_MODE, val->val1);
 			break;
 		case RD03D_OPERATION_MODE_REPORT:
-			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_REPORTING_MODE, val->val1) >=
-			    0) {
-				data->operation_mode = RD03D_OPERATION_MODE_REPORT;
-			}
+			rd03d_set_attribute(dev, RD03D_CMD_IDX_REPORTING_MODE, val->val1);
 			break;
 		case RD03D_OPERATION_MODE_RUN:
-			if (rd03d_set_attribute(dev, RD03D_CMD_IDX_RUNNING_MODE, val->val1) >= 0) {
-				data->operation_mode = RD03D_OPERATION_MODE_RUN;
-			}
+			rd03d_set_attribute(dev, RD03D_CMD_IDX_RUNNING_MODE, val->val1);
 			break;
 		default:
 			ret = -EINVAL;
 			break;
 		}
+		break;
+	default:
+		ret = -ENOTSUP;
 		break;
 	}
 
 	return ret;
 }
 
-static inline int rd03d_get_attribute(const struct device *dev, rd03d_protocol_cmd_idx cmd_idx,
+static inline int rd03d_get_attribute(const struct device *dev, enum rd03d_protocol_cmd_idx cmd_idx,
 				      int *value)
 {
 	struct rd03d_data *data = dev->data;
@@ -507,9 +485,9 @@ static inline int rd03d_get_attribute(const struct device *dev, rd03d_protocol_c
 	}
 
 	// Get command
-	ret = rd03d_send_cmd(dev, cmd_idx, value, 1) if (ret < 0)
-	{
-		LOG_ERR("Error, get attribute command (%d) failed", cmd_idx);
+	ret = rd03d_send_cmd(dev, cmd_idx, 0);
+	if (ret < 0) {
+		LOG_ERR("Error, get attribute command (%d) failed", (int)cmd_idx);
 		return ret;
 	}
 
@@ -543,16 +521,41 @@ static int rd03d_attr_get(const struct device *dev, enum sensor_channel chan,
 	struct rd03d_data *data = dev->data;
 	int ret;
 
-	if (!(chan >= SENSOR_CHAN_RD03D_CONFIG_DISTANCE &&
-	      chan <= SENSOR_CHAN_RD03D_CONFIG_OPERATION_MODE)) {
+	enum sensor_channel_rd03d rdchan = (enum sensor_channel_rd03d)chan;
+	enum sensor_attribute_rd03d rdattr = (enum sensor_attribute_rd03d)attr;
+
+	if (!(rdchan >= SENSOR_CHAN_RD03D_CONFIG_DISTANCE &&
+	      rdchan <= SENSOR_CHAN_RD03D_CONFIG_OPERATION_MODE)) {
 		return -ENOTSUP;
 	}
-	if (!(chan >= SENSOR_ATTR_RD03D_CONFIG_VALUE && chan <= SENSOR_ATTR_RD03D_CONFIG_MAXIMUM)) {
+	if (!(rdattr >= SENSOR_ATTR_RD03D_CONFIG_VALUE &&
+	      rdattr <= SENSOR_ATTR_RD03D_CONFIG_MAXIMUM)) {
 		return -ENOTSUP;
 	}
 
 	int ti = 0;
+
 	switch (chan) {
+	case SENSOR_CHAN_PROX:
+		val->val1 = 0;
+		for (ti = 0; ti < RD03D_MAX_TARGETS; ti++) {
+			if (data->targets[ti].x != 0 && data->targets[ti].y != 0) {
+				val->val1 |= (1 << ti);
+			}
+		}
+		val->val2 = 0;
+		return 0;
+	case SENSOR_CHAN_DISTANCE: {
+		int target = CLAMP(val->val1, 0, RD03D_MAX_TARGETS - 1);
+		val->val1 = data->targets[target].distance;
+		val->val2 = 0;
+		return 0;
+	}
+	default:
+		return -ENOTSUP;
+	}
+
+	switch (rdchan) {
 	case SENSOR_CHAN_RD03D_POS:
 		ti = CLAMP((attr - SENSOR_ATTR_RD03D_TARGET_0), 0, RD03D_MAX_TARGETS - 1);
 		val->val1 = data->targets[ti].x;
@@ -569,66 +572,43 @@ static int rd03d_attr_get(const struct device *dev, enum sensor_channel chan,
 		val->val2 = 0;
 		break;
 
-	case SENSOR_CHAN_PROX:
-		val->val1 = 0;
-		for (ti = 0; ti < RD03D_MAX_TARGETS; ti++) {
-			if (data->targets[ti].x != 0 && data->targets[ti].y != 0) {
-				val->val1 |= (1 << ti);
-			}
-		}
-		val->val2 = 0;
-		break;
-	case SENSOR_CHAN_DISTANCE:
-		val->val1 = data->targets[target].distance;
-		val->val2 = 0;
-		break;
-
 	case SENSOR_CHAN_RD03D_CONFIG_DISTANCE:
-		switch (attr) {
+		switch (rdattr) {
 		case SENSOR_ATTR_RD03D_CONFIG_MINIMUM:
 			ret = rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_MIN_DISTANCE, &val->val1);
-			if (ret >= 0) {
-				data->min_distance = val->val1;
-			}
 			break;
 		case SENSOR_ATTR_RD03D_CONFIG_MAXIMUM:
 			ret = rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_MAX_DISTANCE, &val->val1);
-			if (ret >= 0) {
-				data->max_distance = val->val1;
-			}
+			break;
+		default:
+			ret = -ENOTSUP;
 			break;
 		}
 		break;
 	case SENSOR_CHAN_RD03D_CONFIG_FRAMES:
-		switch (attr) {
+		switch (rdattr) {
 		case SENSOR_ATTR_RD03D_CONFIG_MINIMUM:
 			ret = rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_MIN_FRAMES, &val->val1);
-			if (ret >= 0) {
-				data->min_frames = val->val1;
-			}
 			break;
 		case SENSOR_ATTR_RD03D_CONFIG_MAXIMUM:
 			ret = rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_MAX_FRAMES, &val->val1);
-			if (ret >= 0) {
-				data->max_frames = val->val1;
-			}
+			break;
+		default:
+			ret = -ENOTSUP;
 			break;
 		}
 		break;
 	case SENSOR_CHAN_RD03D_CONFIG_DELAY_TIME:
 		ret = rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_DELAY_TIME, &val->val1);
-		if (ret >= 0) {
-			data->delay_time = val->val1;
-		}
 		break;
-	case SENSOR_CHAN_RD03D_DETECTION_MODE:
+	case SENSOR_CHAN_RD03D_CONFIG_DETECTION_MODE:
 		if (data->detection_mode == RD03D_DETECTION_MODE_SINGLE_TARGET) {
 			val->val1 = RD03D_DETECTION_MODE_SINGLE_TARGET;
 		} else {
 			val->val1 = RD03D_DETECTION_MODE_MULTI_TARGET;
 		}
 		break;
-	case SENSOR_CHAN_RD03D_OPERATION_MODE:
+	case SENSOR_CHAN_RD03D_CONFIG_OPERATION_MODE:
 		switch (data->operation_mode & ~RD03D_OPERATION_MODE_CMD) {
 		case RD03D_OPERATION_MODE_DEBUG:
 			val->val1 = RD03D_OPERATION_MODE_DEBUG;
@@ -639,11 +619,17 @@ static int rd03d_attr_get(const struct device *dev, enum sensor_channel chan,
 		case RD03D_OPERATION_MODE_RUN:
 			val->val1 = RD03D_OPERATION_MODE_RUN;
 			break;
+		default:
+			ret = -ENOTSUP;
+			break;
 		}
 		if ((data->operation_mode & RD03D_OPERATION_MODE_CMD) == RD03D_OPERATION_MODE_CMD) {
 			val->val2 = RD03D_OPERATION_MODE_CMD;
 		}
 		break;
+
+	default:
+		return -ENOTSUP;
 	}
 
 	return ret;
@@ -653,22 +639,32 @@ static int rd03d_channel_get(const struct device *dev, enum sensor_channel chan,
 			     struct sensor_value *val)
 {
 	struct rd03d_data *data = dev->data;
-	struct rd03d_cfg *cfg = dev->config;
 
 	int ret;
-	const int target = val->val1;
 
-	if (chan >= SENSOR_CHAN_RD03D_POS && chan <= SENSOR_CHAN_RD03D_DISTANCE) {
-		if (target < 0 || target >= RD03D_MAX_TARGETS) {
-			target = CLAMP(target, 0, RD03D_MAX_TARGETS - 1);
-		}
-	} else if (chan == SENSOR_CHAN_PROX || chan == SENSOR_CHAN_DISTANCE) {
-		if (target < 0 || target >= RD03D_MAX_TARGETS) {
-			target = CLAMP(target, 0, RD03D_MAX_TARGETS - 1);
-		}
-	}
+	const int target = CLAMP(val->val1, 0, RD03D_MAX_TARGETS - 1);
+	enum sensor_channel_rd03d rdchan = (enum sensor_channel_rd03d)chan;
 
 	switch (chan) {
+
+	case SENSOR_CHAN_PROX:
+		val->val1 = 0;
+		for (int ti = 0; ti < RD03D_MAX_TARGETS; ti++) {
+			if (data->targets[ti].x != 0 && data->targets[ti].y != 0) {
+				val->val1 |= (1 << ti);
+			}
+		}
+		val->val2 = 0;
+		return 0;
+	case SENSOR_CHAN_DISTANCE:
+		val->val1 = data->targets[target].distance;
+		val->val2 = 0;
+		return 0;
+	default:
+		return -ENOTSUP;
+	}
+
+	switch (rdchan) {
 	case SENSOR_CHAN_RD03D_POS:
 		val->val1 = data->targets[target].x;
 		val->val2 = data->targets[target].y;
@@ -679,32 +675,15 @@ static int rd03d_channel_get(const struct device *dev, enum sensor_channel chan,
 	case SENSOR_CHAN_RD03D_DISTANCE:
 		val->val1 = data->targets[target].distance;
 		break;
+
 	case SENSOR_CHAN_RD03D_CONFIG_DISTANCE:
-		val->val1 = cfg->min_distance;
-		val->val2 = cfg->max_distance;
+		// TODO: get attribute, min/max
 		break;
-
-	case SENSOR_CHAN_PROX:
-		val->val1 = 0;
-		for (int ti = 0; ti < RD03D_MAX_TARGETS; ti++) {
-			if (data->targets[ti].x != 0 && data->targets[ti].y != 0) {
-				val->val1 |= (1 << ti);
-			}
-		}
-		val->val2 = 0;
-		break;
-	case SENSOR_CHAN_DISTANCE:
-		val->val1 = data->targets[target].distance;
-		val->val2 = 0;
-		break;
-
 	case SENSOR_CHAN_RD03D_CONFIG_FRAMES:
-		val->val1 = cfg->min_frames;
-		val->val2 = cfg->max_frames;
+		// TODO: get attribute, min/max
 		break;
 	case SENSOR_CHAN_RD03D_CONFIG_DELAY_TIME:
-		val->val1 = cfg->delay_time;
-		val->val2 = 0;
+		// TODO: get attribute
 		break;
 	case SENSOR_CHAN_RD03D_CONFIG_DETECTION_MODE:
 		if (data->detection_mode == RD03D_DETECTION_MODE_SINGLE_TARGET) {
@@ -743,6 +722,9 @@ static int rd03d_sample_fetch(const struct device *dev, enum sensor_channel chan
 	// When in 'reporting' mode, the sensor will send 'reports' continuously
 	// and data will become available in the RX buffer.
 	struct rd03d_data *data = dev->data;
+	const struct rd03d_cfg *cfg = dev->config;
+
+	int ret;
 
 	// We decode the rx buffer into data->targets
 	if (data->operation_mode == RD03D_OPERATION_MODE_REPORT) {
@@ -814,11 +796,11 @@ static void rd03d_uart_isr(const struct device *uart_dev, void *user_data)
 		return;
 	}
 
-	uint8_t *rxb = &data->rd_data[0];
+	uint8_t *rxb = &data->rx_data[0];
 	if (uart_irq_rx_ready(uart_dev)) {
 
 		const int byreq = RD03D_RX_BUF_MAX_LEN - data->rx_bytes; /* Avoid buffer overrun */
-		const int byread = uart_fifo_read(uart_dev, rxb[data->rx_bytes], byreq);
+		const int byread = uart_fifo_read(uart_dev, &rxb[data->rx_bytes], byreq);
 
 		data->rx_bytes += byread;
 
@@ -874,7 +856,7 @@ determine_rx_data_len:
 				}
 
 				// TODO How to recover from this, reset rx_bytes ?
-				data->LOG_ERR("Critical: invalid response!");
+				LOG_ERR("Critical: invalid response!");
 				data->rx_bytes = 0;
 			}
 		}
@@ -909,14 +891,14 @@ static int rd03d_init(const struct device *dev)
 	struct rd03d_data *data = dev->data;
 	const struct rd03d_cfg *cfg = dev->config;
 
-	int ret;
+	int ret = 0;
 
 	data->tx_data_len = 0;
 	memset(data->tx_data, 0, RD03D_TX_BUF_MAX_LEN);
-	, data->tx_data[0] = RD03D_CMD_BEGIN[0];
-	data->tx_data[1] = RD03D_CMD_BEGIN[1];
-	data->tx_data[2] = RD03D_CMD_BEGIN[2];
-	data->tx_data[3] = RD03D_CMD_BEGIN[3];
+	data->tx_data[0] = RD03D_CMD_HEAD[0];
+	data->tx_data[1] = RD03D_CMD_HEAD[1];
+	data->tx_data[2] = RD03D_CMD_HEAD[2];
+	data->tx_data[3] = RD03D_CMD_HEAD[3];
 
 	data->rx_data_len = 0;
 	memset(data->rx_data, 0, RD03D_RX_BUF_MAX_LEN);
@@ -943,74 +925,28 @@ static int rd03d_init(const struct device *dev)
 
 	rd03d_open_cmd_mode(dev);
 
-	bool read_config = true;
-
-	if (read_config) {
-		int value = 0;
-
-		/* Configure default min and max range */
-		if (rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_MIN_DISTANCE, &value) < 0) {
-			LOG_ERR("Error getting minimum range %d", cfg->range);
-			return ret;
-		}
-		cfg->min_distance = (uint16_t)value;
-
-		if (rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_MAX_DISTANCE, &value) < 0) {
-			LOG_ERR("Error getting maximum range %d", cfg->range);
-			return ret;
-		}
-		cfg->max_distance = (uint16_t)value;
-
-		/* Configure default min and max frames */
-		if (rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_MIN_FRAMES, &value) < 0) {
-			LOG_ERR("Error getting minimum frames %d", cfg->min_frames);
-			return ret;
-		}
-		cfg->min_frames = (uint16_t)value;
-
-		if (rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_MAX_FRAMES, &value) < 0) {
-			LOG_ERR("Error getting maximum frames %d", cfg->max_frames);
-			return ret;
-		}
-		cfg->max_frames = (uint16_t)value;
-
-		/* Configure default delay time */
-		if (rd03d_get_attribute(dev, RD03D_CMD_IDX_GET_DELAY_TIME, &value) < 0) {
-			LOG_ERR("Error getting delay time %d", cfg->delay_time);
-			return ret;
-		}
-		cfg->delay_time = (uint16_t)value;
-
-	} else {
-		/* Configure default min and max range */
-		if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MIN_DISTANCE, cfg->min_distance) <
-		    0) {
-			LOG_ERR("Error setting minimum range %d", cfg->range);
-		}
-		if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MAX_DISTANCE, cfg->max_distance) <
-		    0) {
-			LOG_ERR("Error setting maximum range %d", cfg->range);
-			return ret;
-		}
-		/* Configure default min and max frames */
-		if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MIN_FRAMES, cfg->min_frames) < 0) {
-			LOG_ERR("Error setting minimum frames %d", cfg->min_frames);
-			return ret;
-		}
-		if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MAX_FRAMES, cfg->max_frames) < 0) {
-			LOG_ERR("Error setting maximum frames %d", cfg->max_frames);
-			return ret;
-		}
-		/* Configure default delay time */
-		if (rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_DELAY_TIME, cfg->delay_time) < 0) {
-			LOG_ERR("Error setting delay time %d", cfg->delay_time);
-			return ret;
-		}
+	// Set configured attributes
+	if (cfg->min_distance != 0xffff) {
+		ret = rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MIN_DISTANCE, cfg->min_distance);
+	}
+	if (cfg->max_distance != 0xffff) {
+		ret = rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MAX_DISTANCE, cfg->max_distance);
+	}
+	if (cfg->min_frames != 0xffff) {
+		ret = rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MIN_FRAMES, cfg->min_frames);
+	}
+	if (cfg->max_frames != 0xffff) {
+		ret = rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_MAX_FRAMES, cfg->max_frames);
+	}
+	if (cfg->delay_time != 0xffff) {
+		ret = rd03d_set_attribute(dev, RD03D_CMD_IDX_SET_DELAY_TIME, cfg->delay_time);
 	}
 
 	/* Activate report mode */
+	struct sensor_value val;
+	val.val1 = RD03D_OPERATION_MODE_REPORT;
 	if (rd03d_attr_set(dev, SENSOR_CHAN_RD03D_CONFIG_OPERATION_MODE,
-			   SENSOR_ATTR_RD03D_CONFIG_VALUE, RD03D_OPERATION_MODE_REPORT) < 0) {
+			   SENSOR_ATTR_RD03D_CONFIG_VALUE, &val) < 0) {
 		LOG_ERR("Error setting default operation mode");
 	}
 
@@ -1024,22 +960,22 @@ static DEVICE_API(sensor, rd03d_api_funcs) = {
 	.channel_get = rd03d_channel_get,
 };
 
-#define RD03D_INIT(inst)                                                                           \
-                                                                                                   \
-	static struct rd03d_data rd03d_data_##inst;                                                \
-                                                                                                   \
-	static const struct rd03d_cfg rd03d_cfg_##inst = {                                         \
-		.uart_dev = DEVICE_DT_GET(DT_INST_BUS(inst)),                                      \
-		.min_distance = DT_INST_PROP(inst, minimum_distance),                              \
-		.max_distance = DT_INST_PROP(inst, maximum_distance),                              \
-		.min_frames = DT_INST_PROP(inst, minimum_frames),                                  \
-		.max_frames = DT_INST_PROP(inst, maximum_frames),                                  \
-		.delay_time = DT_INST_PROP(inst, delay_time),                                      \
-		.cb = rd03d_uart_isr,                                                              \
-	};                                                                                         \
-                                                                                                   \
-	SENSOR_DEVICE_DT_INST_DEFINE(inst, rd03d_init, NULL, &rd03d_data_##inst,                   \
-				     &rd03d_cfg_##inst, POST_KERNEL, CONFIG_SENSOR_INIT_PRIORITY,  \
+#define RD03D_INIT(inst)                                                               \
+                                                                                       \
+	static struct rd03d_data rd03d_data_##inst;                                        \
+                                                                                       \
+	static const struct rd03d_cfg rd03d_cfg_##inst = {                                 \
+		.uart_dev = DEVICE_DT_GET(DT_INST_BUS(inst)),                                  \
+		.min_distance = DT_INST_PROP_OR(inst, min_distance, 0xffff),                   \
+		.max_distance = DT_INST_PROP_OR(inst, max_distance, 0xffff),                   \
+		.min_frames = DT_INST_PROP_OR(inst, min_frames, 0xffff),                       \
+		.max_frames = DT_INST_PROP_OR(inst, max_frames, 0xffff),                       \
+		.delay_time = DT_INST_PROP_OR(inst, delay_time, 0xffff),                       \
+		.cb = rd03d_uart_isr,                                                          \
+	};                                                                                 \
+                                                                                       \
+	SENSOR_DEVICE_DT_INST_DEFINE(inst, rd03d_init, NULL, &rd03d_data_##inst,           \
+				     &rd03d_cfg_##inst, POST_KERNEL, CONFIG_SENSOR_INIT_PRIORITY,      \
 				     &rd03d_api_funcs);
 
 DT_INST_FOREACH_STATUS_OKAY(RD03D_INIT)
