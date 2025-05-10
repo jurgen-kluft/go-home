@@ -3,21 +3,22 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/drivers/sensor.h>
+#include <zephyr/sys/util.h>
 #include "rd-03d.h"
 
 LOG_MODULE_REGISTER(rd03d, CONFIG_SENSOR_LOG_LEVEL);
 
-// Protocol packet begin and end
-#define RD03D_CMD_HEADER_BEGIN   0xFD, 0xFC, 0xFB, 0xFA
-#define RD03D_CMD_HEADER_END     0x04, 0x03, 0x02, 0x01
-#define RD03D_FRAME_BEGIN        0xF4, 0xF3, 0xF2, 0xF1
-#define RD03D_FRAME_END          0xF8, 0xF7, 0xF6, 0xF5
-#define RD03D_REPORT_FRAME_BEGIN 0xAA, 0xFF, 0x03, 0x00
-#define RD03D_REPORT_FRAME_END   0x55, 0xCC
+// Endianness is Little Endian
 
 // clang-format off
 
-// Endianness is Little Endian
+// Protocol data frame format, head and tail
+static const uint8_t RD03D_CMD_BEGIN[]   = {0xFD, 0xFC, 0xFB, 0xFA};
+static const uint8_t RD03D_CMD_END[]     = {0x04, 0x03, 0x02, 0x01};
+static const uint8_t RD03D_FRAME_HEAD[]  = {0xF4, 0xF3, 0xF2, 0xF1};
+static const uint8_t RD03D_FRAME_TAIL[]  = {0xF8, 0xF7, 0xF6, 0xF5};
+static const uint8_t RD03D_REPORT_HEAD[] = {0xAA, 0xFF, 0x03, 0x00};
+static const uint8_t RD03D_REPORT_TAIL[] = {0x55, 0xCC};
 
 // Note: So in the comments you may read Word which means that this is a register value. 
 //       The byte order of the command is thus swapped compared to an indicated Word value.
@@ -117,12 +118,11 @@ static int prepare_cmd(rd03d_protocol_cmd_idx, uint8_t *cmd_buffer, int value) {
 		cmd_buffer[l++] = 0x00; //
 	}
 
-	// Write the end
-	const uint8_t* cmd_header_end[] = RD03D_CMD_HEADER_END;
-	cmd_buffer[l++] = cmd_header_end[0];
-	cmd_buffer[l++] = cmd_header_end[1];
-	cmd_buffer[l++] = cmd_header_end[2];
-	cmd_buffer[l++] = cmd_header_end[3];
+	// Write the tail
+	cmd_buffer[l++] = RD03D_CMD_TAIL[0];
+	cmd_buffer[l++] = RD03D_CMD_TAIL[1];
+	cmd_buffer[l++] = RD03D_CMD_TAIL[2];
+	cmd_buffer[l++] = RD03D_CMD_TAIL[3];
 
 	return l;
 }
@@ -139,62 +139,125 @@ static int prepare_cmd(rd03d_protocol_cmd_idx, uint8_t *cmd_buffer, int value) {
 // |  Send Command Word | 0x0100 (2 bytes)  | Return value (N bytes)  |
 // |------------------------------------------------------------------
 
-static const uint8_t RD03D_CMD_ACK_IDX_OPEN_CMD_MODE[]   = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0xFF, 0x01, 0x00, 0x00, 0x01, 0x00, 0x40, 0x00, RD03D_CMD_HEADER_END };
-static const uint8_t RD03D_CMD_ACK_IDX_CLOSE_CMD_MODE[]  = { RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0xFE, 0x01, 0x00, 0x00, RD03D_CMD_HEADER_END };
+// static const uint8_t RD03D_CMD_ACK_IDX_OPEN_CMD_MODE[]   = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0xFF, 0x01, 0x00, 0x00, 0x01, 0x00, 0x40, 0x00, RD03D_CMD_HEADER_END };
+// static const uint8_t RD03D_CMD_ACK_IDX_CLOSE_CMD_MODE[]  = { RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0xFE, 0x01, 0x00, 0x00, RD03D_CMD_HEADER_END };
 
 // Protocol, ACKS we get for set and get commands, the ACK related to the get cmd contains a 4 byte variable at (rx_buffer[10] to rx_buffer[13])
 // static const uint8_t RD03D_CMD_ACK_IDX_SET_XXX[] = { RD03D_CMD_HEADER_BEGIN, 0x04, 0x00, 0x07, 0x01, 0x00, 0x00, RD03D_CMD_HEADER_END },
 // static const uint8_t RD03D_CMD_ACK_IDX_GET_XXX[] = { RD03D_CMD_HEADER_BEGIN, 0x08, 0x00, 0x08, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, RD03D_CMD_HEADER_END },
 
 // clang-format on
-
-static int verify_open_cmd_ack(const uint8_t *data, int data_len)
+static inline bool data_frame_has_valid_len(int data_len)
 {
-	if (data_len != sizeof(RD03D_CMD_ACK_IDX_OPEN_CMD_MODE)) {
+	return (data_len == 12 || data_len == 14 || data_len == 18);
+}
+
+static inline bool data_frame_has_valid_head(const uint8_t *data, int data_len)
+{
+	return data[0] == RD03D_FRAME_HEAD[0] && data[1] == RD03D_FRAME_HEAD[1] &&
+	       data[2] == RD03D_FRAME_HEAD[2] && data[3] == RD03D_FRAME_HEAD[3];
+}
+
+static inline int data_frame_get_intra_frame_data_len(const uint8_t *data, int data_len)
+{
+	const int len = data[4] | (data[5] << 8);
+	return (len != 2 && len != 4 && len != 8) ? -1 : len;
+}
+
+static inline bool data_frame_has_valid_tail(const uint8_t *data, int data_len,
+					     int intra_frame_data_len)
+{
+	if (data_len != (4 + 2 + intra_frame_data_len + 4)) {
+		return false;
+	}
+
+	return data[4 + 2 + intra_frame_data_len + 0] == RD03D_FRAME_TAIL[0] &&
+	       data[4 + 2 + intra_frame_data_len + 1] == RD03D_FRAME_TAIL[1] &&
+	       data[4 + 2 + intra_frame_data_len + 2] == RD03D_FRAME_TAIL[2] &&
+	       data[4 + 2 + intra_frame_data_len + 3] == RD03D_FRAME_TAIL[3];
+}
+
+static int verify_ack_for_open_cmd(const uint8_t *data, int data_len)
+{
+	const int intra_frame_data_len = 8;
+	if (data_len != 4 + 2 + intra_frame_data_len + 4) {
 		return -1;
 	}
 
-	return memcmp(data, RD03D_CMD_ACK_IDX_OPEN_CMD_MODE,
-		      sizeof(RD03D_CMD_ACK_IDX_OPEN_CMD_MODE)) == 0
-		       ? 0
-		       : -1;
-}
-
-static int verify_close_cmd_ack(const uint8_t *data, int data_len)
-{
-	if (data_len != sizeof(RD03D_CMD_ACK_IDX_CLOSE_CMD_MODE)) {
+	if (data_frame_has_valid_head(data, data_len) == false) {
+		return -1;
+	}
+	if (data_frame_get_intra_frame_data_len(data, data_len) != intra_frame_data_len) {
 		return -1;
 	}
 
-	return memcmp(data, RD03D_CMD_ACK_IDX_CLOSE_CMD_MODE,
-		      sizeof(RD03D_CMD_ACK_IDX_CLOSE_CMD_MODE)) == 0
-		       ? 0
-		       : -1;
+	if (data[6] == 0xFF && data[7] == 0x01 && data[8] == 0x00 && data[9] == 0x00 &&
+	    data[10] == 0x01 && data[11] == 0x00 && data[12] == 0x40 && data[13] == 0x00) {
+		return data_frame_has_valid_tail(data, data_len, intra_frame_data_len) ? 0 : -1;
+	}
+	return -1;
 }
 
-static int verify_set_cmd_ack(const uint8_t *data, int data_len)
+static int verify_ack_for_close_cmd(const uint8_t *data, int data_len)
 {
-	if (data_len != sizeof(RD03D_CMD_ACK_IDX_SET_XXX)) {
+	const int intra_frame_data_len = 4;
+	if (data_len != 4 + 2 + intra_frame_data_len + 4) {
 		return -1;
 	}
 
-	return memcmp(data, RD03D_CMD_ACK_IDX_SET_XXX, sizeof(RD03D_CMD_ACK_IDX_SET_XXX)) == 0 ? 0
-											       : -1;
+	if (data_frame_has_valid_head(data, data_len) == false) {
+		return -1;
+	}
+	if (data_frame_get_intra_frame_data_len(data, data_len) != intra_frame_data_len) {
+		return -1;
+	}
+
+	if (data[6] == 0xFE && data[7] == 0x01 && data[8] == 0x00 && data[9] == 0x00) {
+		return data_frame_has_valid_tail(data, data_len, intra_frame_data_len) ? 0 : -1;
+	}
+	return -1;
 }
 
-static int verify_get_cmd_ack(const uint8_t *data, int data_len, int *value)
+static int verify_ack_for_set_cmd(const uint8_t *data, int data_len)
+{
+	const int intra_frame_data_len = 4;
+	if (data_len != 4 + 2 + intra_frame_data_len + 4) {
+		return -1;
+	}
+
+	if (data_frame_has_valid_head(data, data_len) == false) {
+		return -1;
+	}
+	if (data_frame_get_intra_frame_data_len(data, data_len) != intra_frame_data_len) {
+		return -1;
+	}
+
+	if (data[6] == 0x07 && data[7] == 0x01 && data[8] == 0x00 && data[9] == 0x00) {
+		return data_frame_has_valid_tail(data, data_len, intra_frame_data_len) ? 0 : -1;
+	}
+	return -1;
+}
+
+static int verify_ack_for_get_cmd(const uint8_t *data, int data_len, int *value)
 {
 	*value = 0;
-	if (data_len != sizeof(RD03D_CMD_ACK_IDX_GET_XXX)) {
+
+	const int intra_frame_data_len = 8;
+	if (data_len != 4 + 2 + intra_frame_data_len + 4) {
 		return -1;
 	}
 
-	if (memcmp(data, RD03D_CMD_ACK_IDX_GET_XXX, sizeof(RD03D_CMD_ACK_IDX_GET_XXX)) == 0) {
-		// read the 4 byte variable
-		*value = data[10] | (data[11] << 8) | (data[12] << 16) | (data[13] << 24);
-		return 0;
+	if (data_frame_has_valid_head(data, data_len) == false) {
+		return -1;
+	}
+	if (data_frame_get_intra_frame_data_len(data, data_len) != intra_frame_data_len) {
+		return -1;
 	}
 
+	if (data[6] == 0x08 && data[7] == 0x01 && data[8] == 0x00 && data[9] == 0x00) {
+		*value = sys_get_le32(data + 10);
+		return data_frame_has_valid_tail(data, data_len, intra_frame_data_len) ? 0 : -1;
+	}
 	return -1;
 }
 
@@ -248,13 +311,9 @@ static int rd03d_open_cmd_mode(const struct device *dev)
 		return ret;
 	}
 
-	// Check if the command was acknowledged
-	if (verify_open_cmd_ack(data->rx_data, data->rx_data_len) != 0) {
-		LOG_ERR("Failed to open command mode");
-		return -EIO;
-	}
-
-	return 0;
+	// Verify the command was acknowledged successfully
+	ret = verify_ack_for_open_cmd(data->rx_data, data->rx_data_len);
+	return ret;
 }
 
 static int rd03d_close_cmd_mode(const struct device *dev)
@@ -269,12 +328,8 @@ static int rd03d_close_cmd_mode(const struct device *dev)
 	}
 
 	// Verify the command was acknowledged successfully
-	if (verify_close_cmd_ack(data->rx_data, data->rx_data_len) != 0) {
-		LOG_ERR("Failed to close command mode");
-		return -EIO;
-	}
-
-	return 0;
+	ret = verify_ack_for_close_cmd(data->rx_data, data->rx_data_len);
+	return ret;
 }
 
 static int rd03d_set_attribute(const struct device *dev, enum rd03d_protocol_cmd_idx cmd_idx,
@@ -292,7 +347,7 @@ static int rd03d_set_attribute(const struct device *dev, enum rd03d_protocol_cmd
 	if ((data->operation_mode & RD03D_OPERATION_MODE_CMD) == 0) {
 		ret = rd03d_open_cmd_mode(dev);
 		if (ret < 0) {
-			LOG_ERR("Failure, open command mode");
+			LOG_ERR("Error, open command mode failed");
 			return -EINVAL;
 		}
 		data->operation_mode |= RD03D_OPERATION_MODE_CMD;
@@ -301,14 +356,14 @@ static int rd03d_set_attribute(const struct device *dev, enum rd03d_protocol_cmd
 	// Set the attribute value in the command
 	ret = rd03d_send_cmd(dev, cmd_idx, value, 1) if (ret < 0)
 	{
-		LOG_ERR("Failure, set attribute command (%d)", cmd_idx);
+		LOG_ERR("Error, set attribute command (%d) failed", cmd_idx);
 		return ret;
 	}
 
 	// Verify the command was acknowledged successfully
-	ret = verify_set_cmd_ack(data->rx_data, data->rx_data_len);
+	ret = verify_ack_for_set_cmd(data->rx_data, data->rx_data_len);
 	if (ret < 0) {
-		LOG_ERR("Failure, set attribute command (%d) did not get valid ACK", cmd_idx);
+		LOG_ERR("Error, set attribute command (%d) did not get valid ACK", cmd_idx);
 		return ret;
 	}
 
@@ -328,32 +383,6 @@ static int rd03d_set_attribute(const struct device *dev, enum rd03d_protocol_cmd
 
 	return ret;
 }
-
-/*
-enum sensor_channel_rd03d {
-	SENSOR_CHAN_RD03D_CONFIG_DISTANCE = SENSOR_CHAN_PRIV_START,
-	SENSOR_CHAN_RD03D_CONFIG_FRAMES,
-	SENSOR_CHAN_RD03D_CONFIG_DELAY_TIME,
-	SENSOR_CHAN_RD03D_CONFIG_DETECTION_MODE,
-	SENSOR_CHAN_RD03D_CONFIG_OPERATION_MODE,
-	SENSOR_CHAN_RD03D_POS,
-	SENSOR_CHAN_RD03D_SPEED,
-	SENSOR_CHAN_RD03D_DISTANCE,
-};
-
-enum sensor_attribute_rd03d {
-	SENSOR_ATTR_RD03D_TARGETS = SENSOR_ATTR_PRIV_START,
-
-	SENSOR_ATTR_RD03D_TARGET_0,
-	SENSOR_ATTR_RD03D_TARGET_1,
-	SENSOR_ATTR_RD03D_TARGET_2,
-
-	SENSOR_ATTR_RD03D_CONFIG_VALUE,
-	SENSOR_ATTR_RD03D_CONFIG_MINIMUM,
-	SENSOR_ATTR_RD03D_CONFIG_MAXIMUM,
-};
-
-*/
 
 static int rd03d_attr_set(const struct device *dev, enum sensor_channel chan,
 			  enum sensor_attribute attr, const struct sensor_value *val)
@@ -460,17 +489,52 @@ static inline int rd03d_get_attribute(const struct device *dev, rd03d_protocol_c
 				      int *value)
 {
 	struct rd03d_data *data = dev->data;
+
 	int ret;
 
-	// get attribute cmd, has a reponse
-	ret = rd03d_send_cmd(dev, cmd_idx, 0);
-	if (ret < 0) {
+	// This is always a mutable command, so we need to copy the command into
+	// the transmit (tx) buffer, set the value, and then send the command.
+
+	// Note: The user has to explicitly set the command mode to be able to
+	//       set and get attributes/channel data.
+	if ((data->operation_mode & RD03D_OPERATION_MODE_CMD) == 0) {
+		ret = rd03d_open_cmd_mode(dev);
+		if (ret < 0) {
+			LOG_ERR("Error, open command mode failed");
+			return -EINVAL;
+		}
+		data->operation_mode |= RD03D_OPERATION_MODE_CMD;
+	}
+
+	// Get command
+	ret = rd03d_send_cmd(dev, cmd_idx, value, 1) if (ret < 0)
+	{
+		LOG_ERR("Error, get attribute command (%d) failed", cmd_idx);
 		return ret;
 	}
 
-	// Decode the response and write 'value'
+	// Read the value from the response
+	ret = verify_ack_for_get_cmd(data->rx_data, data->rx_data_len, value);
+	if (ret < 0) {
+		LOG_ERR("Error, get attribute command (%d) did not get valid ACK", cmd_idx);
+		return ret;
+	}
 
-	return 0;
+	// Note: When setting RD03D_ATTR_OPERATION_MODE to any of the reporting
+	//       modes, the sensor will close the command mode.
+	//       This means that the command mode will be closed automatically
+	//       and the sensor will enter the reporting mode.
+	if ((cmd_idx >= RD03D_CMD_IDX_DEBUGGING_MODE && cmd_idx <= RD03D_CMD_IDX_RUNNING_MODE)) {
+		if ((data->operation_mode & RD03D_OPERATION_MODE_CMD) == RD03D_OPERATION_MODE_CMD) {
+			ret = rd03d_close_cmd_mode(dev);
+			if (ret < 0) {
+				return -EINVAL;
+			}
+			data->operation_mode &= ~RD03D_OPERATION_MODE_CMD;
+		}
+	}
+
+	return ret;
 }
 
 static int rd03d_attr_get(const struct device *dev, enum sensor_channel chan,
@@ -488,36 +552,26 @@ static int rd03d_attr_get(const struct device *dev, enum sensor_channel chan,
 	}
 
 	int ti = 0;
-
 	switch (chan) {
 	case SENSOR_CHAN_RD03D_POS:
-		ti = attr - SENSOR_ATTR_RD03D_TARGET_0;
-		if (ti < 0 || ti >= RD03D_MAX_TARGETS) {
-			return -EINVAL;
-		}
+		ti = CLAMP((attr - SENSOR_ATTR_RD03D_TARGET_0), 0, RD03D_MAX_TARGETS - 1);
 		val->val1 = data->targets[ti].x;
 		val->val2 = data->targets[ti].y;
 		break;
 	case SENSOR_CHAN_RD03D_SPEED:
-		ti = attr - SENSOR_ATTR_RD03D_TARGET_0;
-		if (ti < 0 || ti >= RD03D_MAX_TARGETS) {
-			return -EINVAL;
-		}
+		ti = CLAMP((attr - SENSOR_ATTR_RD03D_TARGET_0), 0, RD03D_MAX_TARGETS - 1);
 		val->val1 = data->targets[ti].speed;
 		val->val2 = 0;
 		break;
 	case SENSOR_CHAN_RD03D_DISTANCE:
-		ti = attr - SENSOR_ATTR_RD03D_TARGET_0;
-		if (ti < 0 || ti >= RD03D_MAX_TARGETS) {
-			return -EINVAL;
-		}
+		ti = CLAMP((attr - SENSOR_ATTR_RD03D_TARGET_0), 0, RD03D_MAX_TARGETS - 1);
 		val->val1 = data->targets[ti].distance;
 		val->val2 = 0;
 		break;
 
 	case SENSOR_CHAN_PROX:
 		val->val1 = 0;
-		for (int ti = 0; ti < RD03D_MAX_TARGETS; ti++) {
+		for (ti = 0; ti < RD03D_MAX_TARGETS; ti++) {
 			if (data->targets[ti].x != 0 && data->targets[ti].y != 0) {
 				val->val1 |= (1 << ti);
 			}
@@ -606,11 +660,11 @@ static int rd03d_channel_get(const struct device *dev, enum sensor_channel chan,
 
 	if (chan >= SENSOR_CHAN_RD03D_POS && chan <= SENSOR_CHAN_RD03D_DISTANCE) {
 		if (target < 0 || target >= RD03D_MAX_TARGETS) {
-			return -EINVAL;
+			target = CLAMP(target, 0, RD03D_MAX_TARGETS - 1);
 		}
 	} else if (chan == SENSOR_CHAN_PROX || chan == SENSOR_CHAN_DISTANCE) {
 		if (target < 0 || target >= RD03D_MAX_TARGETS) {
-			return -EINVAL;
+			target = CLAMP(target, 0, RD03D_MAX_TARGETS - 1);
 		}
 	}
 
@@ -701,23 +755,37 @@ static int rd03d_sample_fetch(const struct device *dev, enum sensor_channel chan
 		}
 
 		// Decode the response
-		// RD03D_REPORT_FRAME_BEGIN 0xAA, 0xFF, 0x03, 0x00
+		// RD03D_REPORT_HEAD
 		//   Target 1 { x, y, speed, distance }
 		//   Target 2 { x, y, speed, distance }
 		//   Target 3 { x, y, speed, distance }
-		// RD03D_REPORT_FRAME_END   0x55, 0xCC
+		// RD03D_REPORT_TAIL
 
 		uint8_t const *rx = data->rx_data;
 
-		if (rx[0] != 0xAA || rx[1] != 0xFF || rx[2] != 0x03 || rx[3] != 0x00) {
-			LOG_ERR("Invalid report frame");
+		// TODO actually the verification has already been done when receiving, we
+		//      should not really have to verify again!
+
+		const int report_len = 8 * RD03D_MAX_TARGETS;
+		if (data->rx_data_len !=
+		    sizeof(RD03D_REPORT_HEAD) + report_len + sizeof(RD03D_REPORT_TAIL)) {
+			LOG_ERR("Invalid report frame, data frame length mismatch");
 			return -EINVAL;
 		}
 
-		// rx len should be 4 + (8 * num_targets) + 2
+		if (rx[0] != RD03D_REPORT_HEAD[0] || rx[1] != RD03D_REPORT_HEAD[1] ||
+		    rx[2] != RD03D_REPORT_HEAD[2] || rx[3] != RD03D_REPORT_HEAD[3]) {
+			LOG_ERR("Invalid report frame, head mismatch");
+			return -EINVAL;
+		}
 
-		// For multi-target, assume each target occupies 8 bytes and parse them
-		// sequentially. Here we start from index 4 and step through the buffer.
+		if (rx[28] != RD03D_REPORT_TAIL[0] || rx[29] != RD03D_REPORT_TAIL[1]) {
+			LOG_ERR("Invalid report frame, tail mismatch");
+			return -EINVAL;
+		}
+
+		// For decode target, assume each target occupies 8 bytes and parse them
+		// sequentially. Here we skip header and step through the buffer.
 		int ti = 0;
 		for (int i = 4; i < (data->rx_bytes - 2) && ti < RD03D_MAX_TARGETS; i += 8) {
 
@@ -845,11 +913,10 @@ static int rd03d_init(const struct device *dev)
 
 	data->tx_data_len = 0;
 	memset(data->tx_data, 0, RD03D_TX_BUF_MAX_LEN);
-	const uint8_t *header_begin = RD03D_CMD_HEADER_BEGIN;
-	data->tx_data[0] = header_begin[0];
-	data->tx_data[1] = header_begin[1];
-	data->tx_data[2] = header_begin[2];
-	data->tx_data[3] = header_begin[3];
+	, data->tx_data[0] = RD03D_CMD_BEGIN[0];
+	data->tx_data[1] = RD03D_CMD_BEGIN[1];
+	data->tx_data[2] = RD03D_CMD_BEGIN[2];
+	data->tx_data[3] = RD03D_CMD_BEGIN[3];
 
 	data->rx_data_len = 0;
 	memset(data->rx_data, 0, RD03D_RX_BUF_MAX_LEN);

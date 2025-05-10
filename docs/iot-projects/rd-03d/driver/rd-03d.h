@@ -9,6 +9,7 @@
 #define RD03D_TX_BUF_MAX_LEN 18
 #define RD03D_RX_BUF_MAX_LEN 64
 #define RD03D_UART_BAUD_RATE 115200
+#define RD03D_MAX_TARGETS 3
 
 /* Arbitrary max duration to wait on a semaphore */
 #define RD03D_SEMA_MAX_WAIT K_SECONDS(1)
@@ -34,8 +35,6 @@ enum rd03d_protocol_cmd_idx {
 
 	RD03D_CMD_IDX_SINGLE_TARGET_MODE, // Detection mode single target
 	RD03D_CMD_IDX_MULTI_TARGET_MODE,  // Detection mode multiple targets
-
-	RD03D_CMD_IDX_MAX,
 };
 
 enum rd03d_detection_mode {
@@ -45,7 +44,7 @@ enum rd03d_detection_mode {
 
 enum rd03d_operation_mode {
 	RD03D_OPERATION_MODE_CMD = 0x80,
-	RD03D_OPERATION_MODE_DEBUG = 0x0,
+	RD03D_OPERATION_MODE_DEBUG = 0x00,
 	RD03D_OPERATION_MODE_REPORT = 0x01,
 	RD03D_OPERATION_MODE_RUN = 0x02,
 };
@@ -59,10 +58,6 @@ enum rd03d_property {
 	RD03D_PROP_DETECTION_MODE,
 	RD03D_PROP_OPERATION_MODE,
 };
-
-/** @brief Information collected from the sensor on each fetch. */
-
-#define RD03D_MAX_TARGETS 3
 
 struct rd03d_target {
 	uint16_t x;        /**< X coordinate in mm */
