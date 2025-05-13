@@ -28,12 +28,22 @@ The presence will be posted directly to the MQTT broker. The ESP32 will be conne
 
 ## Measurement
 
-Lowest In-Bed: 10 K Ohm
-Highest In-Bed: 30 K Ohm
+Side of Bed = Jurgen
+     Lowest In-Bed: ~15 K Ohm
+     Highest In-Bed: -20 K Ohm
+     Out-Of-Bed: 60 K Ohm
 
-Out-of-Bed: The resistance is very high, so the FSR is not conductive. The resistance is in the MOhm range.
+R1 = SQRT(15 K Ohm * 60 K Ohm) = SQRT(900 K Ohm) = 30 K Ohm = ~ 30 K Ohm
 
-R1 = SQRT(10 K Ohm * 3000 K Ohm) = SQRT(30000 K Ohm) = 170 K Ohm
+Side of Bed = Faith
+     Lowest In-Bed: ~5 K Ohm
+     Highest In-Bed: -10 K Ohm
+     Out-Of-Bed: 25 - 35 K Ohm
+
+R1 = SQRT(5 K Ohm * 35 K Ohm) = SQRT(175 K Ohm) = 13.3 K Ohm = ~ 15 K Ohm
+
+The resistance (FSR + Wiring) is due to the length of the wires.
+
 
 ## ESP32 Code
 

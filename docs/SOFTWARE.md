@@ -5,10 +5,7 @@
 ## Sensor Data Server
 
 - TCP: https://github.com/maurice2k/tcpserver
-
-## Message Broker
-
-Custom message broker to receive UDP messages from ESP32 devices and redirect them to the correct MQTT topic.
+- Actor Model; https://github.com/vladopajic/go-actor
 
 ## MQTT Broker
 
@@ -29,8 +26,4 @@ From golang we can receive data from ESPHome devices, and we can send commands t
 
 - https://github.com/squarejaw/wiz
 - https://github.com/achetronic/wizgo
-
-## Go
-
-- Actor Model; https://github.com/vladopajic/go-actor
 

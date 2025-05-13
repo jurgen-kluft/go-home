@@ -38,7 +38,7 @@ Here a, incomplete, list of sensors that are very practical:
   - I2C address: 0x23
   - URL: https://github.com/claws/BH1750
 - BME/BMP280 temperature, humidity, and pressure sensor
-  - Voltage: 3.3V
+  - Voltage: 3.3V - 5V (Be aware, some modules are 3.3V only)
   - I2C address: 0x76
   - URL: https://github.com/finitespace/BME280
 - SCD41 CO2 sensor
