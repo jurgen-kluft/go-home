@@ -1,12 +1,5 @@
 package main
 
-// TODO:
-// This is a very simple TCP server that listens for messages from ESP32 devices.
-// It receives messages in a custom binary format containing different types of sensor data.
-// The server decodes the messages and generates MQTT messages to be sent to an MQTT broker.
-// We also will push this data to an InfluxDB database that we can visualize with Grafana.
-// The server will be able to handle multiple clients and will be able to process messages in parallel.
-
 import (
 	"flag"
 	"fmt"
@@ -29,16 +22,7 @@ func newHandler() actor.Receiver {
 func (handler) Receive(c *actor.Context) {
 	switch msg := c.Message().(type) {
 	case []byte:
-		fmt.Println("received packet")
-
-		// Custom binary message format
-		packet, err := DecodeNetworkPacket(msg)
-		if err != nil {
-			slog.Error("decode error", "err", err)
-			return
-		}
-		fmt.Println("decoded packet:", packet)
-
+		fmt.Println("got message to handle:", string(msg))
 	case actor.Stopped:
 		for i := 0; i < 3; i++ {
 			fmt.Printf("\r handler stopping in %d", 3-i)
@@ -72,17 +56,19 @@ func (s *session) Receive(c *actor.Context) {
 }
 
 func (s *session) readLoop(c *actor.Context) {
+	buf := make([]byte, 1024)
 	for {
-		// What is the maximum size of a message?
-		msg := make([]byte, 1024)
-		n, err := s.conn.Read(msg)
+		n, err := s.conn.Read(buf)
 		if err != nil {
 			slog.Error("conn read error", "err", err)
 			break
 		}
+		// copy shared buffer, to prevent race conditions.
+		msg := make([]byte, n)
+		copy(msg, buf[:n])
 
-		// Send to the handler to process the message
-		c.Send(c.Parent().Child("handler/default"), msg[:n])
+		// Send to the handler to process to message
+		c.Send(c.Parent().Child("handler/default"), msg)
 	}
 	// Loop is done due to error or we need to close due to server shutdown.
 	c.Send(c.Parent(), &connRem{pid: c.PID()})
@@ -153,7 +139,7 @@ func (s *server) acceptLoop(c *actor.Context) {
 }
 
 func main() {
-	listenAddr := flag.String("listen", "10.0.0.60:31337", "listen address of the TCP server")
+	listenAddr := flag.String("listenaddr", ":6000", "listen address of the TCP server")
 
 	e, err := actor.NewEngine(actor.NewEngineConfig())
 	if err != nil {

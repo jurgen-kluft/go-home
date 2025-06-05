@@ -1,58 +1,39 @@
 module github.com/jurgen-kluft/go-home/sensor-server
 
-replace jurgen-kluft/go-home/sensor-server/gnet => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/gnet
+replace jurgen-kluft/go-home/sensor-server/hollywood => /Users/obnosis5/dev.go/src/github.com/jjurgen-kluft/go-home/sensor-server/hollywood
 
-replace jurgen-kluft/go-home/sensor-server/gnet/internal/gfd => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/gnet/internal/gfd
-
-replace jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/bs => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/bs
-
-replace jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/buffer/elastic => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/buffer/elastic
-
-replace jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/buffer/linkedlist => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/buffer/linkedlist
-
-replace jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/buffer/ring => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/buffer/ring
-
-replace jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/errors => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/errors
-
-replace jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/io => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/io
-
-replace jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/logging => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/logging
-
-replace jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/math => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/math
-
-replace jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/netpoll => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/netpoll
-
-replace jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/pool/bytebuffer => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/pool/bytebuffer
-
-replace jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/pool/byteslice => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/pool/byteslice
-
-replace jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/pool/goroutine => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/pool/goroutine
-
-replace jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/pool/ringbuffer => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/pool/ringbuffer
-
-replace jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/queue => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/queue
-
-replace jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/socket => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/gnet/internal/pkg/socket
-
-replace jurgen-kluft/go-home/sensor-server/ants => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/ants
-
-replace jurgen-kluft/go-home/sensor-server/ants/pkg/sync => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/ants/pkg/sync
-
-go 1.23.0
-
-toolchain go1.23.8
+go 1.23.8
 
 require (
+	github.com/DataDog/gostackparse v0.7.0
+	github.com/grandcat/zeroconf v1.0.0
+	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10
+	github.com/prometheus/client_golang v1.22.0
 	github.com/stretchr/testify v1.10.0
-	github.com/valyala/bytebufferpool v1.0.0
-	go.uber.org/zap v1.27.0
-	golang.org/x/sync v0.14.0
-	golang.org/x/sys v0.33.0
+	github.com/zeebo/xxh3 v1.0.2
+	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
+	google.golang.org/grpc v1.72.0
+	google.golang.org/protobuf v1.36.6
+	storj.io/drpc v0.0.34
 )
 
 require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
-	go.uber.org/multierr v1.10.0 // indirect
+	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
+	github.com/kr/text v0.2.0 // indirect
+	github.com/miekg/dns v1.1.41 // indirect
+	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
+	github.com/prometheus/client_model v0.6.1 // indirect
+	github.com/prometheus/common v0.62.0 // indirect
+	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/zeebo/errs v1.4.0 // indirect
+	golang.org/x/net v0.38.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
