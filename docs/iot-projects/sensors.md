@@ -1,5 +1,22 @@
 # Sensors
 
+- BH1750 light sensor 
+  - I2C address: 0x23
+  - URL: https://github.com/claws/BH1750
+- BME280 temperature, humidity, and pressure sensor
+  - I2C address: 0x76
+  - URL: https://github.com/finitespace/BME280
+- SDC41 CO2 sensor
+    - I2C address: 0x68
+    - URL: https://github.com/Sensirion/arduino-i2c-scd4x
+- RD-03D mmWave sensor 
+    - I2C address: 0x10
+    - URL: 
+      - https://github.com/javier-fg/arduino_rd-03d
+      - https://github.com/MauricioOrtega10/Rd-03
+      - https://github.com/bertrik/aithinker-rd03
+      - https://github.com/Gjorgjevikj/Ai-Thinker-RD-03
+
 Here a, incomplete, list of sensors that are very practical:
 
 - Light (lux)

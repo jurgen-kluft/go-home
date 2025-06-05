@@ -14,6 +14,14 @@
 SensirionI2cScd4x sensorCO2;
 bool              sensorCO2Initialized = false;
 
+// ESP32 YD 
+const int sdaPin = 21;
+const int sclPin = 22;
+
+// ESP32S3 Dev Module
+//const int sdaPin = 8;
+//const int sclPin = 9;
+
 void PrintUint64(uint64_t &value)
 {
     Serial.print("0x");
@@ -131,7 +139,7 @@ void setup()
     {
         delay(100);
     }
-    Wire.begin(21, 22);
+    Wire.begin(sdaPin, sclPin);
 
     initCO2Sensor();
 

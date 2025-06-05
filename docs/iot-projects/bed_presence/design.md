@@ -28,22 +28,36 @@ The presence will be posted directly to the MQTT broker. The ESP32 will be conne
 
 ## Measurement
 
-Side of Bed = Jurgen
-     Lowest In-Bed: ~15 K Ohm
-     Highest In-Bed: -20 K Ohm
-     Out-Of-Bed: 60 K Ohm
+--------------------------------------------------------------------
 
-R1 = SQRT(15 K Ohm * 60 K Ohm) = SQRT(900 K Ohm) = 30 K Ohm = ~ 30 K Ohm
+Side of Bed = Jurgen (15th May 2025)
+     Lowest In-Bed:      ~15 K Ohm  /   -20 K Ohm
+     Out-Of-Bed:         60 K Ohm
+R1 = SQRT(15 K Ohm * 60 K Ohm) = SQRT(900 K Ohm) = 30 K Ohm = 20 K Ohm + 10 K Ohm
 
-Side of Bed = Faith
-     Lowest In-Bed: ~5 K Ohm
-     Highest In-Bed: -10 K Ohm
-     Out-Of-Bed: 25 - 35 K Ohm
+Side of Bed = Jurgen (4th June 2025)
+     Lowest In-Bed:      ~40 K Ohm  /   -50 K Ohm
+     Out-Of-Bed:         600 K Ohm
+R1 = SQRT(40 K Ohm * 600 K Ohm) = SQRT(24000 K Ohm) = 155 K Ohm = 100 K Ohm + 50 K Ohm + 5 K Ohm
 
-R1 = SQRT(5 K Ohm * 35 K Ohm) = SQRT(175 K Ohm) = 13.3 K Ohm = ~ 15 K Ohm
 
-The resistance (FSR + Wiring) is due to the length of the wires.
+--------------------------------------------------------------------
 
+Side of Bed = Faith (15th May 2025)
+     Lowest In-Bed:     ~5 K Ohm    /    -10 K Ohm
+     Out-Of-Bed:        25 K Ohm    /     35 K Ohm
+
+R1 = SQRT(5 K Ohm * 35 K Ohm) = SQRT(175 K Ohm) = 13.3 K Ohm = 10 K Ohm + 1 K Ohm + 1 K Ohm + 1 K Ohm
+
+
+Side of Bed = Faith (4th June 2025)
+     Lowest In-Bed:     ~5 K Ohm   /    -10 K Ohm
+     Out-Of-Bed:       200 K Ohm   /    300 K Ohm
+
+R1 = SQRT(5 K Ohm * 300 K Ohm) = SQRT(1500 K Ohm) = 38.7 K Ohm = 30 K Ohm + 8.2 K Ohm
+
+
+--------------------------------------------------------------------
 
 ## ESP32 Code
 

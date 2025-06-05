@@ -4,8 +4,8 @@
 
 ## Sensor Data Server
 
-- TCP: https://github.com/maurice2k/tcpserver
-- Actor Model; https://github.com/vladopajic/go-actor
+- TCP: 
+- Actor Model: https://github.com/jurgen-kluft/go-home/sensor-server/hollywood
 
 ## MQTT Broker
 
