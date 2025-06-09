@@ -7,10 +7,10 @@ void setup()
 {
     Serial.begin(9600);
 
-    // Initialize the I2C bus (BH1750 library doesn't do this automatically)
-    // On esp8266 devices you can select SCL and SDA pins using Wire.begin(D4, D3);
-    // Wire.begin(8,9);
-    Wire.begin();
+    //Wire.begin(8,9);
+    Wire.begin(21,22);
+    
+    lightMeter.configure(BH1750::CONTINUOUS_HIGH_RES_MODE);
 
     if (lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE, 0x23, &Wire))
     {

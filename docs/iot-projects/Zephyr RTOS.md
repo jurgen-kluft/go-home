@@ -1,5 +1,14 @@
 # Zephyr RTOS
 
+## Zephyr
+
+- Activate the Zephyr environment:
+
+  ```bash
+  source ~/zephyrproject/.venv/bin/activate
+  source zephyr/zephyr-env.sh
+  ```
+
 ## Working
 
 The following sensors have been tested within the sample framework:

@@ -1,43 +1,20 @@
-/*
-BME280 I2C Test.ino
-
-This code shows how to record data from the BME280 environmental sensor
-using I2C interface. This file is an example file, part of the Arduino
-BME280 library.
-
-GNU General Public License
-
-Written: Dec 30 2015.
-Last Updated: Oct 07 2017.
-
-Connecting the BME280 Sensor:
-Sensor              ->  Board
------------------------------
-Vin (Voltage In)    ->  3.3V
-Gnd (Ground)        ->  Gnd
-SDA (Serial Data)   ->  A4 on Uno/Pro-Mini, 20 on Mega2560/Due, 2 Leonardo/Pro-Micro
-SCK (Serial Clock)  ->  A5 on Uno/Pro-Mini, 21 on Mega2560/Due, 3 Leonardo/Pro-Micro
-
- */
-
-// From: https://github.com/finitespace/BME280/blob/master/examples/BME_280_I2C_Test/BME_280_I2C_Test.ino
-
-#include <BME280I2C.h>
 #include <Wire.h>
+#include <BH1750.h>
+#include <BME280I2C.h>
 
 #define SERIAL_BAUD 115200
 
 BME280I2C bme;  // Default : forced mode, standby time = 1000 ms
                 // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
 
-//////////////////////////////////////////////////////////////////
+BH1750 lightMeter;
+
 void setup()
 {
     Serial.begin(SERIAL_BAUD);
 
-    while (!Serial) {}  // Wait
-
-    Wire.begin(21, 22);
+    //Wire.begin(8,9);
+    Wire.begin(21,22);
 
     while (!bme.begin())
     {
@@ -51,13 +28,24 @@ void setup()
         case BME280::ChipModel_BMP280: Serial.println("Found BMP280 sensor! No Humidity available."); break;
         default: Serial.println("Found UNKNOWN sensor! Error!");
     }
+    
+    lightMeter.configure(BH1750::CONTINUOUS_HIGH_RES_MODE);
+
+    if (lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE, 0x23, &Wire))
+    {
+        Serial.println(F("BH1750 initialised"));
+    }
+    else
+    {
+        Serial.println(F("Error initialising BH1750"));
+    }
 }
 
-//////////////////////////////////////////////////////////////////
 void loop()
 {
     printBME280Data(&Serial);
-    delay(500);
+    printLightSensor(&Serial);
+    delay(1000);
 }
 
 //////////////////////////////////////////////////////////////////
@@ -81,4 +69,13 @@ void printBME280Data(Stream *client)
     client->println("Pa");
 
     delay(1000);
+}
+
+//////////////////////////////////////////////////////////////////
+void printLightSensor(Stream *client)
+{
+    float lux = lightMeter.readLightLevel();
+    client->print("Light: ");
+    client->print(lux);
+    client->println(" lx");
 }

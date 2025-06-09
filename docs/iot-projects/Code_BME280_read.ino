@@ -1,25 +1,3 @@
-/*
-BME280 I2C Test.ino
-
-This code shows how to record data from the BME280 environmental sensor
-using I2C interface. This file is an example file, part of the Arduino
-BME280 library.
-
-GNU General Public License
-
-Written: Dec 30 2015.
-Last Updated: Oct 07 2017.
-
-Connecting the BME280 Sensor:
-Sensor              ->  Board
------------------------------
-Vin (Voltage In)    ->  3.3V
-Gnd (Ground)        ->  Gnd
-SDA (Serial Data)   ->  A4 on Uno/Pro-Mini, 20 on Mega2560/Due, 2 Leonardo/Pro-Micro
-SCK (Serial Clock)  ->  A5 on Uno/Pro-Mini, 21 on Mega2560/Due, 3 Leonardo/Pro-Micro
-
- */
-
 // From: https://github.com/finitespace/BME280/blob/master/examples/BME_280_I2C_Test/BME_280_I2C_Test.ino
 
 #include <BME280I2C.h>
@@ -29,11 +7,21 @@ SCK (Serial Clock)  ->  A5 on Uno/Pro-Mini, 21 on Mega2560/Due, 3 Leonardo/Pro-M
 
 BME280I2C sensorBme280;  // Default : forced mode, standby time = 1000 ms
                          // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
-static uint64_t sensorBme280LastTryInit     = 0;
-static uint64_t sensorBme280LastRead        = 0;
-static uint64_t sensorBme280TryInitInterval = 5000 * 1000;  // 5 seconds
-static uint64_t sensorBme280ReadInterval    = 5000 * 1000;  // 5 seconds
-static bool     sensorBme280Initialized     = false;
+uint64_t sensorBme280LastTryInit     = 0;
+uint64_t sensorBme280LastRead        = 0;
+uint64_t sensorBme280TryInitInterval = 5 * 1000 * 1000;  // 5 seconds
+uint64_t sensorBme280ReadInterval    = 5 * 1000 * 1000;  // 5 seconds
+bool     sensorBme280Initialized     = false;
+
+// ESP32 YD
+// State: ?
+const int sdaPin = 21;
+const int sclPin = 22;
+
+// ESP32S3 Dev Module
+// State: Working
+//const int sdaPin = 8;
+//const int sclPin = 9;
 
 void initializeSensorBme280(uint64_t now)
 {
@@ -47,7 +35,7 @@ void initializeSensorBme280(uint64_t now)
     {
         Serial.println("Could not find BME280 sensor!");
         sensorBme280Initialized = false;
-        return
+        return;
     }
 
     switch (sensorBme280.chipModel())
@@ -69,7 +57,7 @@ void printBME280Data(uint64_t now, Stream *client)
 {
     if (!sensorBme280Initialized)
     {
-        initializeSensorBme280();
+        initializeSensorBme280(now);
         return;
     }
 
@@ -101,17 +89,26 @@ void printBME280Data(uint64_t now, Stream *client)
 void setup()
 {
     Serial.begin(SERIAL_BAUD);
-    while (!Serial) {}  // Wait
+    while (!Serial)
+    {
+        delay(100); // Wait for serial port to connect. Needed for native USB
+    }  
 
-    Wire.begin(21, 22);
+    Wire.begin(sdaPin, sclPin);
 
-    initializeSensorBme280();
+    uint64_t now = micros();
+
+    sensorBme280LastTryInit     = now;
+    sensorBme280LastRead        = now;
+
+    initializeSensorBme280(now);
 }
 
 //////////////////////////////////////////////////////////////////
 void loop()
 {
-    printBME280Data(&Serial);
+    uint64_t now = micros();
+    printBME280Data(now, &Serial);
 
     delay(100);
 }
