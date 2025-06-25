@@ -1,6 +1,6 @@
 module github.com/jurgen-kluft/go-home/sensor-server
 
-replace jurgen-kluft/go-home/sensor-server/hollywood => /Users/obnosis5/dev.go/src/github.com/jjurgen-kluft/go-home/sensor-server/hollywood
+replace jurgen-kluft/go-home/sensor-server/hollywood => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/sensor-server/hollywood
 
 go 1.23.8
 

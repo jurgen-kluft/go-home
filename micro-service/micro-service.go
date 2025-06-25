@@ -6,7 +6,7 @@ import (
 
 	"github.com/jurgen-kluft/go-home/config"
 	logpkg "github.com/jurgen-kluft/go-home/logging"
-	pubsub "github.com/jurgen-kluft/go-home/mqtt"
+	pubsub "github.com/jurgen-kluft/go-home/nats"
 )
 
 // Delegate is a handler that the user can register on a certain received topic
@@ -131,7 +131,7 @@ func (m *Service) FindHandler(itopic string) (delegate Delegate, exists bool) {
 func (m *Service) Loop() {
 	quit := false
 	for !quit {
-		m.Pubsub = pubsub.New(config.PubSubCfg, m.TickFrequency)
+		m.Pubsub = pubsub.New(config.PubSubCfg)
 		err := m.Pubsub.Connect(m.Name, m.PubsubRegister, m.PubsubSubscribe)
 		if err == nil {
 			m.Logger.LogInfo("pubsub", "connected")

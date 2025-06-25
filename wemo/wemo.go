@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/jurgen-kluft/go-home/config"
 	microservice "github.com/jurgen-kluft/go-home/micro-service"
 )
@@ -22,7 +24,7 @@ func main() {
 	register := []string{"sensor/state/wemo/", "config/request/"}
 	subscribe := []string{"config/wemo/"}
 
-	m := microservice.New("wemo")
+	m := microservice.New("wemo", time.Second*15)
 	m.RegisterAndSubscribe(register, subscribe)
 
 	m.RegisterHandler("config/wemo/", func(m *microservice.Service, topic string, msg []byte) bool {

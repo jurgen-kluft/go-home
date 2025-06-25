@@ -10,6 +10,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
 	microservice "github.com/jurgen-kluft/go-home/micro-service"
@@ -83,7 +84,7 @@ func main() {
 	register := []string{c.ccfg, "state/tv/bravia/", "config/request/"}
 	subscribe := []string{c.ccfg, "state/tv/bravia/"}
 
-	m := microservice.New("tv/bravia")
+	m := microservice.New("tv/bravia", time.Second*30)
 	m.RegisterAndSubscribe(register, subscribe)
 
 	m.RegisterHandler("config/tv/bravia/", func(m *microservice.Service, topic string, msg []byte) bool {

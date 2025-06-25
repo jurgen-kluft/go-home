@@ -12,6 +12,10 @@ BH1750 lightMeter;
 void setup()
 {
     Serial.begin(SERIAL_BAUD);
+    while (!Serial)
+    {
+        delay(100); // Wait for serial port to connect. Needed for native USB
+    }
 
     //Wire.begin(8,9);
     Wire.begin(21,22);
@@ -30,7 +34,6 @@ void setup()
     }
     
     lightMeter.configure(BH1750::CONTINUOUS_HIGH_RES_MODE);
-
     if (lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE, 0x23, &Wire))
     {
         Serial.println(F("BH1750 initialised"));

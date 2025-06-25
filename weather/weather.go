@@ -190,7 +190,7 @@ func main() {
 	register := []string{"config/weather/", "config/request/", "state/sensor/weather/"}
 	subscribe := []string{"config/weather/"}
 
-	m := microservice.New("weather")
+	m := microservice.New("weather", time.Second*15)
 	m.RegisterAndSubscribe(register, subscribe)
 
 	m.RegisterHandler("config/weather/", func(m *microservice.Service, topic string, msg []byte) bool {

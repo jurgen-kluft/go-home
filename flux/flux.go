@@ -248,7 +248,7 @@ func main() {
 	register := []string{"config/request/", "config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/"}
 	subscribe := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/"}
 
-	m := microservice.New("flux")
+	m := microservice.New("flux", time.Second*30)
 	m.RegisterAndSubscribe(register, subscribe)
 
 	c := new()

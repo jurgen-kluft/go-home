@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
 	microservice "github.com/jurgen-kluft/go-home/micro-service"
@@ -163,7 +164,7 @@ func main() {
 	register := []string{"config/config/", "config/request/"}
 	subscribe := []string{"config/config/", "config/request/"}
 
-	m := microservice.New("config")
+	m := microservice.New("config", time.Second*15)
 	m.RegisterAndSubscribe(register, subscribe)
 
 	ctx := newContext()

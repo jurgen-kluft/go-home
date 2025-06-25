@@ -261,7 +261,7 @@ func main() {
 	register := []string{"config/calendar/", "config/request/", "state/sensor/calendar/"}
 	subscribe := []string{"config/calendar/"}
 
-	m := microservice.New("calendar")
+	m := microservice.New("calendar", time.Second*60)
 	m.RegisterAndSubscribe(register, subscribe)
 
 	c := new()

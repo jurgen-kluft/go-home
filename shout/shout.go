@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
 	microservice "github.com/jurgen-kluft/go-home/micro-service"
@@ -105,7 +106,7 @@ func main() {
 	register := []string{"config/request/"}
 	subscribe := []string{"config/shout/", "shout/message/"}
 
-	m := microservice.New("shout")
+	m := microservice.New("shout", time.Second*15)
 	m.RegisterAndSubscribe(register, subscribe)
 
 	c := new()

@@ -225,7 +225,7 @@ func main() {
 	register := []string{"state/presence/", "config/request/"}
 	subscribe := []string{"config/presence/"}
 
-	micro := microservice.New("presence")
+	micro := microservice.New("presence", time.Second*15)
 	micro.RegisterAndSubscribe(register, subscribe)
 
 	micro.RegisterHandler("config/presence/", func(m *microservice.Service, topic string, msg []byte) bool {

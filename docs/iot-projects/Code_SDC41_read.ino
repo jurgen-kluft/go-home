@@ -16,13 +16,13 @@ bool              sensorCO2Initialized = false;
 
 // ESP32 YD 
 // State: ??
-// const int sdaPin = 21;
-// const int sclPin = 22;
+const int sdaPin = 21;
+const int sclPin = 22;
 
 // ESP32S3 Dev Module
 // State: Working
-const int sdaPin = 8;
-const int sclPin = 9;
+// const int sdaPin = 8;
+// const int sclPin = 9;
 
 void PrintUint64(uint64_t value)
 {

@@ -23,7 +23,7 @@ func main() {
 	register := []string{"config/request/", "config/automation/"}
 	subscribe := []string{"config/automation/"}
 
-	m := microservice.New("automation")
+	m := microservice.New("automation", time.Second*5)
 	m.RegisterAndSubscribe(register, subscribe)
 
 	auto := new(m)
@@ -136,12 +136,12 @@ func newPresence(service *microservice.Service) *homePresence {
 
 // reset() should be called when the front-door is opened->closed because this
 // can indicate people have left the house. This will start a procedure:
-// - Wait for 15 minutes
-// - Start an evaluation window
-// - In the evaluation window we determine if there are people home by Wifi and Motion
-// - If after the evaluation window nothing is detected we mark 'peopleAreHome' as false
-// - After the evaluation state a scan state is started that will keep looking at
-//   Wifi and Motion etc..
+//   - Wait for 15 minutes
+//   - Start an evaluation window
+//   - In the evaluation window we determine if there are people home by Wifi and Motion
+//   - If after the evaluation window nothing is detected we mark 'peopleAreHome' as false
+//   - After the evaluation state a scan state is started that will keep looking at
+//     Wifi and Motion etc..
 func (h *homePresence) frontDoorOpenClosed() {
 	h.detectionState = "Open/Closed"
 	h.detectionStamp = time.Now()
@@ -663,10 +663,11 @@ func (ta *timedBasedAction) tick(now time.Time) bool {
 
 // Examples:
 // A) While there is motion every 10 minutes keep the lights ON, once there is not turn the
-//    lights OFF and auto-delete
+//
+//	lights OFF and auto-delete
+//
 // B) Once there is no motion in the kitchen for 15 minutes turn OFF the lights and auto-delete
 // C) For the next duration once there is motion turn ON the lights and auto-delete
-//
 type motionDelegate func(ta *motionBasedAction, a *automation)
 type motionType int
 

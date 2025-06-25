@@ -431,7 +431,7 @@ func main() {
 
 	tickCount := 0
 
-	m := microservice.New("suncalc")
+	m := microservice.New("suncalc", time.Second*15)
 	m.RegisterAndSubscribe(register, subscribe)
 
 	m.RegisterHandler("config/suncalc/", func(m *microservice.Service, topic string, msg []byte) bool {

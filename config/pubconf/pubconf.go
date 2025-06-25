@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	microservice "github.com/jurgen-kluft/go-home/micro-service"
 	"github.com/urfave/cli"
@@ -39,7 +40,7 @@ func main() {
 		register := []string{channel}
 		subscribe := []string{}
 
-		m := microservice.New("pubconf")
+		m := microservice.New("pubconf", time.Second*15)
 		m.RegisterAndSubscribe(register, subscribe)
 
 		m.RegisterHandler("*", func(m *microservice.Service, topic string, msg []byte) bool {
@@ -48,7 +49,7 @@ func main() {
 		})
 
 		m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
-			err := m.Pubsub.PublishTTL(channel, jsonbytes, 5*60)
+			err := m.Pubsub.Publish(channel, jsonbytes)
 			if err != nil {
 				fmt.Println(err)
 			}
