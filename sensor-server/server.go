@@ -153,7 +153,7 @@ func (s *server) acceptLoop(c *actor.Context) {
 }
 
 func main() {
-	listenAddr := flag.String("listen", "10.0.0.60:31337", "listen address of the TCP server")
+	listenAddr := flag.String("listen", "10.0.0.66:31337", "listen address of the TCP server")
 
 	e, err := actor.NewEngine(actor.NewEngineConfig())
 	if err != nil {

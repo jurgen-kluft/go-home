@@ -48,20 +48,11 @@ type SensorPacket struct {
 }
 
 type SensorValue struct {
-	sensorType SensorType
-	channel    SensorChannel
-	state      SensorState
-	fieldType  FieldType
-
-	valueInt8  int8
-	valueInt16 int16
-	valueInt32 int32
-
-	valueUint8  uint8
-	valueUint16 uint16
-	valueUint32 uint32
-
-	valueFloat32 float32
+	sensorType  SensorType
+	sensorModel SensorModel
+	state       SensorState
+	fieldType   FieldType
+	value       float64
 }
 
 func DecodeNetworkPacket(data []byte) (SensorPacket, error) {
@@ -88,10 +79,10 @@ func DecodeNetworkPacket(data []byte) (SensorPacket, error) {
 	offset := 8
 	for i := uint8(0); i < pkt.count; i++ {
 		value := SensorValue{
-			sensorType: SensorType(data[offset] >> 4),
-			channel:    SensorChannel(data[offset] & 0x0F),
-			state:      SensorState(data[offset+1] >> 4),
-			fieldType:  FieldType(data[offset+1] & 0x0F),
+			sensorType:  SensorType(data[offset] >> 4),
+			sensorModel: SensorModel(data[offset] & 0x0F),
+			state:       SensorState(data[offset+1] >> 4),
+			fieldType:   FieldType(data[offset+1] & 0x0F),
 		}
 
 		offset += 2
@@ -99,26 +90,26 @@ func DecodeNetworkPacket(data []byte) (SensorPacket, error) {
 		// the written values are in little-endian format
 		switch value.fieldType {
 		case TypeS8:
-			value.valueInt8 = int8(data[offset])
+			value.value = float64(data[offset])
 			offset += 1
 		case TypeS16:
-			value.valueInt16 = int16(binary.LittleEndian.Uint16(data[offset : offset+2]))
+			value.value = float64(binary.LittleEndian.Uint16(data[offset : offset+2]))
 			offset += 2
 		case TypeS32:
-			value.valueInt32 = int32(binary.LittleEndian.Uint32(data[offset : offset+4]))
+			value.value = float64(int32(binary.LittleEndian.Uint32(data[offset : offset+4])))
 			offset += 4
 		case TypeU8:
-			value.valueUint8 = data[offset]
+			value.value = float64(data[offset])
 			offset += 1
 		case TypeU16:
-			value.valueUint16 = binary.LittleEndian.Uint16(data[offset : offset+2])
+			value.value = float64(binary.LittleEndian.Uint16(data[offset : offset+2]))
 			offset += 2
 		case TypeU32:
-			value.valueUint32 = binary.LittleEndian.Uint32(data[offset : offset+4])
+			value.value = float64(binary.LittleEndian.Uint32(data[offset : offset+4]))
 			offset += 4
 		case TypeF32:
 			value32 := binary.LittleEndian.Uint32(data[offset : offset+4])
-			value.valueFloat32 = math.Float32frombits(value32)
+			value.value = float64(math.Float32frombits(value32))
 			offset += 4
 		}
 
@@ -136,171 +127,4 @@ func DecodeNetworkPacket(data []byte) (SensorPacket, error) {
 	}
 
 	return pkt, nil
-}
-
-type SensorState uint8
-
-const (
-	Off   SensorState = 0x1
-	On    SensorState = 0x2
-	Error SensorState = 0x3
-)
-
-type SensorChannel uint8
-
-const (
-	Channel0 SensorChannel = 0x0
-	Channel1 SensorChannel = 0x1
-	Channel2 SensorChannel = 0x2
-	Channel3 SensorChannel = 0x3
-	Channel4 SensorChannel = 0x4
-	Channel5 SensorChannel = 0x5
-	Channel6 SensorChannel = 0x6
-	Channel7 SensorChannel = 0x7
-)
-
-type FieldType uint8
-
-const (
-	TypeS8  FieldType = 0x0
-	TypeS16 FieldType = 0x1
-	TypeS32 FieldType = 0x2
-	TypeU8  FieldType = 0x3
-	TypeU16 FieldType = 0x4
-	TypeU32 FieldType = 0x5
-	TypeF32 FieldType = 0x6
-)
-
-type SensorType uint8
-
-const (
-	Temperature SensorType = 0x0 //
-	Humidity    SensorType = 0x1 //
-	Pressure    SensorType = 0x2 //
-	Light       SensorType = 0x3 //
-	CO2         SensorType = 0x4 //
-	Presence    SensorType = 0x5 // (float, 0.0-1.0)
-	Target      SensorType = 0x6 // (channel index indicates X, Y, Z axis)
-)
-
-func (t SensorType) String() string {
-	switch t {
-	case Temperature:
-		return "Temperature"
-	case Humidity:
-		return "Humidity"
-	case Pressure:
-		return "Pressure"
-	case Light:
-		return "Light"
-	case CO2:
-		return "CO2"
-	case Presence:
-		return "Presence"
-	case Target:
-		return "Target"
-	default:
-		return fmt.Sprintf("Unknown (%d)", t)
-	}
-}
-
-type DeviceLocation uint8
-
-const (
-	Unknown     DeviceLocation = 0
-	Bedroom1    DeviceLocation = 1
-	Bedroom2    DeviceLocation = 2
-	Bedroom3    DeviceLocation = 3
-	Bedroom4    DeviceLocation = 4
-	Livingroom1 DeviceLocation = 5
-	Livingroom2 DeviceLocation = 6
-	Livingroom3 DeviceLocation = 7
-	Livingroom4 DeviceLocation = 8
-	Kitchen1    DeviceLocation = 9
-	Kitchen2    DeviceLocation = 10
-	Kitchen3    DeviceLocation = 11
-	Kitchen4    DeviceLocation = 12
-	Bathroom1   DeviceLocation = 13
-	Bathroom2   DeviceLocation = 14
-	Bathroom3   DeviceLocation = 15
-	Bathroom4   DeviceLocation = 16
-	Hallway     DeviceLocation = 17
-	ChildARoom  DeviceLocation = 18
-	ChildBRoom  DeviceLocation = 19
-	ChildCRoom  DeviceLocation = 20
-	ChildDRoom  DeviceLocation = 21
-	Guest1Room  DeviceLocation = 22
-	Guest2Room  DeviceLocation = 23
-	Study1Room  DeviceLocation = 24
-	Study2Room  DeviceLocation = 25
-	Balcony1    DeviceLocation = 26
-	Balcony2    DeviceLocation = 27
-	Balcony3    DeviceLocation = 28
-	Balcony4    DeviceLocation = 29
-)
-
-func (d DeviceLocation) String() string {
-	switch d {
-	case Unknown:
-		return "Unknown"
-	case Bedroom1:
-		return "Bedroom 1"
-	case Bedroom2:
-		return "Bedroom 2"
-	case Bedroom3:
-		return "Bedroom 3"
-	case Bedroom4:
-		return "Bedroom 4"
-	case Livingroom1:
-		return "Living Room 1"
-	case Livingroom2:
-		return "Living Room 2"
-	case Livingroom3:
-		return "Living Room 3"
-	case Livingroom4:
-		return "Living Room 4"
-	case Kitchen1:
-		return "Kitchen 1"
-	case Kitchen2:
-		return "Kitchen 2"
-	case Kitchen3:
-		return "Kitchen 3"
-	case Kitchen4:
-		return "Kitchen 4"
-	case Bathroom1:
-		return "Bathroom 1"
-	case Bathroom2:
-		return "Bathroom 2"
-	case Bathroom3:
-		return "Bathroom 3"
-	case Bathroom4:
-		return "Bathroom 4"
-	case Hallway:
-		return "Hallway"
-	case ChildARoom:
-		return "Child A Room"
-	case ChildBRoom:
-		return "Child B Room"
-	case ChildCRoom:
-		return "Child C Room"
-	case ChildDRoom:
-		return "Child D Room"
-	case Guest1Room:
-		return "Guest 1 Room"
-	case Guest2Room:
-		return "Guest 2 Room"
-	case Study1Room:
-		return "Study 1 Room"
-	case Study2Room:
-		return "Study 2 Room"
-	case Balcony1:
-		return "Balcony 1"
-	case Balcony2:
-		return "Balcony 2"
-	case Balcony3:
-		return "Balcony 3"
-	case Balcony4:
-		return "Balcony 4"
-	}
-	return ""
 }

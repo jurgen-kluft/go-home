@@ -16,6 +16,14 @@
       - https://github.com/MauricioOrtega10/Rd-03
       - https://github.com/bertrik/aithinker-rd03
       - https://github.com/Gjorgjevikj/Ai-Thinker-RD-03
+- YS312 PIR motion sensor
+    - Output Signal = Digital
+      Sensing Distance: 10M (lens SB-F-02)
+      Sensing Angle: 120° (horizontal direction)
+      Working Voltage: 2.2-5.5V
+      1 = VSS (VCC)
+      2 = DOC (Signal)
+      3 = VDD (GND)
 
 Here a, incomplete, list of sensors that are very practical:
 

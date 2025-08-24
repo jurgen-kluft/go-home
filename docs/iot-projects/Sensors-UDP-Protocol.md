@@ -4,7 +4,14 @@ to a MQTT broker and even Grafana/InfluxDB.
 For presence it will also be responsible to compute the presence of areas in a room. These
 areas are configured in the server and are not part of the message.
 
-We just need to define a basic message format:
+Storage:
+
+Storing the temperature every second for a year with 2 bytes (float16) would require:
+2 bytes * 60 (seconds per minute) * 60 (minutes per hour) * 24 (hours per day) * 365 (days per year) = 63,072,000 bytes = 63 MB
+Note: Applying (snappy) compression would reduce this to about 6 MB.
+
+
+We need to define a basic message format:
 
 - `size` (size of the message in bytes (including this field))
 - `device_location` 
@@ -56,6 +63,9 @@ Sensor Types:
 - 3 = Pressure
 - 4 = Light
 - 5 = CO2
-- 6 = Presence
-- 7 = Motion
-- 8 = Target (channel index indicates X, Y, Z axis)
+- 6 = PM2.5
+- 7 = PM10
+- 8 = VOC
+- 9 = Presence
+- 10 = Motion
+- 11 = Target (channel index indicates X, Y, Z axis)
