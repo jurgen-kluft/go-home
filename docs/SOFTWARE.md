@@ -9,6 +9,7 @@
 
 ## MQTT Broker
 
+- Emitter; https://github.com/emitter-io/emitter (golang)
 - Mochi MQTT; https://github.com/mochi-mqtt/server (golang)
 - MQTT Broker; Mosquitto
 

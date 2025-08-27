@@ -1,14 +1,8 @@
 # Automations
 
-## States
-
-Mostly we want to compute states based local information and/or other states. 
+## House, Per Floor, Per Room, State
 
 For example, we want to know if the kitchen lights should be ON or OFF based on the time of day, season, and other sensors.
-
-## NFC Tags
-
-Let's say we want a `virtual switch` that is set to ON when a NFC tag is scanned, we can create a `virtual switch` that is triggered, and then we can use this `virtual switch` in our automations. Other automations could turn off the `virtual switch`.
 
 ## Timing
 
@@ -32,15 +26,15 @@ This automation can also use more information like the time of day, season, and 
 
 ## Appartment
 
-- Bedroom
-  - Main
+- Main Bedroom
+  - Main Light
   - Stand Jurgen
   - Stand Faith
-  - Shower
-- Sophia
-  - Main
-- Jennifer
-  - Main
+  - Shower Light
+- Sophia Room
+  - Main Light
+- Jennifer Room
+  - Main Light
 - Kitchen
   - Diner
   - Counter
@@ -49,6 +43,7 @@ This automation can also use more information like the time of day, season, and 
   - Stand
   - Chandelier
 - Bathroom
+  - Main Light
   - Shower
 - Entrance
   - Frontdoor Light
@@ -57,3 +52,7 @@ So we need to create a `virtual switch` for each `light` in the house.
 In total we have 13 `virtual switch`es.
 
 We can also make N `moods`
+
+## NFC Tags
+
+Let's say we want a `virtual switch` that is set to ON when a NFC tag is scanned, we can create a `virtual switch` that is triggered, and then we can use this `virtual switch` in our automations. Other automations could turn off the `virtual switch`.
