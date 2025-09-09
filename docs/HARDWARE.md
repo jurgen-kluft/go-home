@@ -7,12 +7,11 @@
 ## Smart Lights
 
 Wiz (Philips) smart lights are connecting to WiFi and can easily be controlled with HomeKit by exposing them as HomeKit accessories by using Golang.
-We can group many bulbl under one `light` and expose it as one light to HomeKit, also these lights are connected through WiFi should they should react a lot quicker than Zigbee lights.
+We can group many bulbs under one `light` and expose it as one light to HomeKit, also these lights are connected through WiFi so they should react a lot quicker than Zigbee lights.
 
 Aqara light bulbs (white) are Zigbee based and can be controlled using the Aqara Hub and can thus end up in HomeKit.
 
-Philips Hue (color or white) can be used in the bedrooms to avoid the need of WiFi. They can be controlled using the Hue Bridge. The Hue Bridge can be connected to LAN and then it can be used to control the lights. Only Hue can be controlled programmatically using Golang. 
-Overall I think we should avoid Hue lights since we need an extra Hub (per floor?).
+Philips Hue (color or white) can be used in the bedrooms to avoid the need of WiFi. They can be controlled using the Hue Bridge. The Hue Bridge can be connected to LAN and then it can be used to control the lights. Only Hue can be controlled programmatically using Golang. Overall I think we should avoid Hue lights since we need an extra Hub (per floor?).
 
 ## Smart Plugs
 
@@ -20,26 +19,38 @@ Can measure power consumption and control devices remotely. For example it can d
 
 ## Room Presense Sensors
 
+September 2025; 
+We could also use plain cameras (esp32s3 modules) that frequently transmit images to a server that does image recognition to detect if a room is occupied or not. This would be more reliable than using radar based sensors. However, for this we do need a Mac Mini M4 or M5 to run our custom image recognition process.
+At the front door we could use a camera to detect if someone is at the door and/or if there are packages delivered. Another use-case is to detect if the parking spot is occupied or not.
+
 I have bought 3 `LinknLink eMotion Pro` sensors on `Amazon.nl`, they are Wifi IP based and should be connected to a MQTT broker. 
 
-We will also build them ourselves using
-
-ESP32 devices on WiFi can easily be exposed to HomeKit (if necessary) through the use of Golang, however we can also just expose switches that indicate presence in a room/area.
+We will also build them ourselves using ESP32 devices on WiFi can easily be exposed to HomeKit (if necessary) through the use of Golang, however we can also just expose switches that indicate presence in a room/area.
 
 Appartment:
 
 - Kitchen
 - Living Room
-- Bedroom
+- Bathroom
+- Bedroom Sophia
+- Bedroom Jennifer
+- Bedroom Main
+- Bathroom Main
 
 Villa:
 
 - Living Room (1st floor)
+- Bathroom (1st floor)
+- Bathroom (2nd floor)
 - Living Room (2nd floor)
-- Bath Room (2nd floor)
 - Study Room (2nd floor)
+- Bathroom (3rd floor)
+- Bedroom Sophia (3rd floor)
+- Bedroom Main (3rd floor)
 
 ## Bed Presence Sensors (DYI, WIP)
+
+One other option
 
 - SEN-09674 FSR (can be 600mm long, with two of them you can detect presence on both sides of the bed)
   - 2x 10K Ohm resistors
