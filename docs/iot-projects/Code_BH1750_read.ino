@@ -5,7 +5,7 @@ BH1750 lightMeter;
 
 void setup()
 {
-    Serial.begin(9600);
+    Serial.begin(115200);
 
     //Wire.begin(8,9);
     Wire.begin(21,22);

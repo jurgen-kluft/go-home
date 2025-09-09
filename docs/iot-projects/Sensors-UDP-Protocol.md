@@ -14,8 +14,7 @@ We need to define a basic message format:
 
 - `size` (size of the message in bytes (including this field))
 - `device_location` 
-- `device_label` 
-- `sensor_count` = [`type`, {optional: `channel index`}, {optional: `state`}, `value`]
+- `sensor values` = N * [`type`, `value`]
 
 Field Type (only 4 types):
 - int8 = 1 byte
