@@ -64,8 +64,7 @@ func DecodeNetworkPacket(data []byte) (SensorPacket, error) {
 			sensorType: SensorType(data[offset]),
 		}
 		value.fieldType = ToSensorFieldType(value.sensorType)
-
-		offset += 2
+		offset += 1
 
 		// depending on fieldType, read the appropriate value.
 		// the written values are in little-endian format

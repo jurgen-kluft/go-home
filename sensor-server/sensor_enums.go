@@ -39,7 +39,7 @@ const (
 type SensorType uint8
 
 const (
-	Temperature SensorType = 0x00 // (s16, °C)
+	Temperature SensorType = 0x00 // (s8, °C)
 	Humidity    SensorType = 0x01 // (u8, %)
 	Pressure    SensorType = 0x02 // (u16, hPa)
 	Light       SensorType = 0x03 // (u16, lux)
