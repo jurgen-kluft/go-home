@@ -111,9 +111,8 @@ func ToSensorFieldType(st SensorType) SensorFieldType {
 		return TypeU8
 	case State:
 		return TypeU16
-	default:
-		return TypeNone
 	}
+	return TypeNone
 }
 
 // String returns the string representation of the SensorType.
