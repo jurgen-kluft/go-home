@@ -1,14 +1,20 @@
-I would like the ESP32 devices to simply send small binary UDP messages to a custom server.
+I would like the ESP32 devices to simply send small binary TCP messages to a custom server.
+
 The server, written in Golang, should be able to receive, process, and redirect the messages 
 to a MQTT broker and even Grafana/InfluxDB.
+
 For presence it will also be responsible to compute the presence of areas in a room. These
 areas are configured in the server and are not part of the message.
 
 Storage:
 
 Storing the temperature every second for a year with 2 bytes (float16) would require:
-2 bytes * 60 (seconds per minute) * 60 (minutes per hour) * 24 (hours per day) * 365 (days per year) = 63,072,000 bytes = 63 MB
-Note: Applying (snappy) compression would reduce this to about 6 MB.
+2 bytes * 6 (times per minute) * 60 (minutes per hour) * 24 (hours per day) * 365 (days per year) = 6,307,200 bytes = ~6 MB
+Note: Applying (snappy) compression would reduce this to about 1 MB.
+
+When establishing the TCP connection with the server, the device should send an identification message with:
+- Identifier (32 bytes, if no match, the server closes the connection)
+- Device Name (96 bytes, e.g. "Bedroom_1F_Left_Window")
 
 We need to define a basic message format:
 

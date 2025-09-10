@@ -53,8 +53,8 @@ const (
 	Distance    SensorType = 0x0B // (u16, cm)
 	UV          SensorType = 0x0C // (u16, index)
 	CO          SensorType = 0x0D // (u16, ppm)
-	Vibration   SensorType = 0x0E // (u8, 0=none, 1=low, 2=medium, 3=high)
-	State       SensorType = 0x0F // (u16 (u8[2]), sensor model, sensor state)
+	Vibration   SensorType = 0x0E // (u8,  <=16=none, <=64=low, <=128=medium, <=192=high, <=255=extreme)
+	State       SensorType = 0xFF // (u16 (u8[2]), sensor model, sensor state)
 )
 
 type SensorState uint8
@@ -75,7 +75,20 @@ const (
 	TypeU8   SensorFieldType = 0x04
 	TypeU16  SensorFieldType = 0x05
 	TypeU32  SensorFieldType = 0x06
+	TypeBit  SensorFieldType = 0x07
 )
+
+func (t SensorFieldType) SizeInBits() int {
+	switch t {
+	case TypeS8, TypeU8, TypeBit:
+		return 8
+	case TypeS16, TypeU16:
+		return 16
+	case TypeS32, TypeU32:
+		return 32
+	}
+	return 0
+}
 
 func ToSensorFieldType(st SensorType) SensorFieldType {
 	switch st {

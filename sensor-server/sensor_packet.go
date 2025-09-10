@@ -40,6 +40,10 @@ type SensorValue struct {
 	value      int
 }
 
+func (v *SensorValue) IsZero() bool {
+	return v.value == 0
+}
+
 func DecodeNetworkPacket(data []byte) (SensorPacket, error) {
 	if len(data) < 5 {
 		return SensorPacket{}, fmt.Errorf("data too short")
