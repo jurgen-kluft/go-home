@@ -19,6 +19,14 @@ From golang we can receive data from ESPHome devices, and we can send commands t
 
 - https://github.com/mycontroller-org/esphome_api
 
+## Image recognition / Object detection
+
+- https://darknetcv.ai/api/ (Darknet/Yolo, this seems to be the best option so far)
+    - https://github.com/stephanecharette/DarkHelp
+    - https://github.com/stephanecharette/DarkMark
+- https://github.com/dog-qiuqiu/Yolo-Fastest
+- https://github.com/ThibaMahlezana/Intrusion-Detection-System
+
 ### Custom Devices
 
 - https://emanuelduss.ch/posts/co2-measurement/    

@@ -4,80 +4,119 @@ import (
 	"fmt"
 )
 
+type SensorLocation uint8
+
+const (
+	Unknown    SensorLocation = 0
+	Location1  SensorLocation = 0x01
+	Location2  SensorLocation = 0x02
+	Location3  SensorLocation = 0x03
+	Location4  SensorLocation = 0x04
+	Location5  SensorLocation = 0x05
+	Location6  SensorLocation = 0x06
+	Location7  SensorLocation = 0x07
+	Location8  SensorLocation = 0x08
+	Location15 SensorLocation = 0x0F
+	Bedroom    SensorLocation = 0x10
+	Livingroom SensorLocation = 0x20
+	Kitchen    SensorLocation = 0x30
+	Bathroom   SensorLocation = 0x40
+	Hallway    SensorLocation = 0x50
+	Balcony    SensorLocation = 0x60
+	Study      SensorLocation = 0x70
+	Pantry     SensorLocation = 0x80
+)
+
 type SensorModel uint8
 
 const (
-	BH1750 SensorModel = 0x0
-	BME280 SensorModel = 0x1
-	SCD4X  SensorModel = 0x2
+	GPIO   SensorModel = 0x00
+	BH1750 SensorModel = 0x10
+	BME280 SensorModel = 0x20
+	SCD4X  SensorModel = 0x30
 )
 
 type SensorType uint8
 
 const (
-	Temperature SensorType = 0x0 // (float, °C)
-	Humidity    SensorType = 0x1 // (float, %)
-	Pressure    SensorType = 0x2 // (float, hPa)
-	Light       SensorType = 0x3 // (float, lux)
-	CO2         SensorType = 0x4 // (float, ppm)
-	VOC         SensorType = 0x5 // (float, ppm)
-	PM1_0       SensorType = 0x6 // (float, µg/m3)
-	PM2_5       SensorType = 0x7 // (float, µg/m3)
-	PM10        SensorType = 0x8 // (float, µg/m3)
-	Noise       SensorType = 0x9 // (float, dB)
-	Presence    SensorType = 0xA // (float, 0.0-1.0)
-)
-
-type DeviceLocation uint16
-
-const (
-	Unknown    DeviceLocation = 0
-	Location1  DeviceLocation = 0x01
-	Location2  DeviceLocation = 0x02
-	Location3  DeviceLocation = 0x03
-	Location4  DeviceLocation = 0x04
-	Location5  DeviceLocation = 0x05
-	Location6  DeviceLocation = 0x06
-	Location7  DeviceLocation = 0x07
-	Location8  DeviceLocation = 0x08
-	Area1      DeviceLocation = 0x10
-	Area2      DeviceLocation = 0x20
-	Area3      DeviceLocation = 0x30
-	Area4      DeviceLocation = 0x40
-	Area5      DeviceLocation = 0x50
-	Area6      DeviceLocation = 0x60
-	Area7      DeviceLocation = 0x70
-	Area8      DeviceLocation = 0x80
-	Bedroom    DeviceLocation = 0x100
-	Livingroom DeviceLocation = 0x200
-	Kitchen    DeviceLocation = 0x300
-	Bathroom   DeviceLocation = 0x400
-	Hallway    DeviceLocation = 0x500
-	Balcony    DeviceLocation = 0x600
-	Study      DeviceLocation = 0x700
-	Pantry     DeviceLocation = 0x800
+	Temperature SensorType = 0x00 // (s8, °C)
+	Humidity    SensorType = 0x01 // (u8, %)
+	Pressure    SensorType = 0x02 // (u16, hPa)
+	Light       SensorType = 0x03 // (u16, lux)
+	CO2         SensorType = 0x04 // (u16, ppm)
+	VOC         SensorType = 0x05 // (u16, ppm)
+	PM1_0       SensorType = 0x06 // (u16, µg/m3)
+	PM2_5       SensorType = 0x07 // (u16, µg/m3)
+	PM10        SensorType = 0x08 // (u16, µg/m3)
+	Noise       SensorType = 0x09 // (u16, dB)
+	Presence    SensorType = 0x0A // (u8, 0-1)
+	Distance    SensorType = 0x0B // (u16, cm)
+	UV          SensorType = 0x0C // (u16, index)
+	CO          SensorType = 0x0D // (u16, ppm)
+	Vibration   SensorType = 0x0E // (u8, 0=none, 1=low, 2=medium, 3=high)
+	State       SensorType = 0x0F // (u16 (u8[2]), sensor model, sensor state)
 )
 
 type SensorState uint8
 
 const (
-	Off   SensorState = 0x1
-	On    SensorState = 0x2
-	Error SensorState = 0x3
+	Off   SensorState = 0x10
+	On    SensorState = 0x20
+	Error SensorState = 0x30
 )
 
-type FieldType uint8
+type SensorFieldType uint8
 
 const (
-	TypeS8  FieldType = 0x0
-	TypeS16 FieldType = 0x1
-	TypeS32 FieldType = 0x2
-	TypeU8  FieldType = 0x3
-	TypeU16 FieldType = 0x4
-	TypeU32 FieldType = 0x5
-	TypeF32 FieldType = 0x6
+	TypeNone SensorFieldType = 0x00
+	TypeS8   SensorFieldType = 0x01
+	TypeS16  SensorFieldType = 0x02
+	TypeS32  SensorFieldType = 0x03
+	TypeU8   SensorFieldType = 0x04
+	TypeU16  SensorFieldType = 0x05
+	TypeU32  SensorFieldType = 0x06
 )
 
+func ToSensorFieldType(st SensorType) SensorFieldType {
+	switch st {
+	case Temperature:
+		return TypeS8
+	case Humidity:
+		return TypeU8
+	case Pressure:
+		return TypeU16
+	case Light:
+		return TypeU16
+	case CO2:
+		return TypeU16
+	case VOC:
+		return TypeU16
+	case PM1_0:
+		return TypeU16
+	case PM2_5:
+		return TypeU16
+	case PM10:
+		return TypeU16
+	case Noise:
+		return TypeU8
+	case Presence:
+		return TypeU8
+	case Distance:
+		return TypeU16
+	case UV:
+		return TypeU8
+	case CO:
+		return TypeU8
+	case Vibration:
+		return TypeU8
+	case State:
+		return TypeU16
+	default:
+		return TypeNone
+	}
+}
+
+// String returns the string representation of the SensorType.
 func (t SensorType) String() string {
 	switch t {
 	case Temperature:
@@ -90,14 +129,35 @@ func (t SensorType) String() string {
 		return "Light"
 	case CO2:
 		return "CO2"
+	case VOC:
+		return "VOC"
+	case PM1_0:
+		return "PM1.0"
+	case PM2_5:
+		return "PM2.5"
+	case PM10:
+		return "PM10"
+	case Noise:
+		return "Noise"
 	case Presence:
 		return "Presence"
+	case Distance:
+		return "Distance"
+	case UV:
+		return "UV"
+	case CO:
+		return "CO"
+	case Vibration:
+		return "Vibration"
+	case State:
+		return "State"
 	default:
-		return fmt.Sprintf("Unknown (%d)", t)
+		return "Unknown SensorType"
 	}
 }
 
-func (d DeviceLocation) String() string {
+// String returns the string representation of the SensorLocation.
+func (d SensorLocation) String() string {
 	designator := d & 0xF0
 	if designator == 0 {
 		return fmt.Sprintf("Room %d", d&0x0F)

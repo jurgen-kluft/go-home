@@ -34,7 +34,7 @@ type SensorStorage struct {
 	blockHeaderWriter io.Writer
 }
 
-func (s *SensorStorage) StoreSensor(location DeviceLocation, sensorType SensorType, sensorValue SensorValue) error {
+func (s *SensorStorage) StoreSensor(location SensorLocation, sensorType SensorType, sensorValue SensorValue) error {
 	// Create or get the data block for the given location and sensor type
 	dataFile := &SensorDataFile{Filename: string(location) + "_" + sensorType.String() + ".dat"}
 	block, exists := s.blocks[dataFile]

@@ -29,8 +29,6 @@ func newHandler() actor.Receiver {
 func (handler) Receive(c *actor.Context) {
 	switch msg := c.Message().(type) {
 	case []byte:
-		fmt.Println("received packet")
-
 		// Custom binary message format
 		packet, err := DecodeNetworkPacket(msg)
 		if err != nil {
@@ -153,7 +151,7 @@ func (s *server) acceptLoop(c *actor.Context) {
 }
 
 func main() {
-	listenAddr := flag.String("listen", "10.0.0.66:31337", "listen address of the TCP server")
+	listenAddr := flag.String("listen", "192.168.8.88:31338", "listen address of the TCP server")
 
 	e, err := actor.NewEngine(actor.NewEngineConfig())
 	if err != nil {

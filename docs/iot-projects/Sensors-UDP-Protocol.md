@@ -10,13 +10,11 @@ Storing the temperature every second for a year with 2 bytes (float16) would req
 2 bytes * 60 (seconds per minute) * 60 (minutes per hour) * 24 (hours per day) * 365 (days per year) = 63,072,000 bytes = 63 MB
 Note: Applying (snappy) compression would reduce this to about 6 MB.
 
-
 We need to define a basic message format:
 
 - `size` (size of the message in bytes (including this field))
 - `device_location` 
-- `device_label` 
-- `sensor_count` = [`type`, {optional: `channel index`}, {optional: `state`}, `value`]
+- `sensor values` = N * [`type`, `value`]
 
 Field Type (only 4 types):
 - int8 = 1 byte
