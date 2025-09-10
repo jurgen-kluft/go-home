@@ -9,6 +9,11 @@ For example, we want to know if the kitchen lights should be ON or OFF based on 
 - Lights should not stay on when no one is in the room/area, especially at night.
 - House should know the light intensity so as to start turning on/off lights based on the time of day and season.
 - Lights should be dimmed when watching TV or a movie and brighten when paused.
+- Door and Window sensors (open/close) should be used everywhere (50 RMB)
+  - esp32-c3 super mini
+  - US1881 hall effect sensor
+  - lipo battery
+  - magnet
 
 Example:
 
