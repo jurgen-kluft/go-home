@@ -34,6 +34,7 @@ type SensorStore struct {
 type SensorDataBlock struct {
 	Info         *SensorStore
 	Time         time.Time       // Time (Year, Month, Day, at zero hour)
+	SensorType   SensorType      // Type of sensor (Temperature, Humidity, etc)
 	SampleType   SensorFieldType // Type of samples in this block
 	SampleFreq   int32           // Samples per hour
 	SamplePeriod int32           // Milliseconds between samples
@@ -102,15 +103,6 @@ func (s *SensorDataBlock) WriteSensorValue(sensorValue SensorValue) {
 		byteIndex := SensorDataBlockHeaderSize + sampleIndex*2
 		binary.LittleEndian.PutUint16(s.Buffer[byteIndex:byteIndex+2], uint16(sensorValue.value))
 	case TypeS32:
-		byteIndex := SensorDataBlockHeaderSize + sampleIndex*4
-		binary.LittleEndian.PutUint32(s.Buffer[byteIndex:byteIndex+4], uint32(sensorValue.value))
-	case TypeU8:
-		byteIndex := SensorDataBlockHeaderSize + sampleIndex
-		s.Buffer[byteIndex] = byte(sensorValue.value)
-	case TypeU16:
-		byteIndex := SensorDataBlockHeaderSize + sampleIndex*2
-		binary.LittleEndian.PutUint16(s.Buffer[byteIndex:byteIndex+2], uint16(sensorValue.value))
-	case TypeU32:
 		byteIndex := SensorDataBlockHeaderSize + sampleIndex*4
 		binary.LittleEndian.PutUint32(s.Buffer[byteIndex:byteIndex+4], uint32(sensorValue.value))
 	}

@@ -47,13 +47,15 @@ func (handler) Receive(c *actor.Context) {
 }
 
 type session struct {
-	conn net.Conn
+	handshake bool
+	conn      net.Conn
 }
 
 func newSession(conn net.Conn) actor.Producer {
 	return func() actor.Receiver {
 		return &session{
-			conn: conn,
+			handshake: false,
+			conn:      conn,
 		}
 	}
 }
@@ -72,13 +74,18 @@ func (s *session) Receive(c *actor.Context) {
 func (s *session) readLoop(c *actor.Context) {
 	for {
 		// What is the maximum size of a message?
-		msg := make([]byte, 1024)
+		msg := make([]byte, 256)
 		n, err := s.conn.Read(msg)
 		if err != nil {
 			slog.Error("conn read error", "err", err)
 			break
 		}
-
+		if s.handshake == false {
+			// First message is the identity (MAC address)
+			s.handshake = true
+			slog.Info("session identity: addr = " + s.conn.RemoteAddr().String() + ", mac = " + string(msg[:17]))
+			continue
+		}
 		// Send to the handler to process the message
 		c.Send(c.Parent().Child("handler/default"), msg[:n])
 	}
