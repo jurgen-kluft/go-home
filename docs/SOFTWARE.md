@@ -1,11 +1,11 @@
 # Software
 
 - Go; https://golang.org/, 1.22.12
+- C/C++
 
 ## Sensor Data Server
 
-- TCP: 
-- Actor Model: https://github.com/jurgen-kluft/go-home/sensor-server/hollywood
+- TCP server (Go or C/C++)
 
 ## MQTT Broker
 
@@ -19,7 +19,14 @@ From golang we can receive data from ESPHome devices, and we can send commands t
 
 - https://github.com/mycontroller-org/esphome_api
 
+## Esp32 S3 Camera
+
+- https://github.com/Scicrop/esp32-cam-yolo/tree/master/arduino/WifiCam
+
 ## Image recognition / Object detection
+
+Run directly on ESP32 S3:
+- https://www.hackster.io/asadshafi5/running-yolov5n-on-an-esp32-s3-dd1afc
 
 - https://darknetcv.ai/api/ (Darknet/Yolo, this seems to be the best option so far)
     - https://github.com/stephanecharette/DarkHelp
