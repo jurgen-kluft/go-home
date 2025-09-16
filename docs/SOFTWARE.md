@@ -25,6 +25,10 @@ From golang we can receive data from ESPHome devices, and we can send commands t
 
 ## Image recognition / Object detection
 
+Run on Apple Silicon:
+
+- Moondream; you can query what is being seen on an image (https://github.com/vikhyat/moondream?tab=readme-ov-file)
+
 Run directly on ESP32 S3:
 - https://www.hackster.io/asadshafi5/running-yolov5n-on-an-esp32-s3-dd1afc
 
