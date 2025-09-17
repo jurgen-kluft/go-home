@@ -21,7 +21,15 @@ From golang we can receive data from ESPHome devices, and we can send commands t
 
 ## Esp32 S3 Camera
 
+For example:
+
+- Monitoring the parking place
+- Monitoring the water/gas meter
+- Monitoring the front door for deliveries
+- Monitoring a room for presence of people
+
 - https://github.com/Scicrop/esp32-cam-yolo/tree/master/arduino/WifiCam
+
 
 ## Image recognition / Object detection
 
