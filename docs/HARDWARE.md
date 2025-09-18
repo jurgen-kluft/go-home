@@ -4,6 +4,13 @@
 
 - LG TV; https://www.lg.com/cn/tvs-soundbars/lg-oled65c5pca
 
+## Magnetic Sensor
+
+A3144E Hall Effect Sensor, the Vcc pin should be connected to 3.3V, the GND pin to GND and the OUT pin to a GPIO pin on the ESP32.
+The signal pin should be pulled up to 3.3V using a 10K resistor. When the magnet is close to the sensor, the output will be LOW, otherwise it will be HIGH.
+
+Pinout: Vcc | GND | Signal
+
 ## Smart Lights
 
 Wiz (Philips) smart lights are connecting to WiFi and can easily be controlled with HomeKit by exposing them as HomeKit accessories by using Golang.
