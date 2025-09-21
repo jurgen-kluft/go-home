@@ -272,7 +272,6 @@ static int verify_ack_for_get_cmd(const uint8_t *data, int data_len, int *value)
 static void rd03d_uart_flush(const struct device *uart_dev)
 {
 	uint8_t c;
-
 	while (uart_fifo_read(uart_dev, &c, 1) > 0) {
 		continue;
 	}

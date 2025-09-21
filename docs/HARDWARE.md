@@ -4,6 +4,10 @@
 
 - LG TV; https://www.lg.com/cn/tvs-soundbars/lg-oled65c5pca
 
+## NAS
+
+- Ugreen NAS DH4300 Plus (https://www.youtube.com/watch?v=hEu6LTKbqcA)
+
 ## Magnetic Sensor
 
 A3144E Hall Effect Sensor, the Vcc pin should be connected to 3.3V, the GND pin to GND and the OUT pin to a GPIO pin on the ESP32.
