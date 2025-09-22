@@ -7,6 +7,10 @@
 
 - TCP server (Go or C/C++)
 
+## TNP Server
+
+- https://github.com/btfak/sntp
+
 ## MQTT Broker
 
 - Emitter; https://github.com/emitter-io/emitter (golang)

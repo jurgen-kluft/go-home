@@ -8,12 +8,23 @@
 
 - Ugreen NAS DH4300 Plus (https://www.youtube.com/watch?v=hEu6LTKbqcA)
 
-## Magnetic Sensor
+## Lab Power Supply
 
-A3144E Hall Effect Sensor, the Vcc pin should be connected to 3.3V, the GND pin to GND and the OUT pin to a GPIO pin on the ESP32.
-The signal pin should be pulled up to 3.3V using a 10K resistor. When the magnet is close to the sensor, the output will be LOW, otherwise it will be HIGH.
+Checked out many, and found this one to be of good quality and price.
 
-Pinout: Vcc | GND | Signal
+- UNI-T UDP3305S
+
+## Smart Wall Panels
+
+We would like to have smart wall panels in every room to control lights, plugs, scenes and other automations. The wall panels should be flush mounted in the wall and have a nice touch screen to control everything. The wall panels should be connected to the network through Zigbee.
+
+- Tuya Zigbee Wall Panel (bought one for testing)
+  - Example: https://www.amazon.co.uk/Smart-Switch-Zigbee-Screen-Groups/dp/B0DK3JL6FZ?th=1
+  - Zigbee2Mqtt issue: https://github.com/Koenkk/zigbee2mqtt/issues/24624
+
+## Smart Plugs
+
+Can measure power consumption and control devices remotely. For example it can detect a wash machine, dryer, dish washer, coffee machine running, mobile phone charging.
 
 ## Smart Lights
 
@@ -23,10 +34,6 @@ We can group many bulbs under one `light` and expose it as one light to HomeKit,
 Aqara light bulbs (white) are Zigbee based and can be controlled using the Aqara Hub and can thus end up in HomeKit.
 
 Philips Hue (color or white) can be used in the bedrooms to avoid the need of WiFi. They can be controlled using the Hue Bridge. The Hue Bridge can be connected to LAN and then it can be used to control the lights. Only Hue can be controlled programmatically using Golang. Overall I think we should avoid Hue lights since we need an extra Hub (per floor?).
-
-## Smart Plugs
-
-Can measure power consumption and control devices remotely. For example it can detect a wash machine, dryer, dish washer, coffee machine running and ending when the power consumption drops to a certain level.
 
 ## Room Presense Sensors
 
@@ -87,6 +94,11 @@ Light sensors can be used to detect if it is dark outside and turn on the lights
 
 ### Temperature, Pressure and Humidity
 
+The TMP117 is a high accuracy temperature sensor with an accuracy of ±0.1°C over the -20°C to +50°C temperature range.
+Price is a bit high, but it is very accurate, around 90 RMB on TaoBao.
+
+- TMP117 (Texas Instruments, https://www.ti.com/product/TMP117)
+
 The BME280 is a humidity sensor measuring relative humidity, barometric pressure and ambient temperature.
 
 - BME280 (Bosch, https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/)
@@ -94,10 +106,6 @@ The BME280 is a humidity sensor measuring relative humidity, barometric pressure
 ### Carbon Dioxide (CO2)
 
 - SENSIRION SDC41 CO2 Sensor (https://www.sensirion.com/en/environmental-sensors/air-quality/sdc41-co2-sensor/)
-
-## SmartThings Station
-
-Can serve as an iPhone wireless charger but also can detect if it is charging, so some automation can be triggered when this event happens. For example, when the iPhone is charging we identify it with going to sleep, so turn off the lights in the bedroom. When waking up in the middle of the night, we can turn on some night lights in the bedroom/bathroom.
 
 ## DIY Presence Detection
 
