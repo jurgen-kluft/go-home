@@ -8,6 +8,13 @@
 
 - Ugreen NAS DH4300 Plus (https://www.youtube.com/watch?v=hEu6LTKbqcA)
 
+## ESP32 and ESP8266 boards
+
+- DFRobot, e.g. FireBeetle
+- LOLIN, e.g. D1 Mini
+- Waveshare
+- Seeed Studio, Xiao
+
 ## Lab Power Supply
 
 Checked out many, and found this one to be of good quality and price.
@@ -37,9 +44,9 @@ Philips Hue (color or white) can be used in the bedrooms to avoid the need of Wi
 
 ## Room Presense Sensors
 
-September 2025; 
-We could also use plain cameras (esp32s3 modules) that frequently transmit images to a server that does image recognition to detect if a room is occupied or not. This would be more reliable than using radar based sensors. However, for this we do need a Mac Mini M4 or M5 to run our custom image recognition process.
-At the front door we could use a camera to detect if someone is at the door and/or if there are packages delivered. Another use-case is to detect if the parking spot is occupied or not.
+September 2025:
+
+We can use cameras (esp32s3 modules) that frequently transmit images to a server that does image recognition to detect if a room is occupied or not. This would be more reliable than using radar based sensors. However, for this we do need a Mac Mini M4 or M5 to run our custom image recognition process. At the front door we could use a camera to detect if someone is at the door and/or if there are packages delivered. Another use-case is to detect if the parking spot is occupied or not.
 
 I have bought 3 `LinknLink eMotion Pro` sensors on `Amazon.nl`, they are Wifi IP based and should be connected to a MQTT broker. 
 
@@ -57,11 +64,22 @@ Appartment:
 
 Villa:
 
+- Stairwell (Basement)
+- Storage Room (Basement)
+- Main Room (Basement)
+- Stairwell (1st floor)
 - Living Room (1st floor)
 - Bathroom (1st floor)
+- Kitchen (1st floor)
+- Dining Area (1st floor)
+- Bedroom Area (1st floor)
+- Stairwell (2nd floor)
+- Study Room (2nd floor)
 - Bathroom (2nd floor)
 - Living Room (2nd floor)
-- Study Room (2nd floor)
+- Washing Area (2nd floor)
+- Balcony (2nd floor)
+- Stairwell (3rd floor)
 - Bathroom (3rd floor)
 - Bedroom Sophia (3rd floor)
 - Bedroom Main (3rd floor)
@@ -80,17 +98,10 @@ One other option
 - https://github.com/eoncire/HA_bed_presence
 - https://www.homeautomationguy.io/blog/making-my-own-bed-sensor
 
-Door Contact sensors can be repurposed as pressure sensors. They can then be used in a chair, sofa or a bed to detect if someone is sitting or laying down. This can be used to trigger automations like turning on some lights when getting out of bed in the middle of the night. Or for the living room sofa to pause/resume a movie, resume when someone is sitting down and pause when they get up.
-
-## Air Quality
-
-- ESP32 WROOM 32E (https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32e_esp32-wroom-32ue_datasheet_en.pdf)
-
 ### Luminosity
 
-Light sensors can be used to detect if it is dark outside and turn on the lights in the house. They can also be used to detect if it is bright outside and turn off the lights in the house.
-
-- BH1750 (16 bit I2C light sensor, 1-65535 lux)
+Light sensors can be used to detect if it is dark outside and turn on the lights in the house. 
+They can also be used to detect if it is bright outside and turn off the lights in the house.
 
 ### Temperature, Pressure and Humidity
 
@@ -118,42 +129,25 @@ The BME280 is a humidity sensor measuring relative humidity, barometric pressure
 
 Cost: 
 
-- DFRobot C4001 = 180 RMB
+- DFRobot C4001 = 100 RMB
 - ESP32 = 30 RMB
 - USB cable = 10 RMB
 - Power supply = 20 RMB
-- Total = 240 RMB
+- Total = 160 RMB
 
-### ESP32 with LD2410C
+### ESP32 with AiThinker RD03D
 
-Can only track one person at a time, but it is cheaper than the DFRobot C4001. It can be used to detect if the room is occupied or not.
+Can track multiple targets at a time, it can be used to detect if the room is occupied or not.
 
 - Wi-Fi 2.4GHz, Bluetooth 4.2
 - 5V1A, USB
-- ESPHome or Custom
-- LD2410B/C 24GHz, 60°, 6m
+- RD03D 24GHz, 60°, 11m
 
 Cost:
 
-- LD2410B/C = 50 RMB
+- RD03D = 30 RMB
 - ESP32 = 30 RMB
 - USB cable = 10 RMB
 - Power supply = 20 RMB
-- Total = 110 RMB
+- Total = 90 RMB
 
-### ESP32 with Rd-03D millimeter-Wave Human Detection Sensor by Ai-Thinker
-
-Can track 3 persons at a time, but it is cheaper than the DFRobot C4001. It can thus easily be used to detect if the room is occupied or not and even detect areas of the room where people are located. It can also be used to detect if a person is sitting or laying down.
-
-- Wi-Fi 2.4GHz, Bluetooth 4.2
-- 5V1A, USB
-- ESPHome or Custom
-- Rd-03D 24GHz, 60°, 8m
-
-Cost:
-
-- Rd-03D = 30 RMB
-- ESP32 = 30 RMB
-- USB cable = 10 RMB
-- Power supply = 20 RMB
-- Total = 85 RMB

@@ -2,9 +2,12 @@
 
 On our network, we are running a local NTP server, so all devices can sync their time to this server. This is important for logging and scheduling tasks. We can simply use UDP to send NTP requests to the server and get the current time.
 
+Upon setup we have to synchronize the tick, and we have to have a global reference time (e.g. epoch time) to calculate the current time.
+64 bit, 1us accuracy, results in a rollover every 584 years.
+To avoid time drift, we can sync the time every day or so.
+
 # Air Quality
 
-- ESP32 WROOM 32E
 - Temperature
 - Humidity
 - Pressure
@@ -13,11 +16,9 @@ On our network, we are running a local NTP server, so all devices can sync their
 
 ## Presence
 
-- ESP32 C3 Mini
 - mmWave Radar Sensor
 
 The mmWave radar is always `on` when it detects nothing, but at the moment it detects something, it will slowly `back-off` at a certain rate, e.g. 10 seconds, 20 seconds, 1 minute, 5 minutes, etc.
-
 
 ## Magnetic Sensor
 
