@@ -8,12 +8,39 @@
 
 - Ugreen NAS DH4300 Plus (https://www.youtube.com/watch?v=hEu6LTKbqcA)
 
-## ESP32 and ESP8266 boards
+## ESP8266 boards
+
+Very good for DIY trigger based sensors, e.g. door/window sensors, water leak sensors, vibration sensors, etc.
+
+Also low frequency (wakeup) based sensors can be built using ESP8266 modules, like: 
+
+- temperature
+- humidity
+- pressure
+- luminosity
+
+ESP8266 Low Power: The best tutorial on how to setup low power sensors using ESP8266:
+
+- https://www.youtube.com/watch?v=n_A_8Y4xNx8
+
+ESP 12F combined with a burn fixture development board allows for easy programming and flashing of the ESP8266 module.
+
+
+## ESP32 boards
+
+Good board brands:
 
 - DFRobot, e.g. FireBeetle
 - LOLIN, e.g. D1 Mini
 - Waveshare
 - Seeed Studio, Xiao
+
+## CYD (cheap yellow display)
+
+These can work in combination with OpenHAB :)
+
+- There are many different versions, I have bought the 2.4 inch version (39 RMB)
+- There is also a 2.8 and 3.5 inch version (43, 55 RMB)
 
 ## Lab Power Supply
 
