@@ -4,12 +4,61 @@
 
 - LG TV; https://www.lg.com/cn/tvs-soundbars/lg-oled65c5pca
 
-## Magnetic Sensor
+## NAS
 
-A3144E Hall Effect Sensor, the Vcc pin should be connected to 3.3V, the GND pin to GND and the OUT pin to a GPIO pin on the ESP32.
-The signal pin should be pulled up to 3.3V using a 10K resistor. When the magnet is close to the sensor, the output will be LOW, otherwise it will be HIGH.
+- Ugreen NAS DH4300 Plus (https://www.youtube.com/watch?v=hEu6LTKbqcA)
 
-Pinout: Vcc | GND | Signal
+## ESP8266 boards
+
+Very good for DIY trigger based sensors, e.g. door/window sensors, water leak sensors, vibration sensors, etc.
+
+Also low frequency (wakeup) based sensors can be built using ESP8266 modules, like: 
+
+- temperature
+- humidity
+- pressure
+- luminosity
+
+ESP8266 Low Power: The best tutorial on how to setup low power sensors using ESP8266:
+
+- https://www.youtube.com/watch?v=n_A_8Y4xNx8
+
+ESP 12F combined with a burn fixture development board allows for easy programming and flashing of the ESP8266 module.
+
+
+## ESP32 boards
+
+Good board brands:
+
+- DFRobot, e.g. FireBeetle
+- LOLIN, e.g. D1 Mini
+- Waveshare
+- Seeed Studio, Xiao
+
+## CYD (cheap yellow display)
+
+These can work in combination with OpenHAB :)
+
+- There are many different versions, I have bought the 2.4 inch version (39 RMB)
+- There is also a 2.8 and 3.5 inch version (43, 55 RMB)
+
+## Lab Power Supply
+
+Checked out many, and found this one to be of good quality and price.
+
+- UNI-T UDP3305S
+
+## Smart Wall Panels
+
+We would like to have smart wall panels in every room to control lights, plugs, scenes and other automations. The wall panels should be flush mounted in the wall and have a nice touch screen to control everything. The wall panels should be connected to the network through Zigbee.
+
+- Tuya Zigbee Wall Panel (bought one for testing)
+  - Example: https://www.amazon.co.uk/Smart-Switch-Zigbee-Screen-Groups/dp/B0DK3JL6FZ?th=1
+  - Zigbee2Mqtt issue: https://github.com/Koenkk/zigbee2mqtt/issues/24624
+
+## Smart Plugs
+
+Can measure power consumption and control devices remotely. For example it can detect a wash machine, dryer, dish washer, coffee machine running, mobile phone charging.
 
 ## Smart Lights
 
@@ -20,15 +69,11 @@ Aqara light bulbs (white) are Zigbee based and can be controlled using the Aqara
 
 Philips Hue (color or white) can be used in the bedrooms to avoid the need of WiFi. They can be controlled using the Hue Bridge. The Hue Bridge can be connected to LAN and then it can be used to control the lights. Only Hue can be controlled programmatically using Golang. Overall I think we should avoid Hue lights since we need an extra Hub (per floor?).
 
-## Smart Plugs
-
-Can measure power consumption and control devices remotely. For example it can detect a wash machine, dryer, dish washer, coffee machine running and ending when the power consumption drops to a certain level.
-
 ## Room Presense Sensors
 
-September 2025; 
-We could also use plain cameras (esp32s3 modules) that frequently transmit images to a server that does image recognition to detect if a room is occupied or not. This would be more reliable than using radar based sensors. However, for this we do need a Mac Mini M4 or M5 to run our custom image recognition process.
-At the front door we could use a camera to detect if someone is at the door and/or if there are packages delivered. Another use-case is to detect if the parking spot is occupied or not.
+September 2025:
+
+We can use cameras (esp32s3 modules) that frequently transmit images to a server that does image recognition to detect if a room is occupied or not. This would be more reliable than using radar based sensors. However, for this we do need a Mac Mini M4 or M5 to run our custom image recognition process. At the front door we could use a camera to detect if someone is at the door and/or if there are packages delivered. Another use-case is to detect if the parking spot is occupied or not.
 
 I have bought 3 `LinknLink eMotion Pro` sensors on `Amazon.nl`, they are Wifi IP based and should be connected to a MQTT broker. 
 
@@ -46,11 +91,22 @@ Appartment:
 
 Villa:
 
+- Stairwell (Basement)
+- Storage Room (Basement)
+- Main Room (Basement)
+- Stairwell (1st floor)
 - Living Room (1st floor)
 - Bathroom (1st floor)
+- Kitchen (1st floor)
+- Dining Area (1st floor)
+- Bedroom Area (1st floor)
+- Stairwell (2nd floor)
+- Study Room (2nd floor)
 - Bathroom (2nd floor)
 - Living Room (2nd floor)
-- Study Room (2nd floor)
+- Washing Area (2nd floor)
+- Balcony (2nd floor)
+- Stairwell (3rd floor)
 - Bathroom (3rd floor)
 - Bedroom Sophia (3rd floor)
 - Bedroom Main (3rd floor)
@@ -69,19 +125,17 @@ One other option
 - https://github.com/eoncire/HA_bed_presence
 - https://www.homeautomationguy.io/blog/making-my-own-bed-sensor
 
-Door Contact sensors can be repurposed as pressure sensors. They can then be used in a chair, sofa or a bed to detect if someone is sitting or laying down. This can be used to trigger automations like turning on some lights when getting out of bed in the middle of the night. Or for the living room sofa to pause/resume a movie, resume when someone is sitting down and pause when they get up.
-
-## Air Quality
-
-- ESP32 WROOM 32E (https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32e_esp32-wroom-32ue_datasheet_en.pdf)
-
 ### Luminosity
 
-Light sensors can be used to detect if it is dark outside and turn on the lights in the house. They can also be used to detect if it is bright outside and turn off the lights in the house.
-
-- BH1750 (16 bit I2C light sensor, 1-65535 lux)
+Light sensors can be used to detect if it is dark outside and turn on the lights in the house. 
+They can also be used to detect if it is bright outside and turn off the lights in the house.
 
 ### Temperature, Pressure and Humidity
+
+The TMP117 is a high accuracy temperature sensor with an accuracy of ±0.1°C over the -20°C to +50°C temperature range.
+Price is a bit high, but it is very accurate, around 90 RMB on TaoBao.
+
+- TMP117 (Texas Instruments, https://www.ti.com/product/TMP117)
 
 The BME280 is a humidity sensor measuring relative humidity, barometric pressure and ambient temperature.
 
@@ -90,10 +144,6 @@ The BME280 is a humidity sensor measuring relative humidity, barometric pressure
 ### Carbon Dioxide (CO2)
 
 - SENSIRION SDC41 CO2 Sensor (https://www.sensirion.com/en/environmental-sensors/air-quality/sdc41-co2-sensor/)
-
-## SmartThings Station
-
-Can serve as an iPhone wireless charger but also can detect if it is charging, so some automation can be triggered when this event happens. For example, when the iPhone is charging we identify it with going to sleep, so turn off the lights in the bedroom. When waking up in the middle of the night, we can turn on some night lights in the bedroom/bathroom.
 
 ## DIY Presence Detection
 
@@ -106,42 +156,25 @@ Can serve as an iPhone wireless charger but also can detect if it is charging, s
 
 Cost: 
 
-- DFRobot C4001 = 180 RMB
+- DFRobot C4001 = 100 RMB
 - ESP32 = 30 RMB
 - USB cable = 10 RMB
 - Power supply = 20 RMB
-- Total = 240 RMB
+- Total = 160 RMB
 
-### ESP32 with LD2410C
+### ESP32 with AiThinker RD03D
 
-Can only track one person at a time, but it is cheaper than the DFRobot C4001. It can be used to detect if the room is occupied or not.
+Can track multiple targets at a time, it can be used to detect if the room is occupied or not.
 
 - Wi-Fi 2.4GHz, Bluetooth 4.2
 - 5V1A, USB
-- ESPHome or Custom
-- LD2410B/C 24GHz, 60°, 6m
+- RD03D 24GHz, 60°, 11m
 
 Cost:
 
-- LD2410B/C = 50 RMB
+- RD03D = 30 RMB
 - ESP32 = 30 RMB
 - USB cable = 10 RMB
 - Power supply = 20 RMB
-- Total = 110 RMB
+- Total = 90 RMB
 
-### ESP32 with Rd-03D millimeter-Wave Human Detection Sensor by Ai-Thinker
-
-Can track 3 persons at a time, but it is cheaper than the DFRobot C4001. It can thus easily be used to detect if the room is occupied or not and even detect areas of the room where people are located. It can also be used to detect if a person is sitting or laying down.
-
-- Wi-Fi 2.4GHz, Bluetooth 4.2
-- 5V1A, USB
-- ESPHome or Custom
-- Rd-03D 24GHz, 60°, 8m
-
-Cost:
-
-- Rd-03D = 30 RMB
-- ESP32 = 30 RMB
-- USB cable = 10 RMB
-- Power supply = 20 RMB
-- Total = 85 RMB

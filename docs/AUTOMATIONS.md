@@ -6,13 +6,13 @@ For example, we want to know if the kitchen lights should be ON or OFF based on 
 
 ## Absolutely necessary
 
-- Lights should not stay on when no one is in the room/area, especially at night.
-- House should know the light intensity so as to start turning on/off lights based on the time of day and season.
-- Lights should be dimmed when watching TV or a movie and brighten when paused.
+- Saving: Lights should not stay on when no one is in the room/area, especially at night.
+- Auto: House should know the light intensity (per room) so as to start turning on/off lights.
+- Moods: Lights should be dimmed when watching TV or a movie and brighten when paused.
 - Door and Window sensors (open/close) should be used everywhere (50 RMB)
   - esp32-c3 super mini
-  - US1881 hall effect sensor
-  - lipo battery
+  - US1881 hall effect sensor or reed switch
+  - lipo battery (3.7V 1300mAh)
   - magnet
 
 Example:
@@ -26,12 +26,11 @@ In the morning, when both people are out of bed and people are detected on the 1
 ## Timing
 
 A `virtual switch` that turns ON 30 minutes before sunset. This can be used to trigger other automations.
+A `virtual switch` that turns ON 30 minutes before sunrise. This can be used to trigger other automations.
 
 ## HomeKit Scenes
 
-
 Every scene in HomeKit has an associated `virtual switch`, this can be used to trigger the scene. 
-
 
 Example 3:
 
@@ -40,30 +39,48 @@ Each motion sensor will have a `virtual sensor` that is set to ON when motion is
 We can then have an automation that uses these `virtual sensor`s to determine if the kitchen lights should be ON or OFF.
 This automation can also use more information like the time of day, season, and other sensors to determine if the kitchen lights should be ON or OFF.
 
-
 ## Appartment
 
 - Main Bedroom
-  - Main Light
-  - Stand Jurgen
-  - Stand Faith
-  - Shower Light
+  - Lights
+    - Main Light
+    - Stand Jurgen
+    - Stand Faith
+    - Shower Light
+  - Temperature/Humidity/Pressure/CO2
+  - Bed Presence
 - Sophia Room
-  - Main Light
+  - Lights
+    - Main Light
+  - Temperature/Humidity/Pressure/CO2
 - Jennifer Room
-  - Main Light
+  - Lights
+    - Main Light
+  - Temperature/Humidity/Pressure/CO2
 - Kitchen
-  - Diner
-  - Counter
+  - Lights
+    - Diner
+    - Counter
+  - Air Quality
+  - Presence
 - Living Room
-  - Main
-  - Stand
-  - Chandelier
+  - Lights
+    - Main
+    - Stand
+    - Chandelier
+  - Temperature/Humidity/Pressure/CO2
+  - Presence
 - Bathroom
-  - Main Light
-  - Shower
+  - Lights
+    - Main Light
+    - Shower
+  - Presence
 - Entrance
-  - Frontdoor Light
+  - Lights
+    - Frontdoor Light
+  - Presence
+
+## Virtual Switches
 
 So we need to create a `virtual switch` for each `light` in the house.
 In total we have 13 `virtual switch`es.
