@@ -1,5 +1,14 @@
 # Automations
 
+## Automation High-Level Rules
+
+- People's Intent is more important than Automation
+- Turning lights OFF automatically when no one is in the room is OK, however it should be marked that the lights where turned off by automation so that when people enter the room again, the lights are automatically turned ON.
+
+So per room the state of the lights have an additional marker called `last change`, which can be either `automation` or `user`.
+
+e.g. If someone goes to take a nap during the day in their bedroom, the lights should not be turned ON automatically when someone enters the room. First of all, very likely the room OCCUPANCY is 1 (the person taking a nap), and second of all, the lights where turned OFF by the user, so we should not turn them ON automatically.
+
 ## House, Per Floor, Per Room, State
 
 For example, we want to know if the kitchen lights should be ON or OFF based on the time of day, season, and other sensors.

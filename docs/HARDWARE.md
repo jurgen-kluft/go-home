@@ -4,9 +4,18 @@
 
 - LG TV; https://www.lg.com/cn/tvs-soundbars/lg-oled65c5pca
 
+## MAC Mini
+
+Mac Mini M4 to run:
+
+- Sensor Server
+- HomeKit Bridge
+- Image Recognition (for presence detection)
+- Other services
+
 ## NAS
 
-- Ugreen NAS DH4300 Plus (https://www.youtube.com/watch?v=hEu6LTKbqcA)
+- Ugreen NAS DH4800 Plus (https://www.youtube.com/watch?v=hEu6LTKbqcA)
 
 ## ESP8266 boards
 
@@ -24,7 +33,6 @@ ESP8266 Low Power: The best tutorial on how to setup low power sensors using ESP
 - https://www.youtube.com/watch?v=n_A_8Y4xNx8
 
 ESP 12F combined with a burn fixture development board allows for easy programming and flashing of the ESP8266 module.
-
 
 ## ESP32 boards
 
@@ -78,38 +86,6 @@ We can use cameras (esp32s3 modules) that frequently transmit images to a server
 I have bought 3 `LinknLink eMotion Pro` sensors on `Amazon.nl`, they are Wifi IP based and should be connected to a MQTT broker. 
 
 We will also build them ourselves using ESP32 devices on WiFi can easily be exposed to HomeKit (if necessary) through the use of Golang, however we can also just expose switches that indicate presence in a room/area.
-
-Appartment:
-
-- Kitchen
-- Living Room
-- Bathroom
-- Bedroom Sophia
-- Bedroom Jennifer
-- Bedroom Main
-- Bathroom Main
-
-Villa:
-
-- Stairwell (Basement)
-- Storage Room (Basement)
-- Main Room (Basement)
-- Stairwell (1st floor)
-- Living Room (1st floor)
-- Bathroom (1st floor)
-- Kitchen (1st floor)
-- Dining Area (1st floor)
-- Bedroom Area (1st floor)
-- Stairwell (2nd floor)
-- Study Room (2nd floor)
-- Bathroom (2nd floor)
-- Living Room (2nd floor)
-- Washing Area (2nd floor)
-- Balcony (2nd floor)
-- Stairwell (3rd floor)
-- Bathroom (3rd floor)
-- Bedroom Sophia (3rd floor)
-- Bedroom Main (3rd floor)
 
 ## Bed Presence Sensors (DYI, WIP)
 

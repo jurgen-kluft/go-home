@@ -1,72 +1,104 @@
+- Number of WiFi APs (every floor): 3
+  - GL-inet Berry/Slate and Flint
+
+- Number of presence sensors: 9
+  - USB-C powered
+  - WiFi connected
+- Number of environment sensor boxes: 7
+  - USB-C powered
+  - WiFi connected
+- Number of open/close sensors: 8
+  - Battery powered
+  - WiFi connected
+
 # Appartment
 
 According to the below setup, the appartment contains:
   
-  -  Number of 'Door sensor' = 6
-  -  Number of 'Presence sensor' = 7
-  -  Number of 'Temperature + humidity + luminance + CO2' = 5
-  -  Number of 'Temperature + humidity + luminance' = 1
+  -  Number of '(open/close) sensor' = 8
+  -  Number of 'Presence sensor' = 9
+  -  Number of 'Environment sensor' = 7
   -  Number of 'Switch wall panel (4 buttons)' = 8
+
+There are some 'hotel' switches, they will have to be disabled, since some of them do not contain a neutral wire and we will
+use some of the 'switching' wires to trace neutral to the switch box.
 
 ## Entrance
   
-  - Door sensor
+  - (open/close) sensor
   - Hallway light
-  - Switch wall panel (4 buttons) x 1
+  - Switch wall panel (WiFi, NoNeutral, 2 buttons) x 1
+    - This switch box doesn't have a neutral wire, so we will use a NoNeutral Zigbee switch with 2 buttons.
 
 ## Kitchen
   
   - Presence sensor
-  - Temperature + humidity + luminance + CO2
-  - Switch wall panel (4 buttons) x 1
+  - Environment: Temperature + humidity + luminance + CO2
+  - Switch wall panel (WiFi, Neutral, 3 buttons) x 1
+    - To be verified: This switch box needs to pull a neutral wire from the ceiling light to the switch box
   - Kitchen counter lights
   - Kitchen table lights
   - Kitchen entrance light
 
 ## Bathroom
 
-  - Door sensor  
+  - (open/close) sensor  
   - Presence sensor
-  - Temperature + humidity + luminance
-  - Switch wall panel (4 buttons) x 1
+  - Environment: Temperature + humidity + luminance
+  - Switch wall panel (WiFi, Neutral, 2 buttons) x 1
+    - Tricky; There is a neutral wire passing through, so we will have to hijack it for use in the switch box
   - Bathroom lights
 
 ## Living Room
   
-  - Presence sensor x 2
-  - Temperature + humidity + luminance + CO2
-  - Switch wall panel (4 buttons) x 4
+  - Presence sensor
+  - Presence sensor
+  - (open/close) sensor, balcony  
+  - Environment: Temperature + humidity + luminance + CO2
+  - Switch wall panel (WiFi, Neutral, 2 buttons)
+  - Switch wall panel (WiFi, Neutral, 2 buttons)
+  - Switch wall panel (WiFi, Neutral, 3 buttons)
+  - Switch wall panel (WiFi, Neutral, 3 buttons)
   - Living room main light
   - Living room stand lights
   - Living room chandelier
 
+## Hall
+
+  - Presence sensor
+  - Switch wall panel (WiFi, Neutral, 2 buttons)
+
 ## Bedroom Sophia
   
-  - Door sensor  
+  - (open/close) sensor  
+  - (open/close) sensor, balcony  
   - Presence sensor
-  - Temperature + humidity + luminance + CO2
+  - Environment: Temperature + humidity + luminance + CO2
   - Bedroom main light
+  - Switch wall panel (WiFi, Neutral, 1 button)
 
 ## Bedroom Jennifer
 
-  - Door sensor  
+  - (open/close) sensor  
   - Presence sensor
-  - Temperature + humidity + luminance + CO2
+  - Environment: Temperature + humidity + luminance + CO2
   - Bedroom main light
+  - Switch wall panel (WiFi, Neutral, 1 button)
 
 ## Bedroom Main
 
-  - Door sensor  
+  - (open/close) sensor  
   - Presence sensor
-  - Temperature + humidity + luminance + CO2
+  - Environment: Temperature + humidity + luminance + CO2
   - Bedroom main light
   - Bedroom stand lights
 
 ##  Bathroom Main
 
-  - Door sensor  
+  - (open/close) sensor  
   - Presence sensor
-  - Switch wall panel (4 buttons) x 1
+  - Environment: Temperature + humidity + luminance
+  - Switch wall panel (WiFi, Neutral, 2 buttons)
   - Bathroom lights
 
 ## North Balcony
