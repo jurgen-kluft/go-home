@@ -28,12 +28,6 @@ Also low frequency (wakeup) based sensors can be built using ESP8266 modules, li
 - pressure
 - luminosity
 
-ESP8266 Low Power: The best tutorial on how to setup low power sensors using ESP8266:
-
-- https://www.youtube.com/watch?v=n_A_8Y4xNx8
-
-ESP 12F combined with a burn fixture development board allows for easy programming and flashing of the ESP8266 module.
-
 ## ESP32 boards
 
 Good board brands:
