@@ -50,6 +50,10 @@ Run directly on ESP32 S3:
 - https://github.com/dog-qiuqiu/Yolo-Fastest
 - https://github.com/ThibaMahlezana/Intrusion-Detection-System
 
+## Kalman filter
+
+https://alumni.media.mit.edu/~wad/mas864/proj_src.html
+
 ### Custom Devices
 
 - https://emanuelduss.ch/posts/co2-measurement/    
