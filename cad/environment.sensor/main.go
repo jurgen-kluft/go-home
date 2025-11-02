@@ -23,7 +23,7 @@ import (
 // Global constants
 const (
 	Unit         = 1.0 // 1 unit = 1 mm
-	WT           = 1.5
+	WT           = 1.6
 	W1           = WT
 	W2           = 2 * WT
 	Rounding     = 1
@@ -32,17 +32,22 @@ const (
 
 // Box dimensions
 const (
-	boxW = pcbBoardW + 2*10
-	boxL = pcbBoardL + 2*12
-	boxH = 25.0
+	boxW = pcbBoardW + 2*20
+	boxL = pcbBoardL + 2*15
 	boxT = 2.0
 	boxI = 1.25
 )
 
-// Box bottom
+// Bottom of the box
 const (
-	boxBottomT = W1
-	boxBottomH = 10.0
+	boxBacksideT = boxT
+	boxBacksideH = 10.0
+)
+
+// Top of the box
+const (
+	boxFrontsideT = boxT
+	boxFrontsideH = 25.0
 )
 
 // Inlay magnets for holding the box bottom and top together
@@ -50,8 +55,7 @@ const (
 const (
 	magnetDiameter    = 5.0
 	magnetR           = magnetDiameter / 2.0
-	magnetH           = 2.0
-	magnetInlayHeight = 10.0
+	magnetH           = 2.1
 	magnetInlayRadius = magnetR + W1
 )
 
@@ -65,11 +69,14 @@ const (
 	pcbBoardH  = pcbBoardBH + pcbBoardTH + pcbBoardT // Total height of the PCB including components
 )
 
-// SH1107 OLED Display, 128x128
+// Display, SH1107 OLED, 128x128
 const (
-	OledW = 14.0
-	OledL = 14.0
-	OledH = 2.5
+	displayScreenW        = 37.3
+	displayScreenL        = 34.0
+	displayPcbW           = 47.1
+	displayPcbL           = 34.1
+	displayPcbHoleToHoleW = 42
+	displayPcbHoleToHoleL = 29
 )
 
 // RD03D
@@ -77,8 +84,9 @@ const (
 	RD03DW  = 15.25
 	RD03DL  = 44.5
 	RD03DH  = 5.0
-	RD03DT  = 1.5 // PCB thickness
+	RD03DT  = 3.2 // PCB and things thickness
 	RD03DBT = 0.7 // Bottom height (height of components on bottom side
+	RD03DTT = 1.0 // Bottom height (height of components on bottom side
 )
 
 // Scd41 (CO2, temp, humidity)
@@ -108,12 +116,13 @@ const (
 
 // USB-C hole dimensions
 const (
-	UsbCHoleR = 11.25 // Radius of the USB-C hole, 1 cm
+	UsbCHoleDiameter = 11.25 // Radius of the USB-C hole, 1 cm
+	UsbCHoleRadius   = UsbCHoleDiameter / 2.0
 )
 
 func newBox(w, l, h, r float64) Primitive {
 	return NewRender(
-		20,
+		10,
 		NewDifference(
 			shapes.NewSmoothedCube(Vec3{w, l, h + 2*r}, r).Build(),
 			// Cutoff the top and bottom to end up with the requested height
@@ -131,22 +140,22 @@ func newBox(w, l, h, r float64) Primitive {
 
 func newWall(wallThickness, outerW, outerL, h, r float64) Primitive {
 	return NewRender(
-		20,
+		10,
 		NewDifference(
 			newBox(outerW, outerL, h, r),
 			newBox(outerW-2*wallThickness, outerL-2*wallThickness, 1.2*h, r),
 		))
 }
 
-func newMagnetInlay() Primitive {
+func newMagnetInlay(h float64) Primitive {
 	return NewRender(
-		20,
+		10,
 		NewTranslation(
-			Vec3{0, 0, magnetInlayHeight / 2},
+			Vec3{0, 0, h / 2},
 			NewDifference(
-				NewCylinder(magnetInlayHeight, magnetInlayRadius),
+				NewCylinder(h, magnetInlayRadius),
 				NewTranslation(
-					Vec3{0, 0, magnetInlayHeight/2 - magnetH/2},
+					Vec3{0, 0, h / 2},
 					NewCylinder(magnetH*2, magnetR),
 				),
 			),
@@ -155,53 +164,67 @@ func newMagnetInlay() Primitive {
 }
 
 // Insert slide, reusable for different sensors
-func newInsertSlide(w, l, h, t, bh float64) Primitive {
-	round := 0.25
+func newVerticalInsertSlide(w, l, h, t, bh float64) Primitive {
+	round := 0.2
+	overhang := 1.0
 	return NewTranslation(
 		Vec3{0, 0, bh / 2},
 		NewRender(
-			200,
+			10,
 			NewUnion(
 				NewTranslation(
 					Vec3{0, 0, bh/2 - 2*round + (l+W2)/2},
 					NewDifference(
 						NewDifference(
-							newBox(w+W2+W2, h, l+W2, round),
+							newBox(W1+w+overhang, h, l+W2, round),
 							NewTranslation(
 								Vec3{0, 0, W1},
-								newBox(w, 2*h, l+W1, round),
+								newBox(-overhang+w-overhang, 2*h, l+W1, round),
 							),
 						),
 						NewTranslation(
 							Vec3{0, 0, W1},
-							newBox(w+W2, t, l+W2, round),
+							newBox(w, t, l+W2, round),
 						),
 					),
 				),
-				newBox(w+W2+W2, h, bh, round),
+				newBox(W1+w+W1, h, bh, round),
+			),
+		),
+	)
+}
+
+func newHorizontalInsertSlide2(w, l, h, t float64) Primitive {
+	round := 0.25
+	return NewRender(
+		10,
+		NewDifference(
+			NewDifference(
+				newBox(W1+w+W1, l+W2, h, round),
+				NewTranslation(
+					Vec3{0, W2, 0},
+					newBox(w-W2, l+W2, h*2, round),
+				),
+			),
+			NewTranslation(
+				Vec3{0, W1, 0},
+				newBox(w, l+W2, t, round),
 			),
 		),
 	)
 }
 
 func newScd41InsertSlide() Primitive {
-	return newInsertSlide(Scd41W, Scd41L, 2*W2, Scd41T, boxBottomH-boxBottomT)
+	return newVerticalInsertSlide(Scd41W, Scd41L, W1+Scd41T+W1, Scd41T, boxBacksideH-boxBacksideT)
 }
 func newBh1750InsertSlide() Primitive {
-	return newInsertSlide(Bh1750W, Bh1750L, 2*W2, Bh1750T, boxBottomH-boxBottomT)
+	return newVerticalInsertSlide(Bh1750W, Bh1750L, W1+Bh1750T+W1, Bh1750T, boxBacksideH-boxBacksideT)
 }
 func newBme280InsertSlide() Primitive {
-	return newInsertSlide(Bme280W, Bme280L, 2*W2, Bme280T, boxBottomH-boxBottomT)
+	return newVerticalInsertSlide(Bme280W, Bme280L, W1+Bme280T+W1, Bme280T, boxBacksideH-boxBacksideT)
 }
 func newRd03dInsertSlide() Primitive {
-	return newInsertSlide(RD03DW, RD03DL, 2*W2, RD03DT+RD03DBT, boxBottomH-boxBottomT)
-}
-
-// The frontside of the box, also has 4 sides of a certain height:
-// - RD03D sensor insert-slide (upper part)
-// - OLED display cutout (lower part)
-func newBoxFrontside() Primitive {
-	return newBox(boxW, boxL, boxH, MainRounding)
+	return newHorizontalInsertSlide2(RD03DW, RD03DL, W1+RD03DT+W1, RD03DT)
 }
 
 // The backside of the box:
@@ -209,74 +232,84 @@ func newBoxFrontside() Primitive {
 // - Sensor insert-slides
 // - USB-C connector cutout
 func newBoxBackside() Primitive {
-	V := Vec3{-(boxW / 2), (boxL / 2), 0}
+	V := Vec3{(boxW / 2), (boxL / 2), 0}
 	CurrentLen := V.Len()
 	NewLen := CurrentLen - MainRounding
 
 	LTP := V.Mul(NewLen / CurrentLen)
-	RTP := Vec3{-LTP.X(), LTP.Y(), LTP.Z()}
-	LBP := Vec3{LTP.X(), -LTP.Y(), LTP.Z()}
-	RBP := Vec3{-LTP.X(), -LTP.Y(), LTP.Z()}
+	RTP := Vec3{-LTP.X(), LTP.Y(), 0}
+	LBP := Vec3{LTP.X(), -LTP.Y(), 0}
+	RBP := Vec3{-LTP.X(), -LTP.Y(), 0}
 
 	return NewUnion(
 		NewTranslation(
-			Vec3{0, 0, boxBottomH / 2},
+			Vec3{0, 0, boxBacksideH / 2},
 			NewRender(
-				20,
+				10,
 				NewDifference(
-					newBox(boxW+2*(boxT+boxI), boxL+2*(boxT+boxI), boxBottomH, MainRounding),
+					NewUnion(
+						NewDifference(
+							newBox(boxW+2*(boxT+boxI), boxL+2*(boxT+boxI), boxBacksideH, MainRounding),
+							NewTranslation(
+								Vec3{0, 0, boxBacksideT},
+								newBox(boxW, boxL, boxBacksideH, MainRounding),
+							),
+						),
+						NewTranslation(
+							Vec3{0, 0, boxBacksideT},
+							newWall(boxI, boxW+2*boxI, boxL+2*boxI, boxBacksideH, MainRounding),
+						),
+					),
+					// USB-C connector cutout
 					NewTranslation(
-						Vec3{0, 0, boxT},
-						newBox(boxW, boxL, boxBottomH, MainRounding),
+						Vec3{RBP.X(), RBP.Y() + UsbCHoleDiameter + UsbCHoleRadius, 0},
+						NewCylinder(boxBacksideH*2, UsbCHoleRadius),
 					),
 				),
 			),
-			NewTranslation(
-				Vec3{0, 0, W1},
-				newWall(boxI, boxW+2*boxI, boxL+2*boxI, boxBottomH, MainRounding),
-			),
 		),
+		newPcbInlay(),
 		NewTranslation(
-			Vec3{0, 0, boxBottomT},
+			Vec3{0, 0, boxBacksideT},
 			NewTranslation(
 				LTP,
-				newMagnetInlay(),
+				newMagnetInlay(boxBacksideH-boxBacksideT),
 			),
 		),
 		NewTranslation(
-			Vec3{0, 0, boxBottomT},
+			Vec3{0, 0, boxBacksideT},
 			NewTranslation(
 				RTP,
-				newMagnetInlay(),
+				newMagnetInlay(boxBacksideH-boxBacksideT),
 			),
 		),
 		NewTranslation(
-			Vec3{0, 0, boxBottomT},
+			Vec3{0, 0, boxBacksideT},
 			NewTranslation(
 				LBP,
-				newMagnetInlay(),
+				newMagnetInlay(boxBacksideH-boxBacksideT),
 			),
 		),
 		NewTranslation(
-			Vec3{0, 0, boxBottomT},
+			Vec3{0, 0, boxBacksideT},
 			NewTranslation(
 				RBP,
-				newMagnetInlay(),
+				newMagnetInlay(boxBacksideH-boxBacksideT),
 			),
 		),
 		NewTranslation(
-			Vec3{0, boxL/2 - Scd41H, boxBottomT},
+			Vec3{0, boxL/2 - Scd41H, boxBacksideT},
 			newScd41InsertSlide(),
 		),
 		NewTranslation(
-			Vec3{0, -(boxL/2 - W2 - Bh1750H), boxBottomT},
-			newBh1750InsertSlide(),
+			Vec3{0, -(boxL/2 - W2 - Bh1750H), boxBacksideT},
+			newBme280InsertSlide(),
 		),
 		NewTranslation(
-			Vec3{(-boxW / 2) + 3*W1, 0, boxBottomT},
+			Vec3{(boxW / 2) - 3*W1, (W2 + RD03DW + W2), boxBacksideT},
 			NewRotation(
 				Vec3{0, 0, 90},
-				newBme280InsertSlide(),
+				newBh1750InsertSlide(),
 			),
 		),
 	)
@@ -286,7 +319,7 @@ func newPcbInlay() Primitive {
 	return NewTranslation(
 		Vec3{0, 0, boxT},
 		NewRender(
-			20,
+			10,
 			NewUnion(
 				NewTranslation(
 					Vec3{0, 0, pcbBoardH / 2},
@@ -304,9 +337,107 @@ func newPcbInlay() Primitive {
 	)
 }
 
+// The frontside of the box, also has 4 sides of a certain height:
+// - RD03D sensor insert-slide (upper part)
+// - OLED display cutout (lower part)
+func newBoxFrontside() Primitive {
+	V := Vec3{(boxW / 2), (boxL / 2), 0}
+	CurrentLen := V.Len()
+	NewLen := CurrentLen - MainRounding
+
+	LTP := V.Mul(NewLen / CurrentLen)
+	RTP := Vec3{-LTP.X(), LTP.Y(), LTP.Z()}
+	LBP := Vec3{LTP.X(), -LTP.Y(), LTP.Z()}
+	RBP := Vec3{-LTP.X(), -LTP.Y(), LTP.Z()}
+
+	return NewUnion(
+		NewTranslation(
+			Vec3{0, 0, boxFrontsideH / 2},
+			NewDifference(
+				NewDifference(
+					NewDifference(
+						newBox(boxW+2*(boxFrontsideT+boxI), boxL+2*(boxFrontsideT+boxI), boxFrontsideH, MainRounding),
+						NewTranslation(
+							Vec3{0, 0, boxFrontsideT},
+							newBox(boxW, boxL, boxFrontsideH, MainRounding),
+						),
+					),
+					NewTranslation(
+						Vec3{0, 0, boxFrontsideH / 2},
+						newBox(boxW+2*(boxI), boxL+2*(boxI), W2, MainRounding),
+					),
+				),
+				// Opening at the top side for inserting the RD03D sensor into the insert-slide
+				NewTranslation(
+					Vec3{boxW / 2, 0, (-boxFrontsideH / 2) + (RD03DH / 2) + 2*boxFrontsideT},
+					NewRotation(
+						Vec3{0, 0, 90},
+						newBox(RD03DW, RD03DL/2, RD03DH+W2, Rounding),
+					),
+				),
+				// Opening on the front for the OLED display
+				NewTranslation(
+					Vec3{0, -(boxL / 2) + (displayScreenL / 2) + boxT + W1, -3 * W2},
+					newBox(displayScreenW+W2, displayScreenL+W2, 6*W2, Rounding),
+				),
+			),
+		),
+		// The insert slide for the RD03D sensor
+		NewTranslation(
+			Vec3{20, 0, boxFrontsideT + (W1+RD03DT+W1)/2},
+			NewRotation(
+				Vec3{0, 0, -90},
+				newRd03dInsertSlide(),
+			),
+		),
+		// Magnet inlays
+		NewTranslation(
+			Vec3{0, 0, boxT},
+			NewTranslation(
+				LTP,
+				newMagnetInlay(boxFrontsideH-boxFrontsideT),
+			),
+		),
+		NewTranslation(
+			Vec3{0, 0, boxT},
+			NewTranslation(
+				RTP,
+				newMagnetInlay(boxFrontsideH-boxFrontsideT),
+			),
+		),
+		NewTranslation(
+			Vec3{0, 0, boxT},
+			NewTranslation(
+				LBP,
+				newMagnetInlay(boxFrontsideH-boxFrontsideT),
+			),
+		),
+		NewTranslation(
+			Vec3{0, 0, boxT},
+			NewTranslation(
+				RBP,
+				newMagnetInlay(boxFrontsideH-boxFrontsideT),
+			),
+		),
+	)
+}
+
+func newProduct() Primitive {
+	return NewUnion(
+		NewTranslation(
+			Vec3{0, 0, 0},
+			newBoxBackside(),
+		),
+		NewTranslation(
+			Vec3{0, 0, boxFrontsideH},
+			newBoxFrontside(),
+		),
+	)
+}
+
 func main() {
 	sys.Initialize()
 	sys.RenderMultiple([]sys.Shape{
-		{Name: "main", Primitive: NewList(newBoxBackside(), newPcbInlay()), Flags: sys.Default},
+		{Name: "main", Primitive: newProduct(), Flags: sys.Default},
 	})
 }
