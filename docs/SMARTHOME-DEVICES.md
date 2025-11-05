@@ -1,4 +1,19 @@
-# Air Quality
+# Smart Home
+
+- A hub (on every floor) that can display all the data from the sensors
+  - should have touch display so that we can control it easily.
+- Sensors that can measure air quality, presence, bed presence, door/window status, etc.
+
+## Air Quality Ultra
+
+This is for an area where we want to also measure Temperature, Humidity, PM, VOC and NOx.
+
+- SEN66, Sensirion Sensor (500 RMB, 70 USD)
+  - Measures: Temperature, Humidity, PM (0.5, 1.0, 2.5, 10.0), CO2, VOC, NOx
+  - I2C Interface
+  - URL: https://sensirion.com/products/catalog/SEN66
+
+## Air Quality
 
 - Temperature
 - Humidity

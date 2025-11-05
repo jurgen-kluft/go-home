@@ -16,7 +16,8 @@ const (
 
 // Cylindrical battery dimensions are 16mm diameter, 34mm length
 const (
-	batteryDiameter = 16.0
+	batteryWireGap  = 2.0
+	batteryDiameter = 16.6 + batteryWireGap
 	batteryLength   = 34.0
 	batteryRadius   = batteryDiameter / 2.0
 	W1              = wallThickness
@@ -54,7 +55,7 @@ func newBatteryHolderLid() Primitive {
 			),
 			// Another disc attached
 			NewTranslation(Vec3{0, 0, W1},
-				NewCylinder(W1, batteryRadius+W2),
+				NewCylinder(W1, batteryRadius+W1),
 			),
 		),
 	)
@@ -68,11 +69,11 @@ func newBatteryHolder() Primitive {
 			NewUnion(
 				NewCylinder(h, batteryRadius+W1),
 				NewTranslation(
-					Vec3{0, batteryRadius, 0},
-					NewBox(batteryDiameter, switchBoardHeight, h),
+					Vec3{0, batteryRadius, -(W1 / 2)},
+					NewBox(batteryDiameter, switchBoardHeight, h+W1),
 				),
 			),
-			// Make the cylinder hollow, 1mm wall thickness
+			// Make the cylinder hollow, W1 wall thickness
 			NewTranslation(Vec3{0, 0, W1},
 				NewCylinder(batteryLength+W2, batteryRadius),
 			),
@@ -97,9 +98,11 @@ func newSensorBox() Primitive {
 			),
 			NewTranslation(
 				Vec3{0, -W1, 0},
-				NewBox(switchBoardWidth, switchBoardHeight+W2, switchBoardLength-W2),
+				//NewBox(switchBoardWidth, switchBoardHeight+W2, switchBoardLength-W2),
+				NewBox(switchBoardWidth, switchBoardHeight+W2, switchBoardLength),
 			),
-		))
+		),
+	)
 }
 
 func newSensorBoxLid() Primitive {
@@ -124,7 +127,7 @@ func newCombineAll() Primitive {
 					newBatteryHolder(),
 				),
 				NewTranslation(
-					Vec3{0, batteryRadius - 2*W1, -((switchBoardLength+W2)/2 + batteryLength/2 + (W1 - rounding))},
+					Vec3{0, batteryRadius - 2*W1, -((switchBoardLength+W2)/2 + (batteryLength+W2)/2 + rounding)},
 					newSensorBox(),
 				),
 			),
@@ -132,12 +135,17 @@ func newCombineAll() Primitive {
 		))
 }
 
-func newProduct() Primitive {
+func productSensorBox() Primitive {
 	return NewList(
 		NewTranslation(
 			Vec3{0, batteryRadius + W1, batteryLength / 2},
 			newCombineAll(),
 		),
+	)
+}
+
+func productBatteryHolderLid() Primitive {
+	return NewList(
 		NewTranslation(
 			Vec3{-30, W1 + W1/2, 0},
 			NewRotation(
@@ -145,6 +153,11 @@ func newProduct() Primitive {
 				newBatteryHolderLid(),
 			),
 		),
+	)
+}
+
+func productSensorBoxLid() Primitive {
+	return NewList(
 		NewTranslation(
 			Vec3{30, W1 + rounding, 0},
 			NewRotation(
@@ -158,6 +171,8 @@ func newProduct() Primitive {
 func main() {
 	sys.Initialize()
 	sys.RenderMultiple([]sys.Shape{
-		{Name: "main", Primitive: newProduct(), Flags: sys.Default},
+		{Name: "sensorbox", Primitive: productSensorBox(), Flags: sys.Default},
+		{Name: "sensorbox lid", Primitive: productSensorBoxLid(), Flags: sys.None},
+		{Name: "batteryholder lid", Primitive: productBatteryHolderLid(), Flags: sys.None},
 	})
 }

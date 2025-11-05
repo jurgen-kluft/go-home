@@ -71,12 +71,13 @@ const (
 
 // Display, SH1107 OLED, 128x128
 const (
-	displayScreenW        = 37.3
-	displayScreenL        = 34.0
-	displayPcbW           = 47.1
-	displayPcbL           = 34.1
-	displayPcbHoleToHoleW = 42
-	displayPcbHoleToHoleL = 29
+	displayScreenW       = 37.3 // Active display width
+	displayScreenL       = 34.0 // Active display length
+	displayW             = 47.1 // Overall width including bezel
+	displayL             = 34.1 // Overall length including bezel
+	displayMountingW     = 42   // Mounting hole to hole width
+	displayMountingL     = 29   // Mounting hole to hole length
+	displayMountingHoleD = 2.2  // Mounting hole diameter
 )
 
 // RD03D
