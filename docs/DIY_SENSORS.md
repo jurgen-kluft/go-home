@@ -5,6 +5,9 @@
 - Pressure
 - CO2
 - Luminosity
+- Presence
+
+Would like to have a self designed 3D printed enclosure that can hold all the sensors as well as a screen to display the values. The enclosure should have good airflow to the sensors. Also when presence detects someone is nearby, the screen should light up to show the values, otherwise it should either be off or show the date, time and weather.
 
 ## Presence
 
