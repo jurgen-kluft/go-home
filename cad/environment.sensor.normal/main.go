@@ -41,7 +41,7 @@ const (
 // Bottom of the box
 const (
 	boxBacksideT = boxT
-	boxBacksideH = 10.0
+	boxBacksideH = 15.0
 )
 
 // Top of the box
@@ -61,23 +61,52 @@ const (
 
 // PCB Board
 const (
-	pcbBoardW  = 62 + (Rounding / 2)
-	pcbBoardL  = 90 + (Rounding / 2)
-	pcbBoardT  = 1.6                                 // Thickness of the PCB board itself
-	pcbBoardBH = 6.0 - pcbBoardT                     // Height of the tallest component on the bottom of the PCB
-	pcbBoardTH = W1                                  // Thickness of the tallest component on the top of the PCB
-	pcbBoardH  = pcbBoardBH + pcbBoardTH + pcbBoardT // Total height of the PCB including components
+	pcbBoardW      = 62 + (Rounding / 2)
+	pcbBoardL      = 90 + (Rounding / 2)
+	pcbBoardT      = 1.6                                 // Thickness of the PCB board itself
+	pcbBoardMountW = 51.0                                // Mounting width, from hole to hole, for the PCB board
+	pcbBoardMountL = 75.0                                // Mounting length, from hole to hole, for the PCB board
+	displayMountHR = 2.0 / 2                             // Mounting hole radius for the PCB board
+	pcbBoardBH     = 6.0 - pcbBoardT                     // Height of the tallest component on the bottom of the PCB
+	pcbBoardTH     = W1                                  // Thickness of the tallest component on the top of the PCB
+	pcbBoardH      = pcbBoardBH + pcbBoardTH + pcbBoardT // Total height of the PCB including components
+)
+
+// Display, 128x128, SH1107 OLED
+const (
+	sh1107ScreenW       = 37.3 // Actual display width
+	sh1107ScreenL       = 34.0 // Actual display length
+	sh1107ScreenR       = 0.5  // Actual display corner rounding
+	sh1107W             = 47.1 // Overall width including bezel
+	sh1107L             = 34.1 // Overall length including bezel
+	sh1107MountingW     = 42   // Mounting hole to hole width
+	sh1107MountingL     = 29   // Mounting hole to hole length
+	sh1107MountingHoleD = 2.2  // Mounting hole diameter
+)
+
+// Display, 410*502, SH8601 AMOLED, (dwo.net.cn, DO0180PFST05)
+const (
+	amoLedScreenW       = 34.79 // Actual display width
+	amoLedScreenL       = 42.62 // Actual display length
+	amoLedScreenR       = 9.0   // Actual display corner rounding
+	amoLedW             = 36.79 // Overall width including bezel
+	amoLedL             = 52.56 // Overall length including bezel
+	amoLedMountingW     = 31.73 // Mounting hole to hole width
+	amoLedMountingL     = 47.56 // Mounting hole to hole length
+	amoLedMountingHoleD = 1.8   // Mounting hole diameter
 )
 
 // Display, SH1107 OLED, 128x128
 const (
-	displayScreenW       = 37.3 // Active display width
-	displayScreenL       = 34.0 // Active display length
-	displayW             = 47.1 // Overall width including bezel
-	displayL             = 34.1 // Overall length including bezel
-	displayMountingW     = 42   // Mounting hole to hole width
-	displayMountingL     = 29   // Mounting hole to hole length
-	displayMountingHoleD = 2.2  // Mounting hole diameter
+	displayScreenW       = amoLedScreenL
+	displayScreenL       = amoLedScreenW
+	displayScreenR       = amoLedScreenR
+	displayW             = amoLedW
+	displayL             = amoLedL
+	displayMountingW     = amoLedMountingW
+	displayMountingL     = amoLedMountingL
+	displayMountingHoleD = amoLedMountingHoleD
+	displayMountingHoleR = amoLedMountingHoleD / 2
 )
 
 // RD03D
@@ -92,27 +121,41 @@ const (
 
 // Scd41 (CO2, temp, humidity)
 const (
-	Scd41SW = 8    // Width of the sensor body
-	Scd41W  = 13.2 // Width of the PCB
-	Scd41L  = 22.0 // Length of the PCB
-	Scd41H  = 8
-	Scd41T  = 1.6
+	Scd41SensorWidth          = 8.5                                              // Width of the sensor body
+	Scd41SensorLength         = 8.5                                              // Length of the sensor body
+	Scd41SensorHeight         = 6.5                                              // Height of the sensor body
+	Scd41BottomToSensorTop    = 18.0                                             // Length until the top of the sensor body (measured from the bottom)
+	Scd41BottomToSensorMiddle = Scd41BottomToSensorTop - (Scd41SensorHeight / 2) // Length until the middle of the sensor body (measured from the bottom)
+	Scd41W                    = 13.2                                             // Width of the PCB
+	Scd41L                    = 22.0                                             // Length of the PCB
+	Scd41H                    = 8
+	Scd41T                    = 1.6
 )
 
 // Bh1750 (light)
 const (
-	Bh1750W = 14.2
-	Bh1750L = 18.8
-	Bh1750H = 3.0
+	Bh1750W                    = 14.2                                               // Width of the PCB
+	Bh1750L                    = 18.5                                               // Length of the PCB
+	Bh1750BottomToSensorTop    = 12.25                                              // Length until the top of the sensor body (measured from the bottom)
+	Bh1750TopToSensorBottom    = Bh1750L - 8.25                                     // Length until the bottom of the sensor body (measured from the top)
+	Bh1750BottomToSensorMiddle = Bh1750BottomToSensorTop - (Bh1750SensorHeight / 2) // Length until the middle of the sensor body (measured from the bottom)
+	Bh1750SensorWidth          = 3.2                                                // Width of the sensor body
+	Bh1750SensorHeight         = Bh1750BottomToSensorTop - Bh1750TopToSensorBottom  // Height of the sensor body
+
+	Bh1750H = 1.0
 	Bh1750T = 1.6
 )
 
 // Bme280 (temperature, humidity, pressure)
 const (
-	Bme280W = 10.5
-	Bme280L = 13.2
-	Bme280H = 3.5
-	Bme280T = 1.6
+	Bme280W                    = 10.5
+	Bme280L                    = 13.2
+	Bme280H                    = 3.5
+	Bme280T                    = 1.6
+	Bme280SensorWidth          = 2.0
+	Bme280SensorLength         = 3.0
+	Bme280SensorHeight         = 1.0
+	Bme280BottomToSensorMiddle = 11.0
 )
 
 // USB-C hole dimensions
@@ -120,6 +163,38 @@ const (
 	UsbCHoleDiameter = 11.25 // Radius of the USB-C hole, 1 cm
 	UsbCHoleRadius   = UsbCHoleDiameter / 2.0
 )
+
+func newPyramid(w, l, h float64) Primitive {
+	baseLT := Vec3{-w / 2, l / 2, -h / 2}
+	baseRT := Vec3{w / 2, l / 2, -h / 2}
+	baseLB := Vec3{-w / 2, -l / 2, -h / 2}
+	baseRB := Vec3{w / 2, -l / 2, -h / 2}
+	apex := Vec3{0, 0, h / 2}
+
+	points := []Vec3{
+		baseLT,
+		baseRT,
+		baseRB,
+		baseLB,
+		apex,
+	}
+
+	triangles := []Vec3{
+		// Base
+		{0, 1, 2},
+		{0, 2, 3},
+		// Sides
+		{0, 1, 4},
+		{1, 2, 4},
+		{2, 3, 4},
+		{3, 0, 4},
+	}
+
+	return NewRender(
+		10,
+		NewPolyhedron(points, triangles),
+	)
+}
 
 func newBox(w, l, h, r float64) Primitive {
 	return NewRender(
@@ -235,7 +310,7 @@ func newRd03dInsertSlide() Primitive {
 func newBoxBackside() Primitive {
 	V := Vec3{(boxW / 2), (boxL / 2), 0}
 	CurrentLen := V.Len()
-	NewLen := CurrentLen - MainRounding
+	NewLen := CurrentLen - MainRounding + 1
 
 	LTP := V.Mul(NewLen / CurrentLen)
 	RTP := Vec3{-LTP.X(), LTP.Y(), 0}
@@ -269,7 +344,10 @@ func newBoxBackside() Primitive {
 				),
 			),
 		),
-		newPcbInlay(),
+		NewTranslation(
+			Vec3{0, 0, boxBacksideT},
+			newMounting(pcbBoardMountW, pcbBoardMountL, displayMountingHoleR, 4*W1),
+		),
 		NewTranslation(
 			Vec3{0, 0, boxBacksideT},
 			NewTranslation(
@@ -299,19 +377,61 @@ func newBoxBackside() Primitive {
 			),
 		),
 		NewTranslation(
-			Vec3{0, boxL/2 - Scd41H, boxBacksideT},
+			Vec3{-15, boxL/2 - Scd41H, boxBacksideT},
 			newScd41InsertSlide(),
 		),
 		NewTranslation(
-			Vec3{0, -(boxL/2 - W2 - Bh1750H), boxBacksideT},
+			Vec3{-15, -(boxL/2 - W1 - Bh1750H), boxBacksideT},
 			newBme280InsertSlide(),
 		),
 		NewTranslation(
-			Vec3{(boxW / 2) - 3*W1, (W2 + RD03DW + W2), boxBacksideT},
+			Vec3{(boxW / 2) - 3*W1, -(W2 + RD03DW + W2), boxBacksideT},
 			NewRotation(
 				Vec3{0, 0, 90},
 				newBh1750InsertSlide(),
 			),
+		),
+	)
+}
+
+func newMountingNail(lowerRadius, lowerHeight, nailRadius, nailHeight float64) Primitive {
+	return NewDifference(
+		NewUnion(
+			NewCylinder(lowerHeight, lowerRadius),
+			NewCylinder(lowerHeight+nailHeight, nailRadius),
+		),
+		// Cutoff the bottom
+		NewTranslation(
+			Vec3{0, 0, -(lowerHeight + nailHeight + W1) / 2},
+			NewCylinder((lowerHeight+nailHeight+W1), lowerRadius+W2),
+		),
+	)
+}
+
+// newMounting creates mounting nails for a PCB board that has mounting holes.
+func newMounting(w, l, hr, supportHeight float64) Primitive {
+	// Create mounting nails at the 4 corners of the PCB
+	// A mounting nail has two parts, the lower part (thicker) and the upper part that has the radius of the mounting hole.
+	mountingWidth := w
+	mountingLength := l
+	holeRadius := hr
+	nailLength := 3 * W1
+	return NewUnion(
+		NewTranslation(
+			Vec3{-mountingWidth / 2, -mountingLength / 2, 0},
+			newMountingNail(holeRadius+W1, supportHeight, holeRadius, nailLength),
+		),
+		NewTranslation(
+			Vec3{mountingWidth / 2, -mountingLength / 2, 0},
+			newMountingNail(holeRadius+W1, supportHeight, holeRadius, nailLength),
+		),
+		NewTranslation(
+			Vec3{-mountingWidth / 2, mountingLength / 2, 0},
+			newMountingNail(holeRadius+W1, supportHeight, holeRadius, nailLength),
+		),
+		NewTranslation(
+			Vec3{mountingWidth / 2, mountingLength / 2, 0},
+			newMountingNail(holeRadius+W1, supportHeight, holeRadius, nailLength),
 		),
 	)
 }
@@ -344,7 +464,7 @@ func newPcbInlay() Primitive {
 func newBoxFrontside() Primitive {
 	V := Vec3{(boxW / 2), (boxL / 2), 0}
 	CurrentLen := V.Len()
-	NewLen := CurrentLen - MainRounding
+	NewLen := CurrentLen - MainRounding + 1
 
 	LTP := V.Mul(NewLen / CurrentLen)
 	RTP := Vec3{-LTP.X(), LTP.Y(), LTP.Z()}
@@ -368,26 +488,50 @@ func newBoxFrontside() Primitive {
 						newBox(boxW+2*(boxI), boxL+2*(boxI), W2, MainRounding),
 					),
 				),
-				// Opening at the top side for inserting the RD03D sensor into the insert-slide
+
+				// Pyramid like opening at the top for BH1750 sensor (incoming light)
 				NewTranslation(
-					Vec3{boxW / 2, 0, (-boxFrontsideH / 2) + (RD03DH / 2) + 2*boxFrontsideT},
+					Vec3{(boxW / 2) + 0.25, (W2 + RD03DW + W2), -(boxFrontsideH / 2) + Bh1750BottomToSensorMiddle},
 					NewRotation(
-						Vec3{0, 0, 90},
-						newBox(RD03DW, RD03DL/2, RD03DH+W2, Rounding),
+						Vec3{0, -90, 0},
+						newPyramid(Bh1750SensorHeight*3, Bh1750SensorWidth*3, boxFrontsideT+3*W1),
 					),
 				),
+
+				// Pyramid like opening at the side for BME280 sensor
+				NewTranslation(
+					Vec3{-15, ((boxL / 2) + (boxFrontsideT-boxI)/2), (boxFrontsideH / 2) - Bme280BottomToSensorMiddle},
+					NewRotation(
+						Vec3{90, 0, 0},
+						newPyramid(Bme280SensorLength*3, Bme280SensorWidth*3, boxFrontsideT+3*W1),
+					),
+				),
+
+				// Rectangular opening at the side for Scd41 sensor (CO2)
+				NewTranslation(
+					Vec3{-15, -((boxL / 2) + boxFrontsideT/2), (boxFrontsideH / 2) - Scd41BottomToSensorMiddle},
+					newBox(Scd41SensorWidth, boxFrontsideT+4*W1, Scd41SensorHeight, Rounding),
+				),
+
 				// Opening on the front for the OLED display
 				NewTranslation(
-					Vec3{0, -(boxL / 2) + (displayScreenL / 2) + boxT + W1, -3 * W2},
-					newBox(displayScreenW+W2, displayScreenL+W2, 6*W2, Rounding),
+					Vec3{15, (displayScreenL / 2), -3 * W2},
+					newBox(displayScreenW, displayScreenL, 6*W2, displayScreenR),
 				),
 			),
 		),
+
+		// AMOLED display mounting
+		NewTranslation(
+			Vec3{15, (displayScreenL / 2), boxFrontsideT},
+			newMounting(displayMountingL, displayMountingW, displayMountingHoleR, 1),
+		),
+
 		// The insert slide for the RD03D sensor
 		NewTranslation(
-			Vec3{20, 0, boxFrontsideT + (W1+RD03DT+W1)/2},
+			Vec3{28, -30, boxFrontsideT + (W1+RD03DT+W1)/2},
 			NewRotation(
-				Vec3{0, 0, -90},
+				Vec3{0, 0, 90},
 				newRd03dInsertSlide(),
 			),
 		),
@@ -430,7 +574,7 @@ func newProduct() Primitive {
 			newBoxBackside(),
 		),
 		NewTranslation(
-			Vec3{0, 0, boxFrontsideH},
+			Vec3{0, 0, boxFrontsideH + 50},
 			newBoxFrontside(),
 		),
 	)
