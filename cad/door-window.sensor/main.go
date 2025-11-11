@@ -18,7 +18,7 @@ const (
 const (
 	batteryWireGap  = 2.0
 	batteryDiameter = 16.6 + batteryWireGap
-	batteryLength   = 34.0
+	batteryLength   = 34.0 + 2.0
 	batteryRadius   = batteryDiameter / 2.0
 	W1              = wallThickness
 	W2              = 2 * wallThickness
@@ -28,13 +28,13 @@ const (
 const (
 	switchBoardLength = 40.0
 	switchBoardWidth  = 21.0
-	switchBoardHeight = 8.0
+	switchBoardHeight = 16.0
 )
 
 // Tunnel between battery holder and sensor box
 const (
 	tunnelLength = 20.0
-	tunnelRadius = 1.6
+	tunnelRadius = 2.0
 )
 
 // The X-Z plane is the ground planes
@@ -82,7 +82,7 @@ func newBatteryHolder() Primitive {
 
 func newWireTunnel() Primitive {
 	return NewTranslation(
-		Vec3{0, batteryRadius / 2, -batteryLength / 2},
+		Vec3{0, 1, -batteryLength / 2},
 		NewCylinder(tunnelLength, tunnelRadius),
 	)
 
