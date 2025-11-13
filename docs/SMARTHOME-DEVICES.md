@@ -24,6 +24,10 @@ This is for an area where we want to also measure Temperature, Humidity, PM, VOC
 
 Would like to have a self designed 3D printed enclosure that can hold all the sensors as well as a screen to display the values. The enclosure should have good airflow to the sensors. Also when presence detects someone is nearby, the screen should light up to show the values, otherwise it should either be off or show the date, time and weather.
 
+## Rain
+
+- Store/Sensors/Liquid Sensors/Intelligent Rain Detection Module (150 RMB): https://www.dfrobot.com/product-2611.html
+
 ## Presence
 
 - mmWave Radar Sensor
