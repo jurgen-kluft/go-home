@@ -8,14 +8,16 @@
 
 Mac Mini M4 to run:
 
-- Sensor Server
-- HomeKit Bridge
+- Sensor Server (golang)
+- HomeKit Bridge?
+- MQTT Broker
 - Image Recognition (for presence detection)
 - Other services
+  - Immich (photo server)
 
 ## NAS
 
-- Ugreen NAS DH4800 Plus (https://www.youtube.com/watch?v=hEu6LTKbqcA)
+- [X] Ugreen NAS DH4800 Plus (https://www.youtube.com/watch?v=hEu6LTKbqcA)
 
 ## ESP8266 boards
 
@@ -54,18 +56,24 @@ Checked out many, and found this one to be of good quality and price.
 
 We would like to have smart wall panels in every room to control lights, plugs, scenes and other automations. The wall panels should be flush mounted in the wall and have a nice touch screen to control everything. The wall panels should be connected to the network through Zigbee.
 
-- Tuya Zigbee Wall Panel (bought one for testing)
-  - Example: https://www.amazon.co.uk/Smart-Switch-Zigbee-Screen-Groups/dp/B0DK3JL6FZ?th=1
-  - Zigbee2Mqtt issue: https://github.com/Koenkk/zigbee2mqtt/issues/24624
+- GeekOpen, these look like normal light switches, but inside they have a ESP8266 that sends out JSON packets to a configurable TCP server. You can send JSON
+  commands to the switch to change the state of the switch. They are powered using 220V AC.
+
+  - https://www.smart-bird.cn/smart.html
 
 ## Smart Plugs
 
 Can measure power consumption and control devices remotely. For example it can detect a wash machine, dryer, dish washer, coffee machine running, mobile phone charging.
 
+  - https://www.smart-bird.cn/smart.html
+
 ## Smart Lights
 
 Wiz (Philips) smart lights are connecting to WiFi and can easily be controlled with HomeKit by exposing them as HomeKit accessories by using Golang.
 We can group many bulbs under one `light` and expose it as one light to HomeKit, also these lights are connected through WiFi so they should react a lot quicker than Zigbee lights.
+
+- https://github.com/squarejaw/wiz
+- https://github.com/achetronic/wizgo
 
 Aqara light bulbs (white) are Zigbee based and can be controlled using the Aqara Hub and can thus end up in HomeKit.
 
@@ -73,21 +81,13 @@ Philips Hue (color or white) can be used in the bedrooms to avoid the need of Wi
 
 ## Room Presense Sensors
 
-September 2025:
-
-We can use cameras (esp32s3 modules) that frequently transmit images to a server that does image recognition to detect if a room is occupied or not. This would be more reliable than using radar based sensors. However, for this we do need a Mac Mini M4 or M5 to run our custom image recognition process. At the front door we could use a camera to detect if someone is at the door and/or if there are packages delivered. Another use-case is to detect if the parking spot is occupied or not.
-
-I have bought 3 `LinknLink eMotion Pro` sensors on `Amazon.nl`, they are Wifi IP based and should be connected to a MQTT broker. 
-
-We will also build them ourselves using ESP32 devices on WiFi can easily be exposed to HomeKit (if necessary) through the use of Golang, however we can also just expose switches that indicate presence in a room/area.
+We will also build them ourselves using ESP32 devices on WiFi can easily be exposed to HomeKit (if necessary) through the use of Golang, however we can also just expose switches that indicate presence in a room/area using `https://github.com/brutella/hap`.
 
 ## Bed Presence Sensors (DYI, WIP)
 
 One other option
 
-- SEN-09674 FSR (can be 600mm long, with two of them you can detect presence on both sides of the bed)
-  - 2x 10K Ohm resistors
-  - 2 x 72.5 RMB     = 145 RMB
+- RD03D 24GHz, 60°, 8m
 - ESP32              = 22 RMB
 - USB-C power supply = 20 RMB
 - Total              = 187 RMB 

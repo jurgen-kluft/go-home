@@ -1,10 +1,11 @@
 # Smart Home
 
-- A hub (on every floor) that can display all the data from the sensors
-  - should have touch display so that we can control it easily.
-- Sensors that can measure air quality, presence, bed presence, door/window status, etc.
+- A HUB (on every floor) that can display information from all devices
+  - Should have touch display so that we can control it easily.
+- An ESPNOW Gateway that can receive data from all the sensors over ESPNOW and send it to a server
+  - Sensors that can measure air quality, presence, bed presence, door/window status, etc.
 
-## Air Quality Ultra
+## Air Quality Elite
 
 This is for an area where we want to also measure Temperature, Humidity, PM, VOC and NOx.
 
@@ -13,7 +14,7 @@ This is for an area where we want to also measure Temperature, Humidity, PM, VOC
   - I2C Interface
   - URL: https://sensirion.com/products/catalog/SEN66
 
-## Air Quality
+## Air Quality Basic
 
 - Temperature
 - Humidity
@@ -33,13 +34,6 @@ Would like to have a self designed 3D printed enclosure that can hold all the se
 - mmWave Radar Sensor
 
 The mmWave radar is always `on` when it detects nothing, but at the moment it detects something, it will slowly `back-off` at a certain rate, e.g. 10 seconds, 20 seconds, 1 minute, 5 minutes, etc.
-
-## Magnetic Sensor
-
-A3144E Hall Effect Sensor, the Vcc pin should be connected to 3.3V, the GND pin to GND and the OUT pin to a GPIO pin on the ESP32.
-The signal pin should be pulled up to 3.3V using a 10K resistor. When the magnet is close to the sensor, the output will be LOW, otherwise it will be HIGH.
-
-Pinout: Vcc | GND | Signal
 
 ## Bed Presence
 
@@ -89,6 +83,8 @@ If we use a mmWave (low power) sensor that has 'trigger' output, we can use this
 1600 mAh / 110 uA = 14545 hours = 606 days = 1.6 years (theoretical)
 
 # Door / Window / Mailbox Sensor
+
+LoRa based: https://github.com/foorschtbar/LoRaProMini
 
 URL: https://github.com/gadjet/Window-Door-sensor-Version-5/tree/main
      https://gadjetsblog.blogspot.com/2022/03/the-many-versions-of-wireles-door.html

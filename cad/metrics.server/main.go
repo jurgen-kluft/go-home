@@ -32,8 +32,8 @@ const (
 
 // Box dimensions
 const (
-	boxW = pcbBoardW + 2*20
-	boxL = pcbBoardL + 2*15
+	boxW = lcdW + 2*20
+	boxL = lcdL + 2*15
 	boxT = 2.0
 	boxI = 1.25
 )
@@ -59,54 +59,33 @@ const (
 	magnetInlayRadius = magnetR + W1
 )
 
-// PCB Board
-const (
-	pcbBoardW      = 62 + (Rounding / 2)
-	pcbBoardL      = 90 + (Rounding / 2)
-	pcbBoardT      = 1.6                                 // Thickness of the PCB board itself
-	pcbBoardMountW = 51.0                                // Mounting width, from hole to hole, for the PCB board
-	pcbBoardMountL = 75.0                                // Mounting length, from hole to hole, for the PCB board
-	displayMountHR = 2.0 / 2                             // Mounting hole radius for the PCB board
-	pcbBoardBH     = 6.0 - pcbBoardT                     // Height of the tallest component on the bottom of the PCB
-	pcbBoardTH     = W1                                  // Thickness of the tallest component on the top of the PCB
-	pcbBoardH      = pcbBoardBH + pcbBoardTH + pcbBoardT // Total height of the PCB including components
-)
+// Waveshare ESP32-S3 LCD board with:
+// - TF card slot
+// - GPIO header pins
 
-// Display, 128x128, SH1107 OLED
+// Display, 320x480 LCD from Waveshare
 const (
-	sh1107ScreenW       = 37.3 // Actual display width
-	sh1107ScreenL       = 34.0 // Actual display length
-	sh1107ScreenR       = 0.5  // Actual display corner rounding
-	sh1107W             = 47.1 // Overall width including bezel
-	sh1107L             = 34.1 // Overall length including bezel
-	sh1107MountingW     = 42   // Mounting hole to hole width
-	sh1107MountingL     = 29   // Mounting hole to hole length
-	sh1107MountingHoleD = 2.2  // Mounting hole diameter
-)
-
-// Display, 410*502, SH8601 AMOLED, (dwo.net.cn, DO0180PFST05)
-const (
-	amoLedScreenW       = 34.79 // Actual display width
-	amoLedScreenL       = 42.62 // Actual display length
-	amoLedScreenR       = 9.0   // Actual display corner rounding
-	amoLedW             = 36.79 // Overall width including bezel
-	amoLedL             = 52.56 // Overall length including bezel
-	amoLedMountingW     = 31.73 // Mounting hole to hole width
-	amoLedMountingL     = 47.56 // Mounting hole to hole length
-	amoLedMountingHoleD = 1.8   // Mounting hole diameter
+	lcdScreenW       = 34.79 // Actual display width
+	lcdScreenL       = 42.62 // Actual display length
+	lcdScreenR       = 9.0   // Actual display corner rounding
+	lcdW             = 36.79 // Overall width including bezel
+	lcdL             = 52.56 // Overall length including bezel
+	lcdMountingW     = 31.73 // Mounting hole to hole width
+	lcdMountingL     = 47.56 // Mounting hole to hole length
+	lcdMountingHoleD = 1.8   // Mounting hole diameter
 )
 
 // Display, SH1107 OLED, 128x128
 const (
-	displayScreenW       = amoLedScreenL
-	displayScreenL       = amoLedScreenW
-	displayScreenR       = amoLedScreenR
-	displayW             = amoLedW
-	displayL             = amoLedL
-	displayMountingW     = amoLedMountingW
-	displayMountingL     = amoLedMountingL
-	displayMountingHoleD = amoLedMountingHoleD
-	displayMountingHoleR = amoLedMountingHoleD / 2
+	displayScreenW       = lcdScreenL
+	displayScreenL       = lcdScreenW
+	displayScreenR       = lcdScreenR
+	displayW             = lcdW
+	displayL             = lcdL
+	displayMountingW     = lcdMountingW
+	displayMountingL     = lcdMountingL
+	displayMountingHoleD = lcdMountingHoleD
+	displayMountingHoleR = lcdMountingHoleD / 2
 )
 
 // RD03D
@@ -346,10 +325,6 @@ func newBoxBackside() Primitive {
 		),
 		NewTranslation(
 			Vec3{0, 0, boxBacksideT},
-			newMounting(pcbBoardMountW, pcbBoardMountL, displayMountingHoleR, 4*W1),
-		),
-		NewTranslation(
-			Vec3{0, 0, boxBacksideT},
 			NewTranslation(
 				LTP,
 				newMagnetInlay(boxBacksideH-boxBacksideT),
@@ -432,28 +407,6 @@ func newMounting(w, l, hr, supportHeight float64) Primitive {
 		NewTranslation(
 			Vec3{mountingWidth / 2, mountingLength / 2, 0},
 			newMountingNail(holeRadius+W1, supportHeight, holeRadius, nailLength),
-		),
-	)
-}
-
-func newPcbInlay() Primitive {
-	return NewTranslation(
-		Vec3{0, 0, boxT},
-		NewRender(
-			10,
-			NewUnion(
-				NewTranslation(
-					Vec3{0, 0, pcbBoardH / 2},
-					NewDifference(
-						newBox(pcbBoardW+W2, pcbBoardL+W2, pcbBoardH, Rounding),
-						newBox(pcbBoardW, pcbBoardL, pcbBoardH+2*W2, Rounding),
-					),
-				),
-				NewTranslation(
-					Vec3{0, 0, pcbBoardBH + W1/2},
-					newWall(W2, pcbBoardW, pcbBoardL, W1, Rounding),
-				),
-			),
 		),
 	)
 }

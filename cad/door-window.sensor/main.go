@@ -8,6 +8,12 @@ import (
 	. "github.com/ljanyst/ghostscad/primitive"
 )
 
+// History:
+// v1.0: Initial version
+// v1.1: Adjusted battery holder dimensions to fit better
+//       moved battery holder next to sensor box
+//       increased sensor box height to fit the ESP8266 board better
+
 // Global constants
 const (
 	wallThickness = 1.5
@@ -18,7 +24,7 @@ const (
 const (
 	batteryWireGap  = 2.0
 	batteryDiameter = 16.6 + batteryWireGap
-	batteryLength   = 34.0 + 2.0
+	batteryLength   = 34.0 + 6.0 // 34.0
 	batteryRadius   = batteryDiameter / 2.0
 	W1              = wallThickness
 	W2              = 2 * wallThickness
@@ -28,13 +34,13 @@ const (
 const (
 	switchBoardLength = 40.0
 	switchBoardWidth  = 21.0
-	switchBoardHeight = 16.0
+	switchBoardHeight = 15.0 // Including the battery socket and connection
 )
 
 // Tunnel between battery holder and sensor box
 const (
 	tunnelLength = 20.0
-	tunnelRadius = 2.0
+	tunnelRadius = 1.2
 )
 
 // The X-Z plane is the ground planes
@@ -62,15 +68,15 @@ func newBatteryHolderLid() Primitive {
 }
 
 func newBatteryHolder() Primitive {
-	h := batteryLength + W2 + rounding*2
+	h := batteryLength + W2
 	return NewTranslation(
 		Vec3{0, 0, 0},
 		NewDifference(
 			NewUnion(
 				NewCylinder(h, batteryRadius+W1),
 				NewTranslation(
-					Vec3{0, batteryRadius, -(W1 / 2)},
-					NewBox(batteryDiameter, switchBoardHeight, h+W1),
+					Vec3{-W1 / 2, batteryRadius, 0},
+					NewBox(batteryDiameter+W2+W1, switchBoardHeight, h),
 				),
 			),
 			// Make the cylinder hollow, W1 wall thickness
@@ -80,12 +86,18 @@ func newBatteryHolder() Primitive {
 		))
 }
 
-func newWireTunnel() Primitive {
-	return NewTranslation(
-		Vec3{0, 1, -batteryLength / 2},
-		NewCylinder(tunnelLength, tunnelRadius),
+func newTunnelOnXAxis(l, r float64) Primitive {
+	return NewRotation(
+		Vec3{0, 90, 0},
+		NewCylinder(l, r),
 	)
+}
 
+func newTunnelOnYAxis(l, r float64) Primitive {
+	return NewRotation(
+		Vec3{90, 0, 0},
+		NewCylinder(l, r),
+	)
 }
 
 func newSensorBox() Primitive {
@@ -117,7 +129,8 @@ func newSensorBoxLid() Primitive {
 		))
 }
 
-func newCombineAll() Primitive {
+func productSensorBox() Primitive {
+	tunnelLength := 4 * W2
 	return NewRotation(
 		Vec3{0, 0, 180},
 		NewDifference(
@@ -127,19 +140,20 @@ func newCombineAll() Primitive {
 					newBatteryHolder(),
 				),
 				NewTranslation(
-					Vec3{0, batteryRadius - 2*W1, -((switchBoardLength+W2)/2 + (batteryLength+W2)/2 + rounding)},
+					//Vec3{0, batteryRadius - 2*W1, -((switchBoardLength+W2)/2 + (batteryLength+W2)/2 + rounding)},
+					Vec3{-(switchBoardWidth/2 + batteryRadius + W1 + W1), batteryRadius - 2*W1, 0},
 					newSensorBox(),
 				),
 			),
-			newWireTunnel(),
-		))
-}
-
-func productSensorBox() Primitive {
-	return NewList(
-		NewTranslation(
-			Vec3{0, batteryRadius + W1, batteryLength / 2},
-			newCombineAll(),
+			// Two wire tunnels for the battery to the ESP8266 board
+			NewTranslation(
+				Vec3{-(batteryRadius/2 + tunnelLength/2), 0, batteryLength/2 - W1},
+				newTunnelOnXAxis(tunnelLength, tunnelRadius),
+			),
+			NewTranslation(
+				Vec3{-(batteryRadius/2 + tunnelLength/2), 0, -(batteryLength/2 - W1)},
+				newTunnelOnXAxis(tunnelLength, tunnelRadius),
+			),
 		),
 	)
 }
@@ -168,11 +182,32 @@ func productSensorBoxLid() Primitive {
 	)
 }
 
+func newCombineAll() Primitive {
+	// Return a setup of all the parts together for review
+	// Move them apart for better viewing
+	apart := 20.0
+	return NewList(
+		NewTranslation(
+			Vec3{-apart, 0, 0},
+			productBatteryHolderLid(),
+		),
+		NewTranslation(
+			Vec3{apart, 0, 0},
+			productSensorBoxLid(),
+		),
+		NewTranslation(
+			Vec3{0, 0, 0},
+			productSensorBox(),
+		),
+	)
+}
+
 func main() {
 	sys.Initialize()
 	sys.RenderMultiple([]sys.Shape{
 		{Name: "sensorbox", Primitive: productSensorBox(), Flags: sys.Default},
 		{Name: "sensorbox lid", Primitive: productSensorBoxLid(), Flags: sys.None},
 		{Name: "batteryholder lid", Primitive: productBatteryHolderLid(), Flags: sys.None},
+		{Name: "for-review-only", Primitive: newCombineAll(), Flags: sys.None},
 	})
 }

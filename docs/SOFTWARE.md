@@ -3,25 +3,22 @@
 - Go; https://golang.org/, 1.22.12
 - C/C++
 
+On the new Mac Mini, what to install:
+
+- Homebrew; https://brew.sh/
+- Golang; `brew install go`
+- Mosquitto MQTT broker; `brew install mosquitto`
+- VSCode; https://code.visualstudio.com/
+
 ## Sensor Data Server
 
-- TCP server (Go or C/C++)
-
-## TNP Server
-
-- https://github.com/btfak/sntp
+- TCP server (Golang)
 
 ## MQTT Broker
 
 - Emitter; https://github.com/emitter-io/emitter (golang)
 - Mochi MQTT; https://github.com/mochi-mqtt/server (golang)
 - MQTT Broker; Mosquitto
-
-## ESPHome
-
-From golang we can receive data from ESPHome devices, and we can send commands to them.
-
-- https://github.com/mycontroller-org/esphome_api
 
 ## Esp32 S3 Camera
 
@@ -30,10 +27,8 @@ For example:
 - Monitoring the parking place
 - Monitoring the water/gas meter
 - Monitoring the front door for deliveries
-- Monitoring a room for presence of people
 
 - https://github.com/Scicrop/esp32-cam-yolo/tree/master/arduino/WifiCam
-
 
 ## Image recognition / Object detection
 
@@ -53,13 +48,4 @@ Run directly on ESP32 S3:
 ## Kalman filter
 
 https://alumni.media.mit.edu/~wad/mas864/proj_src.html
-
-### Custom Devices
-
-- https://emanuelduss.ch/posts/co2-measurement/    
-
-## Philips Wiz Lights
-
-- https://github.com/squarejaw/wiz
-- https://github.com/achetronic/wizgo
 

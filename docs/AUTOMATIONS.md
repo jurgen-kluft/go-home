@@ -34,8 +34,8 @@ In the morning, when both people are out of bed and people are detected on the 1
 
 ## Timing
 
-A `virtual switch` that turns ON 30 minutes before sunset. This can be used to trigger other automations.
-A `virtual switch` that turns ON 30 minutes before sunrise. This can be used to trigger other automations.
+A `virtual switch` that turns ON N minutes around sunset, this can be used to trigger other automations.
+A `virtual switch` that turns ON N minutes around sunrise, this can be used to trigger other automations.
 
 ## HomeKit Scenes
 
@@ -48,51 +48,9 @@ Each motion sensor will have a `virtual sensor` that is set to ON when motion is
 We can then have an automation that uses these `virtual sensor`s to determine if the kitchen lights should be ON or OFF.
 This automation can also use more information like the time of day, season, and other sensors to determine if the kitchen lights should be ON or OFF.
 
-## Appartment
-
-- Main Bedroom
-  - Lights
-    - Main Light
-    - Stand Jurgen
-    - Stand Faith
-    - Shower Light
-  - Temperature/Humidity/Pressure/CO2
-  - Bed Presence
-- Sophia Room
-  - Lights
-    - Main Light
-  - Temperature/Humidity/Pressure/CO2
-- Jennifer Room
-  - Lights
-    - Main Light
-  - Temperature/Humidity/Pressure/CO2
-- Kitchen
-  - Lights
-    - Diner
-    - Counter
-  - Air Quality
-  - Presence
-- Living Room
-  - Lights
-    - Main
-    - Stand
-    - Chandelier
-  - Temperature/Humidity/Pressure/CO2
-  - Presence
-- Bathroom
-  - Lights
-    - Main Light
-    - Shower
-  - Presence
-- Entrance
-  - Lights
-    - Frontdoor Light
-  - Presence
-
 ## Virtual Switches
 
 So we need to create a `virtual switch` for each `light` in the house.
-In total we have 13 `virtual switch`es.
 
-We can also make N `moods`
+We can also make N `moods`, so that you can use Siri to change the mood, e.g. "Set the 'living room mood' to Movie".
 
