@@ -1,5 +1,5 @@
-- Number of WiFi APs (every floor): 3
-  - GL-inet Berry/Slate and Flint
+- Number of WiFi APs: 3
+  - GL-inet Berry, Slate and Flint
 
 - Number of presence sensors: 9
   - USB-C powered
@@ -18,7 +18,7 @@ According to the below setup, the appartment contains:
   -  Number of '(open/close) sensor' = 8
   -  Number of 'Presence sensor' = 9
   -  Number of 'Environment sensor' = 7
-  -  Number of 'Switch wall panel (4 buttons)' = 8
+  -  Number of 'Switch wall panel (2/3 buttons)' = 8
 
 There are some 'hotel' switches, they will have to be disabled, since some of them do not contain a neutral wire and we will
 use some of the 'switching' wires to trace neutral to the switch box.

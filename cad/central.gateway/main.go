@@ -8,6 +8,12 @@ import (
 	. "github.com/ljanyst/ghostscad/primitive"
 )
 
+// TODO
+//
+// - External Antenna for ESP32
+// - Ventilation holes ?
+// - Remove USB-C round cutout, not necessary if we use Waveshare board
+
 // Conventions:
 // For the final STL output, the X-Z plane is the ground plane:
 //     - X axis is width
@@ -34,30 +40,49 @@ const (
 const (
 	boxW = PCB_W + 30
 	boxL = PCB_L
-	boxH = 30
+	boxH = boxBottomH + boxTopH
 	boxT = WT
 	boxI = 1.25
 )
 
 // Bottom of the box
 const (
-	boxBacksideT = boxT
-	boxBacksideH = 25.0
+	boxBottomT = boxT
+	boxBottomH = 25.0
 )
 
 // Top of the box
 const (
-	boxFrontsideT = boxT
-	boxFrontsideH = 15.0
+	boxTopT = boxT
+	boxTopH = 15.0
 )
 
-// LilyGo PCB board measurements
+// LilyGo ETH PCB board measurements
 const (
-	PCB_W          = 28.0
-	PCB_L          = 59.5
-	PCB_MountingHR = 1.5  // Radius of the mounting holes
-	PCB_H2HL       = 54.0 // Distance between the mounting holes along the length
-	PCB_H2HW       = 23.0 // Distance between the mounting holes along the width
+	LiliGo_PCB_W          = 28.0
+	LiliGo_PCB_L          = 59.5
+	LiliGo_PCB_MountingHR = 1.5  // Radius of the mounting holes
+	LiliGo_PCB_H2HL       = 54.0 // Distance between the mounting holes along the length
+	LiliGo_PCB_H2HW       = 23.0 // Distance between the mounting holes along the width
+)
+
+// Waveshare ETH PCB board measurements
+const (
+	WS_PCB_W          = 21.0
+	WS_PCB_L          = 72.8
+	WS_PCB_MountingHR = 1.6   // Radius of the mounting holes
+	WS_PCB_H2HL       = 54.15 // Distance between the mounting holes along the length
+	WS_PCB_H2HW       = 18.25 // Distance between the mounting holes along the width
+)
+
+// ETH PCB board measurements
+const (
+	PCB_W          = WS_PCB_W
+	PCB_L          = WS_PCB_L
+	PCB_MountingHR = WS_PCB_MountingHR
+	PCB_H2HL       = WS_PCB_H2HL
+	PCB_H2HW       = WS_PCB_H2HW
+	PCB_HOFFSET    = 1.5 // Extra height offset of the PCB from the bottom of the box
 )
 
 // Inlay magnets for holding the box bottom and top together
@@ -75,18 +100,24 @@ const (
 	UsbCHoleRadius   = UsbCHoleDiameter / 2.0
 )
 
+const (
+	UsbCablePlugWidth  = 11.0
+	UsbCablePlugHeight = 5.25
+)
+
 // Rotary Encoder cutout dimensions
 const (
 	RotaryEncoderW = 12.0
-	RotaryEncoderH = 15.0
+	RotaryEncoderH = 12.0
 	RotaryEncoderD = 7.0
 	RotaryEncoderR = RotaryEncoderD / 2.0
 )
 
 // ETHERNET RJ45 hole dimensions
 const (
-	EthernetHoleW = 14.0
-	EthernetHoleH = 11.0
+	EthernetHoleW = 16.5 // 14.0
+	EthernetHoleH = 13.0 // 11.0
+	EthernetHoleO = 5.0  // Height offset from the bottom of the box backside, plus some extra clearance for USB-C plug
 )
 
 // Display, 128x128, SH1107 OLED
@@ -198,7 +229,7 @@ func newMagnetInlay(h float64) Primitive {
 // - PCB inlay
 // - Sensor insert-slides
 // - USB-C connector cutout
-func newBoxBackside() Primitive {
+func newBoxBottomPart() Primitive {
 	V := Vec3{(boxW / 2), (boxL / 2), 0}
 	CurrentLen := V.Len()
 	NewLen := CurrentLen - MainRounding + 1
@@ -210,27 +241,32 @@ func newBoxBackside() Primitive {
 
 	return NewUnion(
 		NewTranslation(
-			Vec3{0, 0, boxBacksideH / 2},
+			Vec3{0, 0, boxBottomH / 2},
 			NewRender(
 				10,
 				NewDifference(
 					NewUnion(
 						NewDifference(
-							newBox(boxW+2*(boxT+boxI), boxL+2*(boxT+boxI), boxBacksideH, MainRounding),
+							newBox(boxW+2*(boxT+boxI), boxL+2*(boxT+boxI), boxBottomH, MainRounding),
 							NewTranslation(
-								Vec3{0, 0, boxBacksideT},
-								newBox(boxW, boxL, boxBacksideH, MainRounding),
+								Vec3{0, 0, boxBottomT},
+								newBox(boxW, boxL, boxBottomH, MainRounding),
 							),
 						),
 						NewTranslation(
-							Vec3{0, 0, boxBacksideT},
-							newWall(boxI, boxW+2*boxI, boxL+2*boxI, boxBacksideH, MainRounding),
+							Vec3{0, 0, boxBottomT},
+							newWall(boxI, boxW+2*boxI, boxL+2*boxI, boxBottomH, MainRounding),
 						),
 					),
 					// ETHERNET RJ45 connector cutout
 					NewTranslation(
-						Vec3{0, boxL / 2, -(boxBacksideH / 2) + boxBacksideT + EthernetHoleH/2 + 3},
+						Vec3{0, boxL / 2, -(boxBottomH / 2) + (EthernetHoleH / 2) + boxBottomT + EthernetHoleO + PCB_HOFFSET},
 						putOnYAxis(NewCube(Vec3{EthernetHoleW, EthernetHoleH, 2 * W2})),
+					),
+					// USB-C cable plug cutout
+					NewTranslation(
+						Vec3{0, boxL / 2, -(boxBottomH / 2) + (UsbCablePlugHeight / 2) + boxBottomT + PCB_HOFFSET},
+						putOnYAxis(NewCube(Vec3{UsbCablePlugWidth, UsbCablePlugHeight, 2 * W2})),
 					),
 					// TODO Rotary Encoder (circular) cutout
 					NewTranslation(
@@ -240,41 +276,41 @@ func newBoxBackside() Primitive {
 					// USB-C connector cutout
 					NewTranslation(
 						Vec3{RBP.X(), RBP.Y() + UsbCHoleDiameter + UsbCHoleRadius, 0},
-						putOnXAxis(NewCylinder(boxBacksideH*2, UsbCHoleRadius)),
+						putOnXAxis(NewCylinder(boxBottomH*2, UsbCHoleRadius)),
 					),
 				),
 				// DEBUG; display the PCB
-				newBox(PCB_W, PCB_L, 2.0, Rounding),
+				//newBox(PCB_W, PCB_L, 2.0, Rounding),
 			),
 		),
 
 		// Magnet inlays
 		NewTranslation(
-			Vec3{0, 0, boxBacksideT},
+			Vec3{0, 0, boxBottomT},
 			NewTranslation(
 				LTP,
-				newMagnetInlay(boxBacksideH-boxBacksideT),
+				newMagnetInlay(boxBottomH-boxBottomT),
 			),
 		),
 		NewTranslation(
-			Vec3{0, 0, boxBacksideT},
+			Vec3{0, 0, boxBottomT},
 			NewTranslation(
 				RTP,
-				newMagnetInlay(boxBacksideH-boxBacksideT),
+				newMagnetInlay(boxBottomH-boxBottomT),
 			),
 		),
 		NewTranslation(
-			Vec3{0, 0, boxBacksideT},
+			Vec3{0, 0, boxBottomT},
 			NewTranslation(
 				LBP,
-				newMagnetInlay(boxBacksideH-boxBacksideT),
+				newMagnetInlay(boxBottomH-boxBottomT),
 			),
 		),
 		NewTranslation(
-			Vec3{0, 0, boxBacksideT},
+			Vec3{0, 0, boxBottomT},
 			NewTranslation(
 				RBP,
-				newMagnetInlay(boxBacksideH-boxBacksideT),
+				newMagnetInlay(boxBottomH-boxBottomT),
 			),
 		),
 	)
@@ -325,7 +361,7 @@ func newMounting(w, l, hr, supportHeight float64) Primitive {
 // The frontside of the box, also has 4 sides of a certain height:
 // - RD03D sensor insert-slide (upper part)
 // - OLED display cutout (lower part)
-func newBoxFrontside() Primitive {
+func newBoxTopPart() Primitive {
 	V := Vec3{(boxW / 2), (boxL / 2), 0}
 	CurrentLen := V.Len()
 	NewLen := CurrentLen - MainRounding + 1
@@ -337,18 +373,18 @@ func newBoxFrontside() Primitive {
 
 	return NewUnion(
 		NewTranslation(
-			Vec3{0, 0, boxFrontsideH / 2},
+			Vec3{0, 0, boxTopH / 2},
 			NewDifference(
 				NewDifference(
 					NewDifference(
-						newBox(boxW+2*(boxFrontsideT+boxI), boxL+2*(boxFrontsideT+boxI), boxFrontsideH, MainRounding),
+						newBox(boxW+2*(boxTopT+boxI), boxL+2*(boxTopT+boxI), boxTopH, MainRounding),
 						NewTranslation(
-							Vec3{0, 0, boxFrontsideT},
-							newBox(boxW, boxL, boxFrontsideH, MainRounding),
+							Vec3{0, 0, boxTopT},
+							newBox(boxW, boxL, boxTopH, MainRounding),
 						),
 					),
 					NewTranslation(
-						Vec3{0, 0, boxFrontsideH / 2},
+						Vec3{0, 0, boxTopH / 2},
 						newBox(boxW+2*(boxI), boxL+2*(boxI), W2, MainRounding),
 					),
 				),
@@ -361,7 +397,7 @@ func newBoxFrontside() Primitive {
 		),
 		// AMOLED display mounting
 		NewTranslation(
-			Vec3{0, 0, boxFrontsideT},
+			Vec3{0, 0, boxTopT},
 			newMounting(displayMountingW, displayMountingL, displayMountingHoleR, 0),
 		),
 		// Magnet inlays
@@ -369,28 +405,28 @@ func newBoxFrontside() Primitive {
 			Vec3{0, 0, boxT},
 			NewTranslation(
 				LTP,
-				newMagnetInlay(boxFrontsideH-boxFrontsideT),
+				newMagnetInlay(boxTopH-boxTopT),
 			),
 		),
 		NewTranslation(
 			Vec3{0, 0, boxT},
 			NewTranslation(
 				RTP,
-				newMagnetInlay(boxFrontsideH-boxFrontsideT),
+				newMagnetInlay(boxTopH-boxTopT),
 			),
 		),
 		NewTranslation(
 			Vec3{0, 0, boxT},
 			NewTranslation(
 				LBP,
-				newMagnetInlay(boxFrontsideH-boxFrontsideT),
+				newMagnetInlay(boxTopH-boxTopT),
 			),
 		),
 		NewTranslation(
 			Vec3{0, 0, boxT},
 			NewTranslation(
 				RBP,
-				newMagnetInlay(boxFrontsideH-boxFrontsideT),
+				newMagnetInlay(boxTopH-boxTopT),
 			),
 		),
 	)
@@ -400,11 +436,11 @@ func newProduct() Primitive {
 	return NewUnion(
 		NewTranslation(
 			Vec3{0, 0, 0},
-			newBoxBackside(),
+			newBoxBottomPart(),
 		),
 		NewTranslation(
-			Vec3{0, 0, boxFrontsideH + 50},
-			newBoxFrontside(),
+			Vec3{0, 0, boxTopH + 50},
+			newBoxTopPart(),
 		),
 	)
 }

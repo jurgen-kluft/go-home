@@ -20,6 +20,13 @@ import (
 //     - Y axis is length/depth
 //     - Z axis is height
 
+// TODO
+//
+// What putting the sensor outside of the box?
+// We just needs standard cirular holes where sensors can be mounted.
+// This way, we can be compatible with many different sensors.
+//
+
 // Global constants
 const (
 	Unit         = 1.0 // 1 unit = 1 mm
@@ -33,7 +40,7 @@ const (
 // Box dimensions
 const (
 	boxW = pcbBoardW + 2*20
-	boxL = pcbBoardL + 2*15
+	boxL = pcbBoardL + 2*10
 	boxT = 2.0
 	boxI = 1.25
 )
@@ -59,13 +66,13 @@ const (
 	magnetInlayRadius = magnetR + W1
 )
 
-// PCB Board
+// PCB Board from
 const (
-	pcbBoardW      = 62 + (Rounding / 2)
-	pcbBoardL      = 90 + (Rounding / 2)
+	pcbBoardW      = 56.25 + (Rounding / 2)
+	pcbBoardL      = 80.25 + (Rounding / 2)
 	pcbBoardT      = 1.6                                 // Thickness of the PCB board itself
-	pcbBoardMountW = 51.0                                // Mounting width, from hole to hole, for the PCB board
-	pcbBoardMountL = 75.0                                // Mounting length, from hole to hole, for the PCB board
+	pcbBoardMountW = 51                                  // Mounting width, from hole to hole, for the PCB board
+	pcbBoardMountL = 75                                  // Mounting length, from hole to hole, for the PCB board
 	displayMountHR = 2.0 / 2                             // Mounting hole radius for the PCB board
 	pcbBoardBH     = 6.0 - pcbBoardT                     // Height of the tallest component on the bottom of the PCB
 	pcbBoardTH     = W1                                  // Thickness of the tallest component on the top of the PCB
@@ -104,6 +111,12 @@ const (
 	RD03DTT = 1.0 // Bottom height (height of components on bottom side
 )
 
+// Circular hole dimensions for sensor mounting
+const (
+	sensorMountingHoleD = 10.0 // Diameter of the mounting holes for sensors
+	sensorMountingHoleR = sensorMountingHoleD / 2.0
+)
+
 // Scd41 (CO2, temp, humidity)
 const (
 	Scd41SensorWidth          = 8.5                                              // Width of the sensor body
@@ -119,6 +132,7 @@ const (
 
 // Bh1750 (light)
 const (
+	Bh1750Spacing              = 1.0
 	Bh1750W                    = 14.2                                               // Width of the PCB
 	Bh1750L                    = 18.5                                               // Length of the PCB
 	Bh1750BottomToSensorTop    = 12.25                                              // Length until the top of the sensor body (measured from the bottom)
@@ -145,8 +159,9 @@ const (
 
 // USB-C hole dimensions
 const (
-	UsbCHoleDiameter = 11.6 // Radius of the USB-C hole, 1.16 cm
-	UsbCHoleRadius   = UsbCHoleDiameter / 2.0
+	UsbCHoleDiameter     = 11.6 // Radius of the USB-C hole, 1.16 cm
+	UsbCHoleRadius       = UsbCHoleDiameter / 2.0
+	UsbCHoleRingDiameter = 17.0
 )
 
 func newPyramid(w, l, h float64) Primitive {
@@ -179,6 +194,14 @@ func newPyramid(w, l, h float64) Primitive {
 		10,
 		NewPolyhedron(points, triangles),
 	)
+}
+
+func NewCylinderOnTheXAxis(h, r float64) Primitive {
+	return NewRotation(Vec3{0, 90, 0}, NewCylinder(h, r))
+}
+
+func NewCylinderOnTheYAxis(h, r float64) Primitive {
+	return NewRotation(Vec3{90, 0, 0}, NewCylinder(h, r))
 }
 
 func newBox(w, l, h, r float64) Primitive {
@@ -275,17 +298,285 @@ func newHorizontalInsertSlide2(w, l, h, t float64) Primitive {
 	)
 }
 
-func newScd41InsertSlide() Primitive {
-	return newVerticalInsertSlide(Scd41W, Scd41L, W1+Scd41T+W1, Scd41T, boxBacksideH-boxBacksideT)
+func newScd41Sensor() Primitive {
+	pipeLen := W1 * 3
+
+	// The pipe part, thickness is sensorMountingHoleR and it is hollow for wires to go through
+	// Wall thickness is W1
+	return NewDifference(
+		NewUnion(
+			NewTranslation(
+				Vec3{0, ((Scd41L + W2) / 2) + W1, 0},
+				NewCylinderOnTheYAxis(pipeLen, sensorMountingHoleR),
+			),
+			// The box part that contains the sensor
+			NewTranslation(
+				Vec3{0, 0, 0},
+				NewDifference(
+					NewCube(Vec3{Scd41W + W2, Scd41L + W2, Scd41H + W1}),
+					NewTranslation(
+						Vec3{0, 0, W1},
+						NewCube(Vec3{Scd41W, Scd41L, Scd41H + W1 + W1}),
+					),
+				),
+			),
+		),
+		NewTranslation(
+			Vec3{0, ((Scd41L + W2) / 2) + W1, 0},
+			NewCylinderOnTheYAxis(pipeLen*2, sensorMountingHoleR-W1),
+		),
+	)
 }
-func newBh1750InsertSlide() Primitive {
-	return newVerticalInsertSlide(Bh1750W, Bh1750L, W1+Bh1750T+W1, Bh1750T, boxBacksideH-boxBacksideT)
+
+func newScd41SensorLid() Primitive {
+	// The box part that contains the sensor
+	return NewTranslation(
+		Vec3{0, 0, 0},
+		NewDifference(
+			NewUnion(
+				NewCube(Vec3{Scd41W + W2, Scd41L + W2, W1}),
+				NewTranslation(
+					Vec3{0, 0, W1},
+					NewDifference(
+						NewCube(Vec3{Scd41W, Scd41L, W1}),
+						NewCube(Vec3{Scd41W - W2, Scd41L - W2, W2}),
+					),
+				),
+			),
+			// A cutout for the actual CO2 sensor
+			NewTranslation(
+				Vec3{0, (Scd41L / 2.0) - Scd41BottomToSensorMiddle, 0},
+				NewCube(Vec3{Scd41SensorWidth, Scd41SensorLength, W1 + W1}),
+			),
+		),
+	)
 }
-func newBme280InsertSlide() Primitive {
-	return newVerticalInsertSlide(Bme280W, Bme280L, W1+Bme280T+W1, Bme280T, boxBacksideH-boxBacksideT)
+
+func newScd41SensorReview() Primitive {
+	return NewUnion(
+		newScd41Sensor(),
+		NewTranslation(
+			Vec3{0, 0, Scd41BottomToSensorMiddle - (Scd41SensorHeight / 2)},
+			newScd41SensorLid(),
+		),
+	)
 }
-func newRd03dInsertSlide() Primitive {
-	return newHorizontalInsertSlide2(RD03DW, RD03DL, W1+RD03DT+W1, RD03DT)
+
+// BH1750 sensor (light)
+func newBh1750Sensor() Primitive {
+	pipeLen := W1 * 3
+	sW := Bh1750W + Bh1750Spacing
+	sL := Bh1750L + Bh1750Spacing
+	sH := W2 + W1
+
+	// The pipe part, thickness is sensorMountingHoleR and it is hollow for wires to go through
+	// Wall thickness is W1
+	return NewDifference(
+		NewUnion(
+			NewTranslation(
+				//Vec3{0, ((sL + W2) / 2) + W1, 0},
+				Vec3{0, sL/2 + W1 - sensorMountingHoleR, -(pipeLen / 2) - sH/2},
+				NewCylinder(pipeLen, sensorMountingHoleR),
+			),
+			// The box part that contains the sensor
+			NewDifference(
+				NewCube(Vec3{sW + W2, sL + W2, sH}),
+				NewTranslation(
+					Vec3{0, 0, (sH+W1)/2.0 - sH/2.0 + W1},
+					NewCube(Vec3{sW, sL, sH + W1}),
+				),
+			),
+		),
+		NewTranslation(
+			Vec3{0, sL/2 + W1 - sensorMountingHoleR, -(pipeLen / 2) - sH/2},
+			NewCylinder(pipeLen*4, sensorMountingHoleR-W1),
+		),
+	)
+}
+
+func newBh1750SensorLid() Primitive {
+	// The box part that contains the sensor
+	sW := Bh1750W + Bh1750Spacing
+	sL := Bh1750L + Bh1750Spacing
+	return NewTranslation(
+		Vec3{0, 0, 0},
+		NewDifference(
+			NewUnion(
+				NewCube(Vec3{sW + W2, sL + W2, W1}),
+				NewTranslation(
+					Vec3{0, 0, W1},
+					NewDifference(
+						NewCube(Vec3{sW - 0.2, sL, W1}),
+						NewCube(Vec3{sW - W2, sL - W2, W2}),
+					),
+				),
+			),
+			// A cutout for light to reach the BH1750 sensor
+			NewTranslation(
+				Vec3{0, (sL / 2.0) - Bh1750BottomToSensorMiddle, 0},
+				NewCube(Vec3{Bh1750SensorWidth * 1.5, Bh1750SensorHeight * 1.5, W1 + W1}),
+			),
+		),
+	)
+}
+
+func newBh1750SensorReview() Primitive {
+	sW := Bh1750W + 4*W1
+	sH := W2 + W1
+	return NewUnion(
+		NewTranslation(
+			Vec3{0, 0, sH / 2},
+			NewRotation(
+				Vec3{180, 0, 0},
+				newBh1750Sensor(),
+			),
+		),
+		NewTranslation(
+			Vec3{sW, 0, W1 / 2.0},
+			newBh1750SensorLid(),
+		),
+	)
+}
+
+func newBme280Sensor() Primitive {
+	pipeLen := W1 * 3
+	pipeTranslation := Vec3{0, -(Bme280L/2.0 + W1 - sensorMountingHoleD/2.0), -pipeLen/2 - Bme280H/2}
+
+	// The pipe part, thickness is sensorMountingHoleR and it is hollow for wires to go through
+	// Wall thickness is W1
+	return NewDifference(
+		NewUnion(
+			NewTranslation(
+				pipeTranslation,
+				NewCylinder(pipeLen, sensorMountingHoleR),
+			),
+			// The box part that contains the sensor
+			NewTranslation(
+				Vec3{0, 0, 0},
+				NewDifference(
+					NewCube(Vec3{Bme280W + W2, Bme280L + W2, Bme280H + W1}),
+					NewTranslation(
+						Vec3{0, 0, W1},
+						NewCube(Vec3{Bme280W, Bme280L, Bme280H + W1 + W1}),
+					),
+				),
+			),
+		),
+		NewTranslation(
+			pipeTranslation,
+			NewCylinder(pipeLen*2, sensorMountingHoleR-W1),
+		),
+	)
+}
+
+func newBme280SensorLid() Primitive {
+	// The box part that contains the sensor
+	return NewTranslation(
+		Vec3{0, 0, 0},
+		NewDifference(
+			NewUnion(
+				NewCube(Vec3{Bme280W + W2, Bme280L + W2, W1}),
+				NewTranslation(
+					Vec3{0, 0, W1},
+					NewDifference(
+						NewCube(Vec3{Bme280W, Bme280L, W1}),
+						NewCube(Vec3{Bme280W - W2, Bme280L - W2, W2}),
+					),
+				),
+			),
+			// A cutout for the actual BME280 sensor
+			NewTranslation(
+				Vec3{0, (Bme280L / 2.0) - Bme280BottomToSensorMiddle, 0},
+				NewCube(Vec3{Bme280SensorWidth, Bme280SensorLength, W1 + W1 + Bme280H}),
+			),
+		),
+	)
+}
+
+func newBme280SensorReview() Primitive {
+	return NewUnion(
+		NewTranslation(
+			Vec3{0, 0, Bme280H/2 + W1/2},
+			NewRotation(
+				Vec3{180, 0, 0},
+				newBme280Sensor(),
+			),
+		),
+		NewTranslation(
+			Vec3{20, 0, W1 / 2},
+			newBme280SensorLid(),
+		),
+	)
+}
+
+func newRD03DSensor() Primitive {
+
+	length := RD03DL
+	height := sensorMountingHoleD
+
+	pipeLen := W1 * 3
+	pipeTranslation := Vec3{0, -(length/2.0 + W1 + pipeLen/2), 0}
+
+	// The pipe part, thickness is sensorMountingHoleR and it is hollow for wires to go through
+	// Wall thickness is W1
+	return NewDifference(
+		NewUnion(
+			NewTranslation(
+				pipeTranslation,
+				NewCylinderOnTheYAxis(pipeLen, sensorMountingHoleR),
+			),
+			// The box part that contains the sensor
+			NewTranslation(
+				Vec3{0, 0, 0},
+				NewDifference(
+					NewCube(Vec3{RD03DW + W2, length + W2, height}),
+					NewTranslation(
+						Vec3{0, 0, W1},
+						NewCube(Vec3{RD03DW, length, height}),
+					),
+				),
+			),
+		),
+		NewTranslation(
+			pipeTranslation,
+			NewCylinderOnTheYAxis(pipeLen*2, sensorMountingHoleR-W1),
+		),
+	)
+}
+
+func newRD03DSensorLid() Primitive {
+	length := RD03DL
+
+	// The box part that contains the sensor
+	return NewTranslation(
+		Vec3{0, 0, 0},
+		NewDifference(
+			NewUnion(
+				NewCube(Vec3{RD03DW + W2, length + W2, W1}),
+				NewTranslation(
+					Vec3{0, 0, W1},
+					NewDifference(
+						NewCube(Vec3{RD03DW, length, W1}),
+						NewCube(Vec3{RD03DW - W2, length - W2, W2}),
+					),
+				),
+			),
+		),
+	)
+}
+
+func newRD03DSensorReview() Primitive {
+	height := sensorMountingHoleD
+	return NewUnion(
+		NewTranslation(
+			Vec3{0, 0, height / 2},
+			newRD03DSensor(),
+		),
+		NewTranslation(
+			Vec3{25, 0, W1 / 2},
+			newRD03DSensorLid(),
+		),
+	)
 }
 
 // The backside of the box:
@@ -323,7 +614,7 @@ func newBoxBackside() Primitive {
 					),
 					// USB-C connector cutout
 					NewTranslation(
-						Vec3{RBP.X() + 4, RBP.Y() + UsbCHoleDiameter + UsbCHoleRadius, 0},
+						Vec3{-(boxW / 2) + 2 + UsbCHoleRingDiameter/2, -(boxL / 2.0) + UsbCHoleRingDiameter, 0},
 						NewCylinder(boxBacksideH*2, UsbCHoleRadius),
 					),
 				),
@@ -369,21 +660,6 @@ func newBoxBackside() Primitive {
 			NewTranslation(
 				RBP,
 				newMagnetInlay(boxBacksideH-boxBacksideT),
-			),
-		),
-		NewTranslation(
-			Vec3{-15, boxL/2 - Scd41H, boxBacksideT},
-			newScd41InsertSlide(),
-		),
-		NewTranslation(
-			Vec3{-15, -(boxL/2 - W1 - Bh1750H), boxBacksideT},
-			newBme280InsertSlide(),
-		),
-		NewTranslation(
-			Vec3{(boxW / 2) - 3*W1, -(W2 + RD03DW + W2), boxBacksideT},
-			NewRotation(
-				Vec3{0, 0, 90},
-				newBh1750InsertSlide(),
 			),
 		),
 	)
@@ -483,28 +759,53 @@ func newBoxFrontside() Primitive {
 					),
 				),
 
-				// Pyramid like opening at the top for BH1750 sensor (incoming light)
+				// Circular openings for sensors
+
+				// TOP
 				NewTranslation(
-					Vec3{(boxW / 2) + 0.25, (W2 + RD03DW + W2), -(boxFrontsideH / 2) + Bh1750BottomToSensorMiddle},
+					Vec3{(boxW / 2), -(7 * W2), sensorMountingHoleR / 2.0},
 					NewRotation(
 						Vec3{0, -90, 0},
-						newPyramid(Bh1750SensorHeight*3, Bh1750SensorWidth*3, boxFrontsideT+3*W1),
+						NewCylinder(W2*3, sensorMountingHoleR),
+					),
+				),
+				NewTranslation(
+					Vec3{(boxW / 2), (7 * W2), sensorMountingHoleR / 2.0},
+					NewRotation(
+						Vec3{0, -90, 0},
+						NewCylinder(W2*3, sensorMountingHoleR),
 					),
 				),
 
-				// Pyramid like opening at the side for BME280 sensor
+				// Side
 				NewTranslation(
-					Vec3{-15, ((boxL / 2) + (boxFrontsideT-boxI)/2), (boxFrontsideH / 2) - Bme280BottomToSensorMiddle},
+					Vec3{-15, ((boxL / 2) + (boxFrontsideT-boxI)/2), 0},
 					NewRotation(
 						Vec3{90, 0, 0},
-						newPyramid(Bme280SensorLength*3, Bme280SensorWidth*3, boxFrontsideT+3*W1),
+						NewCylinder(W2*3, sensorMountingHoleR),
+					),
+				),
+				NewTranslation(
+					Vec3{15, ((boxL / 2) + (boxFrontsideT-boxI)/2), 0},
+					NewRotation(
+						Vec3{90, 0, 0},
+						NewCylinder(W2*3, sensorMountingHoleR),
 					),
 				),
 
-				// Rectangular opening at the side for Scd41 sensor (CO2)
 				NewTranslation(
-					Vec3{-15, -((boxL / 2) + boxFrontsideT/2), (boxFrontsideH / 2) - Scd41BottomToSensorMiddle},
-					newBox(Scd41SensorWidth, boxFrontsideT+4*W1, Scd41SensorHeight, Rounding),
+					Vec3{-15, -((boxL / 2) + boxFrontsideT/2), 0},
+					NewRotation(
+						Vec3{90, 0, 0},
+						NewCylinder(W2*3, sensorMountingHoleR),
+					),
+				),
+				NewTranslation(
+					Vec3{15, -((boxL / 2) + boxFrontsideT/2), 0},
+					NewRotation(
+						Vec3{90, 0, 0},
+						NewCylinder(W2*3, sensorMountingHoleR),
+					),
 				),
 
 				// Opening on the front for the OLED display
@@ -515,27 +816,10 @@ func newBoxFrontside() Primitive {
 			),
 		),
 
-		// NewTranslation(
-		// 	Vec3{-4, -((boxW / 2) - (W2 + RD03DW + W2) + (4.2 / 2)) / 2, boxBacksideH},
-		// 	NewTranslation(
-		// 		LTP,
-		// 		newBox(5.0, (boxW/2)-(W2+RD03DW+W2)+(4.2/2), boxBacksideH, 0.1),
-		// 	),
-		// ),
-
 		// AMOLED display mounting
 		NewTranslation(
 			Vec3{15, (displayScreenL / 2), boxFrontsideT},
 			newMounting(displayMountingL, displayMountingW, displayMountingHoleR, 1),
-		),
-
-		// The insert slide for the RD03D sensor
-		NewTranslation(
-			Vec3{28, -30, boxFrontsideT + (W1+RD03DT+W1)/2},
-			NewRotation(
-				Vec3{0, 0, 90},
-				newRd03dInsertSlide(),
-			),
 		),
 
 		// Magnet inlays
@@ -573,11 +857,11 @@ func newBoxFrontside() Primitive {
 func newProduct() Primitive {
 	return NewUnion(
 		NewTranslation(
-			Vec3{0, 0, 0},
+			Vec3{boxW/2 + 10, 0, 0},
 			newBoxBackside(),
 		),
 		NewTranslation(
-			Vec3{0, 0, boxFrontsideH + 50},
+			Vec3{-(boxW/2 + 10), 0, 0},
 			newBoxFrontside(),
 		),
 	)
@@ -586,6 +870,10 @@ func newProduct() Primitive {
 func main() {
 	sys.Initialize()
 	sys.RenderMultiple([]sys.Shape{
-		{Name: "main", Primitive: newProduct(), Flags: sys.Default},
+		{Name: "esp32_enclosure", Primitive: newProduct(), Flags: sys.Default},
+		{Name: "scd41_sensor", Primitive: newScd41SensorReview(), Flags: sys.Default},
+		{Name: "bh1750_sensor", Primitive: newBh1750SensorReview(), Flags: sys.Default},
+		{Name: "bme280_sensor", Primitive: newBme280SensorReview(), Flags: sys.Default},
+		{Name: "rd03d_sensor", Primitive: newRD03DSensorReview(), Flags: sys.Default},
 	})
 }

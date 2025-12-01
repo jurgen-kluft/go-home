@@ -4,10 +4,11 @@
   - Should have touch display so that we can control it easily.
 - An ESPNOW Gateway that can receive data from all the sensors over ESPNOW and send it to a server
   - Sensors that can measure air quality, presence, bed presence, door/window status, etc.
+  - Gateway will also send a time-sync packet every hour.
 
 ## Air Quality Elite
 
-This is for an area where we want to also measure Temperature, Humidity, PM, VOC and NOx.
+This is for an area where we want to also measure PM, VOC, CO and NOx.
 
 - SEN66, Sensirion Sensor (500 RMB, 70 USD)
   - Measures: Temperature, Humidity, PM (0.5, 1.0, 2.5, 10.0), CO2, VOC, NOx
@@ -27,7 +28,9 @@ Would like to have a self designed 3D printed enclosure that can hold all the se
 
 ## Rain
 
-- Store/Sensors/Liquid Sensors/Intelligent Rain Detection Module (150 RMB): https://www.dfrobot.com/product-2611.html
+- https://smartsolutions4home.com/ss4h-rg-rain-gauge/
+
+This requires 3D printing of the design, seems very doable, very nice idea.
 
 ## Presence
 
@@ -39,9 +42,9 @@ The mmWave radar is always `on` when it detects nothing, but at the moment it de
 
 - ESP32 C3 Mini
 - mmWave Radar Sensor
-- Light Sensor
+  - We will use two setups; ESP8266 + Relay + Light sensor setup, to turn on/off another full setup, ESP32 and RD03D mmWave
 
-In the evening between a certain time window (e.g. 8pm until detection, time-out at 2am) the mmWave sensor is used to determine if the bed is occupied or not. We need to run a prototype with a RD03D mmWave sensor to see if we are able to detect 2 persons in the bed.
+In the evening between a certain time window (configurable, e.g. 8pm until detection, time-out at 2am) the mmWave sensor is used to determine if the bed is occupied or not. We need to run a prototype with a RD03D mmWave sensor to see if we are able to detect 2 persons in the bed.
 
 When the light sensor detects that the lights are turned off, we do the detection for 'bed presence' during a certain time duration (e.g. 10 minutes). After collecting info during this time duration, we determine if the bed is occupied or not, and how many persons are in the bed. Then during the whole night (e.g. until 7am) we just assume the bed is occupied.
 

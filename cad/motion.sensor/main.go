@@ -39,7 +39,7 @@ const (
 	WT           = 1.6    // Wall Thickness
 	W1           = WT     // Thin Wall
 	W2           = 2 * WT // Medium Wall
-	Rounding     = 1      // Small Rounding
+	Rounding     = 0.5    // Small Rounding
 	MainRounding = 10     // Main Rounding
 )
 
@@ -170,27 +170,24 @@ func newPowerBox() Primitive {
 }
 
 func newPowerBoxLid() Primitive {
-	return NewTranslation(
-		Vec3{0, -40, powerBoxHeight / 2},
-		NewDifference(
-			NewUnion(
-				NewTranslation(
-					Vec3{0, W1 / 2, 0},
-					NewCube(Vec3{powerBoxWidth - W1, W1, powerBoxHeight - W1}),
-				),
-				NewTranslation(
-					Vec3{0, W2 / 2, 0},
-					NewCube(Vec3{powerBoxWidth - 2*W2 - 0.2, W2, (powerBoxHeight - 2*W2)}),
-				),
+	return NewDifference(
+		NewUnion(
+			NewTranslation(
+				Vec3{0, W1 / 2, 0},
+				NewCube(Vec3{powerBoxWidth - W1, W1, powerBoxHeight - W1}),
 			),
-
-			// Cut some holes for heat dissipation
-			NewTranslation(Vec3{10, 0, 0}, NewRotation(Vec3{90, 0, 0}, NewCylinder(8*W2, W2*0.6))),
-			NewTranslation(Vec3{-10, 0, 0}, NewRotation(Vec3{90, 0, 0}, NewCylinder(8*W2, W2*0.6))),
-
-			NewTranslation(Vec3{0, 0, 4 * W2}, NewRotation(Vec3{90, 0, 0}, NewCylinder(8*W2, W2*0.6))),
-			NewTranslation(Vec3{0, 0, -4 * W2}, NewRotation(Vec3{90, 0, 0}, NewCylinder(8*W2, W2*0.6))),
+			NewTranslation(
+				Vec3{0, W2 / 2, 0},
+				NewCube(Vec3{powerBoxWidth - 2*W2 - 0.2, W2, (powerBoxHeight - 2*W2)}),
+			),
 		),
+
+		// Cut some holes for heat dissipation
+		NewTranslation(Vec3{10, 0, 0}, NewRotation(Vec3{90, 0, 0}, NewCylinder(8*W2, W2*0.6))),
+		NewTranslation(Vec3{-10, 0, 0}, NewRotation(Vec3{90, 0, 0}, NewCylinder(8*W2, W2*0.6))),
+
+		NewTranslation(Vec3{0, 0, 4 * W2}, NewRotation(Vec3{90, 0, 0}, NewCylinder(8*W2, W2*0.6))),
+		NewTranslation(Vec3{0, 0, -4 * W2}, NewRotation(Vec3{90, 0, 0}, NewCylinder(8*W2, W2*0.6))),
 	)
 }
 
@@ -198,18 +195,19 @@ func newPowerBoxLid() Primitive {
 func newSensorStick() Primitive {
 
 	cylindricalLength := 10.0
+	stickHeight := 2*SensorCylindricalR + W2
 
 	return NewTranslation(
-		Vec3{0, 0, powerBoxHeight + 2*RD03DH},
+		Vec3{0, 0, stickHeight / 2.0},
 		NewUnion(
 			NewDifference(
-				NewBox(RD03DW+2*W1, RD03DL+2*W1, 2*SensorCylindricalR+W2+W2),
+				NewBox(RD03DW+2*W1, RD03DL+2*W1, stickHeight),
 				// Make it hollow
-				NewBox(RD03DW, RD03DL, 2*SensorCylindricalR+W2),
+				NewCube(Vec3{RD03DW, RD03DL, stickHeight - 2*W1}),
 				// Cutout the top, so that we can insert the sensor easily
 				NewTranslation(
-					Vec3{0, 0, (2*SensorCylindricalR + W2 + W2) / 2},
-					NewBox(RD03DW, RD03DL, 2*W2),
+					Vec3{0, 0, stickHeight / 2},
+					NewCube(Vec3{RD03DW, RD03DL, 2 * W2}),
 				),
 				// Cutout for the cylindrical part
 				NewTranslation(
@@ -222,7 +220,7 @@ func newSensorStick() Primitive {
 			NewTranslation(
 				Vec3{0, RD03DL/2.0 + cylindricalLength/2.0 + W1, 0},
 				NewDifference(
-					NewCylinderOnTheYAxis(cylindricalLength, SensorCylindricalR+W1),
+					NewCylinderOnTheYAxis(cylindricalLength+W1, SensorCylindricalR+W1),
 					NewCylinderOnTheYAxis(RD03DL, SensorCylindricalR),
 				),
 			),
@@ -232,15 +230,18 @@ func newSensorStick() Primitive {
 
 func newSensorStickLid() Primitive {
 	return NewTranslation(
-		Vec3{0, 0, powerBoxHeight + 4*RD03DH},
+		Vec3{0, 0, W1 / 2.0},
 		NewUnion(
 			NewTranslation(
 				Vec3{0, 0, W1 / 2},
-				NewCube(Vec3{RD03DW + 2*W1, RD03DL + 2*W1, W1}),
+				NewBox(RD03DW+2*W1, RD03DL+2*W1, W1),
 			),
 			NewTranslation(
 				Vec3{0, 0, W2/2 + Rounding/2},
-				NewBox(RD03DW-0.2, RD03DL, W2),
+				NewDifference(
+					NewBox(RD03DW-0.2, RD03DL, W2),
+					NewBox(RD03DW-0.2-W2, RD03DL-W2, 2*W2),
+				),
 			),
 		),
 	)
@@ -274,15 +275,27 @@ func newProduct() Primitive {
 				NewTranslation(Vec3{-(powerBlockWidth/2 - 3*W2), 6 * W2, powerBlockHeight / 2}, cylindricalHeatHole),
 			),
 
-			// // Antenna shape
+			// // DEBUG Antenna shape
 			// NewTranslation(
 			// 	Vec3{0, SensorCylindricalR, 1.1 * powerBoxHeight},
 			// 	NewBox(AntennaW, AntennaL, AntennaH*3),
 			// ),
-
+			NewTranslation(
+				Vec3{-70, 0, 0},
+				NewRotation(
+					Vec3{90, 0, 0},
+					newPowerBoxLid(),
+				),
+			),
 			// Sensor stick
-			newSensorStick(),
-			newSensorStickLid(),
+			NewTranslation(
+				Vec3{40, 0, 0},
+				newSensorStick(),
+			),
+			NewTranslation(
+				Vec3{-35, 0, 0},
+				newSensorStickLid(),
+			),
 		),
 	)
 }
@@ -290,7 +303,7 @@ func newProduct() Primitive {
 func main() {
 	sys.Initialize()
 	sys.RenderMultiple([]sys.Shape{
-		{Name: "product", Primitive: newProduct(), Flags: sys.Default},
+		{Name: "power_box", Primitive: newProduct(), Flags: sys.Default},
 		{Name: "power_box_lid", Primitive: newPowerBoxLid(), Flags: sys.Default},
 	})
 }
