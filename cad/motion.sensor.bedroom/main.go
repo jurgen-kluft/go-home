@@ -21,24 +21,21 @@ import (
 //     - Y axis is length/depth
 //     - Z axis is height
 
-// We embed a USB power block into the bottom of the box, so we need to
-// account for its dimensions when designing the box. We call this the
-// power box. The power block needs to be flush so that the box can sit flat
-// on the socket.
+// Components:
+// - USB-C socket
+// - Main ESP8266
+//   - APDS9960 sensor (color, gesture, proximity) (sensor stick)
+// - Relay board
+//   - Secondary ESP8266
+//   - RD03D Sensor (sensor stick)
+//   - OLED display
 
-// On top of the power box we make a circular hole where we can insert a
-// cylindrical part connected to a rectangular/ part that holds the sensor.
-// This cylindrical+rectangular part is separated from the power box, and
-// can be inserted into the power box through a circular slot on the top. The
-// wiring from the sensor can go through the cylindrical part into the power box.
-
-// The power box also holds space for the ESP32-C3 and the external antenna.
-
-// Power box dimensions
+// Size of the sensor box
 const (
-	PowerBoxWidth  = PowerBlockWidth + 2*W1
-	PowerBoxLength = PowerBlockLength + 18.0
-	PowerBoxHeight = PowerBlockHeight * 2
+	PowerBoxWidth     = 80.0
+	PowerBoxLength    = 120.0
+	PowerBoxHeight    = 40.0
+	PowerBoxThickness = WT
 )
 
 func NewBox(w, l, h float64) Primitive {
@@ -53,35 +50,9 @@ func NewCylinderOnTheYAxis(h, r float64) Primitive {
 	return NewRotation(Vec3{90, 0, 0}, NewCylinder(h, r))
 }
 
-// newPowerBlock creates the power block primitive that holds the USB power block.
-// The power block has cutouts on the top and bottom for heat dissipation
-func newPowerBlock() Primitive {
-	return NewTranslation(
-		Vec3{0, 0, PowerBlockHeight/2 + W1},
-		NewDifference(
-			shapes.NewSmoothedCube(
-				Vec3{PowerBlockWidth + 2*W1, PowerBlockLength + 2*W1, PowerBlockHeight + 2*W1},
-				PowerBlockRounding,
-			).Build(),
-
-			// Emptying + Front cutout(for inserting the power block)
-			NewTranslation(
-				Vec3{0, W1, 0},
-				NewBox(PowerBlockWidth, PowerBlockLength+W1, PowerBlockHeight),
-			),
-
-			// USB-A cutout
-			NewTranslation(
-				Vec3{0, -((PowerBlockLength / 2) + (USBALength / 2) - W1), 0},
-				NewBox(USBAWidth, USBALength, PowerBlockHeight-2*W1),
-			),
-		),
-	)
-}
-
-// newPowerBox creates the power box primitive that holds the power block, antenna
+// newSensorBox creates the power box primitive that holds the power block, antenna
 // and has cutouts for the power block, and sensor.
-func newPowerBox() Primitive {
+func newSensorBox() Primitive {
 	return NewDifference(
 		NewTranslation(
 			Vec3{0, 0, PowerBoxHeight / 2},
@@ -114,7 +85,7 @@ func newPowerBox() Primitive {
 	)
 }
 
-func newPowerBoxLid() Primitive {
+func newSensorBoxLid() Primitive {
 	return NewDifference(
 		NewUnion(
 			NewTranslation(
@@ -198,13 +169,7 @@ func newProduct() Primitive {
 		10,
 		NewUnion(
 			NewDifference(
-				NewUnion(
-					newPowerBox(),
-					NewTranslation(
-						Vec3{0, ((PowerBoxLength / 2) - (PowerBlockLength / 2)) - W1, 0},
-						newPowerBlock(),
-					),
-				),
+				newSensorBox(),
 
 				// Cutout in the bottom
 				NewTranslation(Vec3{0, 0, PowerBlockHeight / 2}, cylindricalHeatHole),
@@ -226,19 +191,19 @@ func newProduct() Primitive {
 			// 	NewBox(AntennaW, AntennaL, AntennaH*3),
 			// ),
 			NewTranslation(
-				Vec3{-70, 0, 0},
+				Vec3{-120, 0, 0},
 				NewRotation(
 					Vec3{90, 0, 0},
-					newPowerBoxLid(),
+					newSensorBoxLid(),
 				),
 			),
 			// Sensor stick
 			NewTranslation(
-				Vec3{40, 0, 0},
+				Vec3{60, 0, 0},
 				newSensorStick(),
 			),
 			NewTranslation(
-				Vec3{-35, 0, 0},
+				Vec3{-55, 0, 0},
 				newSensorStickLid(),
 			),
 		),
@@ -248,7 +213,7 @@ func newProduct() Primitive {
 func main() {
 	sys.Initialize()
 	sys.RenderMultiple([]sys.Shape{
-		{Name: "power_box", Primitive: newProduct(), Flags: sys.Default},
-		{Name: "power_box_lid", Primitive: newPowerBoxLid(), Flags: sys.Default},
+		{Name: "sensor_box", Primitive: newProduct(), Flags: sys.Default},
+		{Name: "sensor_box_lid", Primitive: newSensorBoxLid(), Flags: sys.Default},
 	})
 }

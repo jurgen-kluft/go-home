@@ -2,6 +2,10 @@ module switchsensor
 
 go 1.23.8
 
+replace github.com/jurgen-kluft/go-home => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home
+
+replace github.com/jurgen-kluft/go-home/cad/lib => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/cad/lib
+
 require github.com/ljanyst/ghostscad v0.2.2
 
 require (

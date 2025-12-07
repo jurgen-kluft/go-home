@@ -1,11 +1,18 @@
 module switchsensor
 
-go 1.23.8
+go 1.25.4
 
-require github.com/ljanyst/ghostscad v0.2.2
+replace github.com/jurgen-kluft/go-home => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home
+
+replace github.com/jurgen-kluft/go-home/cad/lib => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/cad/lib
 
 require (
-	github.com/go-gl/mathgl v1.0.0 // indirect
+	github.com/go-gl/mathgl v1.0.0
+	github.com/jurgen-kluft/go-home/cad/lib v0.0.0-00010101000000-000000000000
+	github.com/ljanyst/ghostscad v0.2.2
+)
+
+require (
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect

@@ -1,4 +1,4 @@
-module motion-sensor
+module motion-sensor-bedroom
 
 go 1.25.4
 

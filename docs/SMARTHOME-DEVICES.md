@@ -32,6 +32,18 @@ Would like to have a self designed 3D printed enclosure that can hold all the se
 
 This requires 3D printing of the design, seems very doable, very nice idea.
 
+## Color Light Strips, Color Sync
+
+We can make a setup that can sync the color of the light strips to the color of the ambient light or light coming from the TV/Monitor.
+
+- One or more TCS34725; RGB Color Sensor with IR filter and White LED
+  - I2C Interface
+  - URL: https://www.adafruit.com/product/1334
+- WS2812B or SK6812 RGB LED Strips
+  - Addressable RGB LED Strips
+  - URL: https://www.adafruit.com/product/1138
+
+
 ## Presence
 
 - mmWave Radar Sensor

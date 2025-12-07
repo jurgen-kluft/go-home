@@ -5,6 +5,7 @@ import (
 	"github.com/ljanyst/ghostscad/sys"
 
 	. "github.com/go-gl/mathgl/mgl64"
+	. "github.com/jurgen-kluft/go-home/cad/lib"
 	. "github.com/ljanyst/ghostscad/primitive"
 )
 
@@ -26,16 +27,6 @@ import (
 //     - Y axis is length/depth
 //     - Z axis is height
 
-// Global constants
-const (
-	Unit         = 1.0 // 1 unit = 1 mm
-	WT           = 1.6
-	W1           = WT
-	W2           = 2 * WT
-	Rounding     = 1
-	MainRounding = 10
-)
-
 // Box dimensions
 const (
 	boxW = PCB_W + 30
@@ -55,24 +46,6 @@ const (
 const (
 	boxTopT = boxT
 	boxTopH = 15.0
-)
-
-// LilyGo ETH PCB board measurements
-const (
-	LiliGo_PCB_W          = 28.0
-	LiliGo_PCB_L          = 59.5
-	LiliGo_PCB_MountingHR = 1.5  // Radius of the mounting holes
-	LiliGo_PCB_H2HL       = 54.0 // Distance between the mounting holes along the length
-	LiliGo_PCB_H2HW       = 23.0 // Distance between the mounting holes along the width
-)
-
-// Waveshare ETH PCB board measurements
-const (
-	WS_PCB_W          = 21.0
-	WS_PCB_L          = 72.8
-	WS_PCB_MountingHR = 1.6   // Radius of the mounting holes
-	WS_PCB_H2HL       = 54.15 // Distance between the mounting holes along the length
-	WS_PCB_H2HW       = 18.25 // Distance between the mounting holes along the width
 )
 
 // ETH PCB board measurements
@@ -120,26 +93,14 @@ const (
 	EthernetHoleO = 5.0  // Height offset from the bottom of the box backside, plus some extra clearance for USB-C plug
 )
 
-// Display, 128x128, SH1107 OLED
-const (
-	sh1107ScreenW       = 37.3 // Actual display width
-	sh1107ScreenL       = 34.0 // Actual display length
-	sh1107ScreenR       = 0.5  // Actual display corner rounding
-	sh1107W             = 47.1 // Overall width including bezel
-	sh1107L             = 34.1 // Overall length including bezel
-	sh1107MountingW     = 42   // Mounting hole to hole width
-	sh1107MountingL     = 29   // Mounting hole to hole length
-	sh1107MountingHoleD = 2.0  // Mounting hole diameter
-)
-
 // Display, SH1107 OLED, 128x128
 const (
-	displayScreenW       = sh1107ScreenW
-	displayScreenL       = sh1107ScreenL
-	displayScreenR       = sh1107ScreenR
-	displayMountingW     = sh1107MountingW
-	displayMountingL     = sh1107MountingL
-	displayMountingHoleR = sh1107MountingHoleD / 2
+	displayScreenW       = Sh1107ScreenW
+	displayScreenL       = Sh1107ScreenL
+	displayScreenR       = Sh1107ScreenR
+	displayMountingW     = Sh1107MountingW
+	displayMountingL     = Sh1107MountingL
+	displayMountingHoleR = Sh1107MountingHoleD / 2
 )
 
 func newPyramid(w, l, h float64) Primitive {

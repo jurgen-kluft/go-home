@@ -5,6 +5,7 @@ import (
 	"github.com/ljanyst/ghostscad/sys"
 
 	. "github.com/go-gl/mathgl/mgl64"
+	. "github.com/jurgen-kluft/go-home/cad/lib"
 	. "github.com/ljanyst/ghostscad/primitive"
 )
 
@@ -26,16 +27,6 @@ import (
 // We just needs standard cirular holes where sensors can be mounted.
 // This way, we can be compatible with many different sensors.
 //
-
-// Global constants
-const (
-	Unit         = 1.0 // 1 unit = 1 mm
-	WT           = 1.6
-	W1           = WT
-	W2           = 2 * WT
-	Rounding     = 1
-	MainRounding = 10
-)
 
 // Box dimensions
 const (
@@ -79,82 +70,20 @@ const (
 	pcbBoardH      = pcbBoardBH + pcbBoardTH + pcbBoardT // Total height of the PCB including components
 )
 
-// Display, 128x128, SH1107 OLED
-const (
-	sh1107ScreenW       = 37.3 // Actual display width
-	sh1107ScreenL       = 34.0 // Actual display length
-	sh1107ScreenR       = 0.5  // Actual display corner rounding
-	sh1107W             = 47.1 // Overall width including bezel
-	sh1107L             = 34.1 // Overall length including bezel
-	sh1107MountingW     = 42   // Mounting hole to hole width
-	sh1107MountingL     = 29   // Mounting hole to hole length
-	sh1107MountingHoleD = 2.2  // Mounting hole diameter
-)
-
 // Display, SH1107 OLED, 128x128
 const (
-	displayScreenW       = sh1107ScreenL
-	displayScreenL       = sh1107ScreenW
-	displayScreenR       = sh1107ScreenR
-	displayMountingW     = sh1107MountingW
-	displayMountingL     = sh1107MountingL
-	displayMountingHoleR = sh1107MountingHoleD / 2
-)
-
-// RD03D
-const (
-	RD03DW  = 15.25
-	RD03DL  = 44.5
-	RD03DH  = 5.0
-	RD03DT  = 3.2 // PCB and things thickness
-	RD03DBT = 0.7 // Bottom height (height of components on bottom side
-	RD03DTT = 1.0 // Bottom height (height of components on bottom side
+	displayScreenW       = Sh1107ScreenL
+	displayScreenL       = Sh1107ScreenW
+	displayScreenR       = Sh1107ScreenR
+	displayMountingW     = Sh1107MountingW
+	displayMountingL     = Sh1107MountingL
+	displayMountingHoleR = Sh1107MountingHoleD / 2
 )
 
 // Circular hole dimensions for sensor mounting
 const (
 	sensorMountingHoleD = 10.0 // Diameter of the mounting holes for sensors
 	sensorMountingHoleR = sensorMountingHoleD / 2.0
-)
-
-// Scd41 (CO2, temp, humidity)
-const (
-	Scd41SensorWidth          = 8.5                                              // Width of the sensor body
-	Scd41SensorLength         = 8.5                                              // Length of the sensor body
-	Scd41SensorHeight         = 6.5                                              // Height of the sensor body
-	Scd41BottomToSensorTop    = 18.0                                             // Length until the top of the sensor body (measured from the bottom)
-	Scd41BottomToSensorMiddle = Scd41BottomToSensorTop - (Scd41SensorHeight / 2) // Length until the middle of the sensor body (measured from the bottom)
-	Scd41W                    = 13.2                                             // Width of the PCB
-	Scd41L                    = 22.0                                             // Length of the PCB
-	Scd41H                    = 8
-	Scd41T                    = 1.6
-)
-
-// Bh1750 (light)
-const (
-	Bh1750Spacing              = 1.0
-	Bh1750W                    = 14.2                                               // Width of the PCB
-	Bh1750L                    = 18.5                                               // Length of the PCB
-	Bh1750BottomToSensorTop    = 12.25                                              // Length until the top of the sensor body (measured from the bottom)
-	Bh1750TopToSensorBottom    = Bh1750L - 8.25                                     // Length until the bottom of the sensor body (measured from the top)
-	Bh1750BottomToSensorMiddle = Bh1750BottomToSensorTop - (Bh1750SensorHeight / 2) // Length until the middle of the sensor body (measured from the bottom)
-	Bh1750SensorWidth          = 3.2                                                // Width of the sensor body
-	Bh1750SensorHeight         = Bh1750BottomToSensorTop - Bh1750TopToSensorBottom  // Height of the sensor body
-
-	Bh1750H = 1.0
-	Bh1750T = 1.6
-)
-
-// Bme280 (temperature, humidity, pressure)
-const (
-	Bme280W                    = 10.5
-	Bme280L                    = 13.2
-	Bme280H                    = 3.5
-	Bme280T                    = 1.6
-	Bme280SensorWidth          = 2.0
-	Bme280SensorLength         = 3.0
-	Bme280SensorHeight         = 1.0
-	Bme280BottomToSensorMiddle = 11.0
 )
 
 // USB-C hole dimensions

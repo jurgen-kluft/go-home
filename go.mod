@@ -1,8 +1,9 @@
 module github.com/jurgen-kluft/go-home
 
 go 1.23.0
-
 toolchain go1.23.8
+
+replace github.com/jurgen-kluft/go-home => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home
 
 require (
 	crawshaw.io/sqlite v0.3.2
