@@ -5,7 +5,7 @@ go 1.25.4
 replace github.com/jurgen-kluft/go-home/cad/lib => /Users/obnosis5/dev.go/src/github.com/jurgen-kluft/go-home/cad/lib
 
 require (
-	github.com/go-gl/mathgl v1.0.0
+	github.com/go-gl/mathgl v1.2.0
 	github.com/jurgen-kluft/go-home/cad/lib v0.0.0-00010101000000-000000000000
 	github.com/ljanyst/ghostscad v0.2.2
 )
@@ -18,7 +18,6 @@ require (
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2 // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
-	golang.org/x/image v0.0.0-20190321063152-3fc05d484e9f // indirect
 	golang.org/x/sys v0.0.0-20220908164124-27713097b956 // indirect
 	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

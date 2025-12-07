@@ -31,21 +31,11 @@ const (
 // --------------------------------------------------------------------------------------------------------------------------
 // Relay boards
 const (
-	RelayBoardWidth        = 17.0
-	RelayBoardLength       = 57.0
+	RelayBoardW            = 17.0
+	RelayBoardL            = 57.0
+	RelayBoardH            = 17.0 - RelayBoardPCBThickness
 	RelayBoardPCBThickness = 1.6
-	RelayBoardHeight       = 17.0 - RelayBoardPCBThickness
 	RelayBoardBottomHeight = 3.0
-)
-
-// --------------------------------------------------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------------------------------------------------
-// Sensor Stick
-
-// The sensor cylindrical connection with the box
-const (
-	SensorCylindricalR = 8.0 / 2
 )
 
 // --------------------------------------------------------------------------------------------------------------------------
@@ -65,6 +55,13 @@ const (
 	USBAWidth  = 12.0
 	USBALength = 16.0
 	USBAHeight = 7.0
+)
+
+// USB-C hole dimensions (The USB-C plug connector)
+const (
+	UsbCHoleDiameter     = 11.6 // Radius of the USB-C hole, 1.16 cm
+	UsbCHoleRadius       = UsbCHoleDiameter / 2.0
+	UsbCHoleRingDiameter = 17.0
 )
 
 // --------------------------------------------------------------------------------------------------------------------------
@@ -100,14 +97,16 @@ const (
 )
 
 // ESP8266 NodeMcu board dimensions
+// TODO: Verify the dimensions
 const (
-	ESP8266W    = 25.0
-	ESP8266L    = 48.0
+	ESP8266W    = 30.4
+	ESP8266L    = 57.0
 	ESP8266H    = 14.0
 	ESP8266T    = 1.6  // Thickness of the PCB
 	ESP8266BT   = 3.0  // Bottom height (height of components on bottom side
-	ESP8266H2HW = 20.0 // Widht, mounting hole to mounting hole
-	ESP8266H2HL = 42.0 // Length, mounting hole to mounting hole
+	ESP8266H2HW = 25.4 // Widht, mounting hole to mounting hole
+	ESP8266H2HL = 52.0 // Length, mounting hole to mounting hole
+	ESP8266HR   = 3.0  // Radius of the mounting holes
 )
 
 // --------------------------------------------------------------------------------------------------------------------------
@@ -134,21 +133,23 @@ const (
 
 // RD03D mmWave sensor dimensions
 const (
-	RD03DW  = 15.25
-	RD03DL  = 44.5
-	RD03DH  = 5.0
-	RD03DT  = 3.2 // PCB and things thickness
-	RD03DBT = 0.7 // Bottom height (height of components on bottom side
-	RD03DTT = 1.0 // Bottom height (height of components on bottom side
+	RD03DW      = 15.25
+	RD03DL      = 44.5
+	RD03DHeight = 5.0  // Actual measured height
+	RD03DH      = 11.0 // Enclosed height
+	RD03DT      = 3.2  // PCB and things thickness
+	RD03DBT     = 0.7  // Bottom height (height of components on bottom side
+	RD03DTT     = 1.0  // Bottom height (height of components on bottom side
 )
 
 // APDS9960 sensor
 const (
-	APDS9960W  = 4.0
-	APDS9960L  = 3.0
-	APDS9960H  = 1.0
-	APDS9960T  = 1.6 // PCB and things thickness
-	APDS9960BT = 0.5 // Bottom height (height of components on bottom side
+	APDS9960W      = 4.0
+	APDS9960L      = 3.0
+	APDS9960Height = 1.0  // Actual measured height
+	APDS9960H      = 11.0 // Enclosed height
+	APDS9960T      = 1.6  // PCB and things thickness
+	APDS9960BT     = 0.5  // Bottom height (height of components on bottom side
 )
 
 // Scd41 (CO2, temp, humidity)
@@ -167,16 +168,17 @@ const (
 // Bh1750 (light)
 const (
 	Bh1750Spacing              = 1.0
-	Bh1750W                    = 14.2                                               // Width of the PCB
-	Bh1750L                    = 18.5                                               // Length of the PCB
 	Bh1750BottomToSensorTop    = 12.25                                              // Length until the top of the sensor body (measured from the bottom)
 	Bh1750TopToSensorBottom    = Bh1750L - 8.25                                     // Length until the bottom of the sensor body (measured from the top)
 	Bh1750BottomToSensorMiddle = Bh1750BottomToSensorTop - (Bh1750SensorHeight / 2) // Length until the middle of the sensor body (measured from the bottom)
 	Bh1750SensorWidth          = 3.2                                                // Width of the sensor body
 	Bh1750SensorHeight         = Bh1750BottomToSensorTop - Bh1750TopToSensorBottom  // Height of the sensor body
 
-	Bh1750H = 1.0
-	Bh1750T = 1.6
+	Bh1750W      = 14.2 // Width of the PCB
+	Bh1750L      = 18.5 // Length of the PCB
+	Bh1750Height = 1.0  // Height of the PCB
+	Bh1750H      = 2.0
+	Bh1750T      = 1.6
 )
 
 // Bme280 (temperature, humidity, pressure)

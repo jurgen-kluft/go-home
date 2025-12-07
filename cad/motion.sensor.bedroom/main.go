@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/ljanyst/ghostscad/lib/shapes"
 	"github.com/ljanyst/ghostscad/sys"
 
 	. "github.com/go-gl/mathgl/mgl64"
@@ -32,23 +31,11 @@ import (
 
 // Size of the sensor box
 const (
-	PowerBoxWidth     = 80.0
-	PowerBoxLength    = 120.0
+	PowerBoxWidth     = 2.0 + ESP8266W + 5.0 + RelayBoardW + 5.0 + ESP8266W + 2.0
+	PowerBoxLength    = 5.0 + max(ESP8266L, RelayBoardL, ESP8266L) + 5.0
 	PowerBoxHeight    = 40.0
 	PowerBoxThickness = WT
 )
-
-func NewBox(w, l, h float64) Primitive {
-	return shapes.NewSmoothedCube(Vec3{w, l, h}, Rounding).Build()
-}
-
-func NewCylinderOnTheXAxis(h, r float64) Primitive {
-	return NewRotation(Vec3{0, 90, 0}, NewCylinder(h, r))
-}
-
-func NewCylinderOnTheYAxis(h, r float64) Primitive {
-	return NewRotation(Vec3{90, 0, 0}, NewCylinder(h, r))
-}
 
 // newSensorBox creates the power box primitive that holds the power block, antenna
 // and has cutouts for the power block, and sensor.
@@ -79,8 +66,8 @@ func newSensorBox() Primitive {
 
 		// Circular Sensor cutout at the top
 		NewTranslation(
-			Vec3{0, -(PowerBoxLength / 2) + 2*SensorCylindricalR, PowerBoxHeight - 4*W1},
-			NewCylinder(8*W1, SensorCylindricalR+W1),
+			Vec3{0, -(PowerBoxLength / 2) + 2*SensorStickCylindricalRadius, PowerBoxHeight - 4*W1},
+			NewCylinder(8*W1, SensorStickCylindricalRadius+W1),
 		),
 	)
 }
@@ -104,62 +91,6 @@ func newSensorBoxLid() Primitive {
 
 		NewTranslation(Vec3{0, 0, 4 * W2}, NewRotation(Vec3{90, 0, 0}, NewCylinder(8*W2, W2*0.6))),
 		NewTranslation(Vec3{0, 0, -4 * W2}, NewRotation(Vec3{90, 0, 0}, NewCylinder(8*W2, W2*0.6))),
-	)
-}
-
-// newSensorStick creates the cylindrical tube with the rectangular (hollow) part on top where the sensor is located.
-func newSensorStick() Primitive {
-
-	cylindricalLength := 10.0
-	stickHeight := 2*SensorCylindricalR + W2
-
-	return NewTranslation(
-		Vec3{0, 0, stickHeight / 2.0},
-		NewUnion(
-			NewDifference(
-				NewBox(RD03DW+2*W1, RD03DL+2*W1, stickHeight),
-				// Make it hollow
-				NewCube(Vec3{RD03DW, RD03DL, stickHeight - 2*W1}),
-				// Cutout the top, so that we can insert the sensor easily
-				NewTranslation(
-					Vec3{0, 0, stickHeight / 2},
-					NewCube(Vec3{RD03DW, RD03DL, 2 * W2}),
-				),
-				// Cutout for the cylindrical part
-				NewTranslation(
-					Vec3{0, (RD03DL + W1) / 2, 0},
-					NewCylinderOnTheYAxis(2*W2, SensorCylindricalR),
-				),
-			),
-
-			// Cylindrical part
-			NewTranslation(
-				Vec3{0, RD03DL/2.0 + cylindricalLength/2.0 + W1, 0},
-				NewDifference(
-					NewCylinderOnTheYAxis(cylindricalLength+W1, SensorCylindricalR+W1),
-					NewCylinderOnTheYAxis(RD03DL, SensorCylindricalR),
-				),
-			),
-		),
-	)
-}
-
-func newSensorStickLid() Primitive {
-	return NewTranslation(
-		Vec3{0, 0, W1 / 2.0},
-		NewUnion(
-			NewTranslation(
-				Vec3{0, 0, W1 / 2},
-				NewBox(RD03DW+2*W1, RD03DL+2*W1, W1),
-			),
-			NewTranslation(
-				Vec3{0, 0, W2/2 + Rounding/2},
-				NewDifference(
-					NewBox(RD03DW-0.2, RD03DL, W2),
-					NewBox(RD03DW-0.2-W2, RD03DL-W2, 2*W2),
-				),
-			),
-		),
 	)
 }
 
@@ -200,11 +131,11 @@ func newProduct() Primitive {
 			// Sensor stick
 			NewTranslation(
 				Vec3{60, 0, 0},
-				newSensorStick(),
+				NewSensorStick(RD03DW, RD03DL, RD03DH, 20.0),
 			),
 			NewTranslation(
 				Vec3{-55, 0, 0},
-				newSensorStickLid(),
+				NewSensorStickLid(RD03DW, RD03DL, RD03DH),
 			),
 		),
 	)
