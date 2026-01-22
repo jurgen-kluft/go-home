@@ -124,7 +124,7 @@ func (c *context) checkAllConfigurationFiles() (err error) {
 func (c *context) registerAllConfigurationChannels() (err error) {
 	for name, configuration := range c.configs.Configurations {
 		c.service.Logger.LogInfo(c.service.Name, fmt.Sprintf("Register pubsub channel %s for %s", configuration.ChannelName, name))
-		err = c.service.Register(configuration.ChannelName)
+		c.service.Connect(configuration.ChannelName)
 	}
 	return
 }
@@ -145,7 +145,7 @@ func (c *context) sendConfigOnChannel(configtype string) (err error) {
 					jsondata, err := v.ToJSON()
 					if err == nil {
 						c.service.Logger.LogInfo(c.service.Name, fmt.Sprintf("Publish %s on channel %s", string(jsondata), configuration.ChannelName))
-						err = c.service.Pubsub.Publish(configuration.ChannelName, jsondata)
+						err = c.service.SendJsonTo(configuration.ChannelName, string(jsondata))
 					}
 				}
 			} else {
@@ -161,17 +161,17 @@ func (c *context) sendConfigOnChannel(configtype string) (err error) {
 }
 
 func main() {
-	register := []string{"config/config/", "config/request/"}
-	subscribe := []string{"config/config/", "config/request/"}
-
-	m := microservice.New("config", time.Second*15)
-	m.RegisterAndSubscribe(register, subscribe)
+	m, err := microservice.New("config", "config/request", time.Second*15)
+	if err != nil {
+		fmt.Println("Error creating microservice:", err)
+		return
+	}
 
 	ctx := newContext()
 	ctx.service = m
 
-	m.RegisterHandler("config/config/", func(m *microservice.Service, topic string, msg []byte) bool {
-		config, err := configFromJSON(msg)
+	m.RegisterHandler("config/config", func(m *microservice.Service, msg *microservice.Message) bool {
+		config, err := configFromJSON(msg.Payload)
 		if err == nil {
 			m.Logger.LogInfo(m.Name, "received configuration")
 			ctx.configs = config
@@ -184,8 +184,8 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("config/request/", func(m *microservice.Service, topic string, msg []byte) bool {
-		configname := string(msg)
+	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
+		configname := string(msg.Payload)
 		m.Logger.LogInfo(m.Name, "requested configuration for '"+configname+"'.")
 		err := ctx.sendConfigOnChannel(configname)
 		if err != nil {
@@ -195,7 +195,7 @@ func main() {
 	})
 
 	tickCount := 0
-	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("tick", func(m *microservice.Service, msg *microservice.Message) bool {
 		if tickCount == 5 {
 			tickCount = 0
 			// Any config files updated ?

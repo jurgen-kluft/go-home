@@ -8,24 +8,19 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
-	"github.com/jurgen-kluft/go-home/metrics"
 	microservice "github.com/jurgen-kluft/go-home/micro-service"
 )
 
 type instance struct {
-	name    string
-	config  *config.AqiConfig
-	update  time.Time
-	metrics *metrics.Metrics
+	name   string
+	config *config.AqiConfig
+	update time.Time
 }
 
 func construct() (c *instance) {
 	c = &instance{}
 	c.name = "aqi"
 	c.update = time.Now()
-	c.metrics, _ = metrics.New()
-
-	c.metrics.Register(c.name, map[string]string{c.name: "quality"}, map[string]interface{}{"pm2.5": 50.0})
 	return c
 }
 
@@ -87,11 +82,6 @@ func (c *instance) Poll() (aqiStateJSON []byte, err error) {
 	aqi, err := c.getResponse()
 	if err == nil {
 
-		// Metrics
-		c.metrics.Begin(c.name)
-		c.metrics.Set(c.name, "pm2.5", aqi)
-		c.metrics.Send(c.name)
-
 		// MQTT: As a sensor
 		sensor := config.NewSensorState("sensor.weather.aqi", "airquality")
 		sensor.AddFloatAttr(c.name, aqi)
@@ -105,15 +95,17 @@ func (c *instance) Poll() (aqiStateJSON []byte, err error) {
 }
 
 func main() {
-	register := []string{"config/aqi/", "config/request/", "state/sensor/aqi/"}
-	subscribe := []string{"config/aqi/"}
+	peers := []string{"config/request"}
 
 	c := construct()
-	m := microservice.New("aqi", time.Minute*10)
-	m.RegisterAndSubscribe(register, subscribe)
+	m, err := microservice.New("aqi", "sensor/aqi", time.Minute*10)
+	if err != nil {
+		panic(err)
+	}
+	m.ConnectTo(peers)
 
-	m.RegisterHandler("config/aqi/", func(m *microservice.Service, topic string, msg []byte) bool {
-		configAqi, err := config.AqiConfigFromJSON(msg)
+	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
+		configAqi, err := config.AqiConfigFromJSON(msg.Payload)
 		if err == nil {
 			m.Logger.LogInfo(m.Name, "received configuration")
 			c.config = configAqi
@@ -123,19 +115,25 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("tick", func(m *microservice.Service, msg *microservice.Message) bool {
 		if c != nil && c.config != nil {
 			m.Logger.LogInfo(m.Name, "polling Aqi")
 			stateAsJson, err := c.Poll()
 			if err == nil {
 				m.Logger.LogInfo(m.Name, "publish Aqi")
-				_ = m.Pubsub.Publish("state/sensor/aqi/", stateAsJson)
+				msg, err := m.NewTextMessage(string(stateAsJson))
+				if err == nil {
+					_ = m.Broadcast(msg)
+				}
 			} else {
 				m.Logger.LogError(m.Name, err.Error())
 			}
 		} else if c != nil && c.config == nil {
 			// Try and request our configuration
-			_ = m.Pubsub.PublishStr("config/request/", "aqi")
+			msg, err := m.NewTextMessage(m.Name)
+			if err == nil {
+				_ = m.SendTo("config/request", msg)
+			}
 		}
 		return true
 	})

@@ -1,190 +1,253 @@
 package microservice
 
 import (
-	"strings"
 	"time"
-
-	"github.com/jurgen-kluft/go-home/config"
-	logpkg "github.com/jurgen-kluft/go-home/logging"
-	pubsub "github.com/jurgen-kluft/go-home/nats"
 )
 
-// Delegate is a handler that the user can register on a certain received topic
-type Delegate func(m *Service, topic string, message []byte) bool
+// 	pubsub "github.com/jurgen-kluft/go-home/nats"
 
-type Message struct {
-	Topic   string
-	Payload []byte
+// // Delegate is a handler that the user can register on a certain received topic
+type Delegate func(m *Service, message *Message) bool
+
+// type Message struct {
+// 	Topic   string
+// 	Payload []byte
+// }
+
+// // Service is a convenience setup to implement a micro-service
+// type Service struct {
+// 	Name            string
+// 	Logger          *logpkg.Logger
+// 	PubsubRegister  []string
+// 	PubsubSubscribe []string
+// 	Pubsub          *pubsub.Context
+// 	Handlers        map[string]Delegate
+// 	CatchHandler    Delegate
+// 	ProcessMessages chan *Message
+// 	TickFrequency   time.Duration
+// }
+
+// func New(name string, tickFrequency time.Duration) *Service {
+// 	service := &Service{}
+
+// 	service.Name = name
+// 	service.Logger = logpkg.New(name)
+// 	service.Logger.AddEntry("pubsub")
+// 	service.Logger.AddEntry(name)
+
+// 	service.PubsubRegister = make([]string, 0, 10)
+// 	service.PubsubSubscribe = make([]string, 0, 10)
+// 	service.Handlers = make(map[string]Delegate)
+
+// 	service.ProcessMessages = make(chan *Message, 128)
+// 	service.TickFrequency = tickFrequency
+// 	return service
+// }
+
+// func (m *Service) Register(r string) error {
+// 	if m.Pubsub == nil {
+// 		// Not connected yet, just add it to the list
+// 		m.PubsubRegister = append(m.PubsubRegister, r)
+// 	} else {
+// 		// We are connected, also call Register on pubsub
+// 		m.PubsubRegister = append(m.PubsubRegister, r)
+// 		m.Pubsub.Register(r)
+// 	}
+// 	return nil
+// }
+
+// func (m *Service) Subscribe(r string) error {
+// 	if m.Pubsub == nil {
+// 		// Not connected yet, just add it to the list
+// 		m.PubsubSubscribe = append(m.PubsubSubscribe, r)
+// 	} else {
+// 		// We are connected, also call Subscribe on pubsub
+// 		m.PubsubSubscribe = append(m.PubsubSubscribe, r)
+// 		m.Pubsub.Subscribe(r)
+// 	}
+// 	return nil
+// }
+
+// func (m *Service) RegisterAndSubscribe(register []string, subscribe []string) {
+// 	for _, r := range register {
+// 		m.Register(r)
+// 	}
+// 	for _, r := range subscribe {
+// 		m.Subscribe(r)
+// 	}
+// }
+
+// func (m *Service) RegisterHandler(topic string, delegate Delegate) {
+// 	m.Handlers[topic] = delegate
+// 	natstopic := strings.Replace(topic, "/", ".", -1)
+// 	natstopic = strings.TrimSuffix(natstopic, ".")
+// 	m.Handlers[natstopic] = delegate
+// }
+
+func (m *Service) RegisterHandler(peerPath string, delegate Delegate) {
+	srcID := Hash32(peerPath)
+	m.handlersByID[srcID] = delegate
+	m.handlersByPath[peerPath] = delegate
 }
 
-// Service is a convenience setup to implement a micro-service
-type Service struct {
-	Name            string
-	Logger          *logpkg.Logger
-	PubsubRegister  []string
-	PubsubSubscribe []string
-	Pubsub          *pubsub.Context
-	Handlers        map[string]Delegate
-	CatchHandler    Delegate
-	ProcessMessages chan *Message
-	TickFrequency   time.Duration
-}
+// func matchTopic(etopic string, itopic string) bool {
+// 	ei := 0
+// 	ii := 0
+// 	cs := true
+// 	for ei < len(etopic) && ii < len(itopic) {
+// 		echar := etopic[ei]
+// 		ichar := itopic[ii]
+// 		if (echar == '/' || echar == '.') && (ichar == '/' || ichar == '.') {
+// 			cs = true
+// 			ei++
+// 			ii++
+// 		} else if cs && etopic[ei] == '*' { // chapter start ?
+// 			// consume chapter from itopic
+// 			ei++
+// 			for ii < len(itopic) && (itopic[ii] != '/' && itopic[ii] != '.') {
+// 				ii++
+// 			}
+// 			if ii == len(itopic) {
+// 				return false
+// 			}
+// 			cs = false
+// 		} else if echar != ichar {
+// 			return false
+// 		} else {
+// 			ei++
+// 			ii++
+// 			cs = false
+// 		}
+// 	}
+// 	return ei == len(etopic) && ii == len(itopic)
+// }
 
-func New(name string, tickFrequency time.Duration) *Service {
-	service := &Service{}
+// func (m *Service) FindHandler(itopic string) (delegate Delegate, exists bool) {
+// 	for etopic, edelegate := range m.Handlers {
+// 		if matchTopic(etopic, itopic) {
+// 			return edelegate, true
+// 		}
+// 	}
+// 	return nil, false
+// }
 
-	service.Name = name
-	service.Logger = logpkg.New(name)
-	service.Logger.AddEntry("pubsub")
-	service.Logger.AddEntry(name)
+// func (m *Service) Loop() {
+// 	quit := false
+// 	for !quit {
+// 		m.Pubsub = pubsub.New(config.PubSubCfg)
+// 		err := m.Pubsub.Connect(m.Name, m.PubsubRegister, m.PubsubSubscribe)
+// 		if err == nil {
+// 			m.Logger.LogInfo("pubsub", "connected")
 
-	service.PubsubRegister = make([]string, 0, 10)
-	service.PubsubSubscribe = make([]string, 0, 10)
-	service.Handlers = make(map[string]Delegate)
+// 			connected := true
+// 			for connected {
+// 				select {
+// 				case msg := <-m.ProcessMessages:
+// 					topic := msg.Topic
+// 					delegate, exists := m.FindHandler(topic)
+// 					if exists {
+// 						if !delegate(m, topic, msg.Payload) {
+// 							connected = false
+// 							quit = true
+// 						}
+// 					}
 
-	service.ProcessMessages = make(chan *Message, 128)
-	service.TickFrequency = tickFrequency
-	return service
-}
+// 				case msg := <-m.Pubsub.InMsgs:
+// 					topic := m.Pubsub.Topic(msg)
+// 					delegate, exists := m.Handlers[topic]
+// 					if exists {
+// 						if !delegate(m, topic, m.Pubsub.Payload(msg)) {
+// 							connected = false
+// 							quit = true
+// 						}
+// 					} else {
+// 						delegate, exists := m.Handlers["*"]
+// 						if exists {
+// 							if !delegate(m, topic, m.Pubsub.Payload(msg)) {
+// 								connected = false
+// 								quit = true
+// 							}
+// 						}
 
-func (m *Service) Register(r string) error {
-	if m.Pubsub == nil {
-		// Not connected yet, just add it to the list
-		m.PubsubRegister = append(m.PubsubRegister, r)
-	} else {
-		// We are connected, also call Register on pubsub
-		m.PubsubRegister = append(m.PubsubRegister, r)
-		m.Pubsub.Register(r)
-	}
-	return nil
-}
+// 						if topic == "client/disconnected" {
+// 							m.Logger.LogInfo("pubsub", "disconnected")
+// 							connected = false
+// 						}
+// 					}
+// 				}
+// 			}
+// 			m.Pubsub.Close()
+// 		}
 
-func (m *Service) Subscribe(r string) error {
-	if m.Pubsub == nil {
-		// Not connected yet, just add it to the list
-		m.PubsubSubscribe = append(m.PubsubSubscribe, r)
-	} else {
-		// We are connected, also call Subscribe on pubsub
-		m.PubsubSubscribe = append(m.PubsubSubscribe, r)
-		m.Pubsub.Subscribe(r)
-	}
-	return nil
-}
+// 		if err != nil {
+// 			m.Logger.LogError(m.Name, err.Error())
+// 		}
 
-func (m *Service) RegisterAndSubscribe(register []string, subscribe []string) {
-	for _, r := range register {
-		m.Register(r)
-	}
-	for _, r := range subscribe {
-		m.Subscribe(r)
-	}
-}
+// 		if !quit {
+// 			m.Logger.LogInfo("pubsub", "Waiting 5 seconds before re-connecting..")
+// 			time.Sleep(5 * time.Second)
+// 		} else {
+// 			m.Logger.LogInfo("pubsub", "End.")
+// 		}
+// 	}
+// }
 
-func (m *Service) RegisterHandler(topic string, delegate Delegate) {
-	m.Handlers[topic] = delegate
-	natstopic := strings.Replace(topic, "/", ".", -1)
-	natstopic = strings.TrimSuffix(natstopic, ".")
-	m.Handlers[natstopic] = delegate
-}
-
-func matchTopic(etopic string, itopic string) bool {
-	ei := 0
-	ii := 0
-	cs := true
-	for ei < len(etopic) && ii < len(itopic) {
-		echar := etopic[ei]
-		ichar := itopic[ii]
-		if (echar == '/' || echar == '.') && (ichar == '/' || ichar == '.') {
-			cs = true
-			ei++
-			ii++
-		} else if cs && etopic[ei] == '*' { // chapter start ?
-			// consume chapter from itopic
-			ei++
-			for ii < len(itopic) && (itopic[ii] != '/' && itopic[ii] != '.') {
-				ii++
-			}
-			if ii == len(itopic) {
-				return false
-			}
-			cs = false
-		} else if echar != ichar {
-			return false
-		} else {
-			ei++
-			ii++
-			cs = false
-		}
-	}
-	return ei == len(etopic) && ii == len(itopic)
-}
-
-func (m *Service) FindHandler(itopic string) (delegate Delegate, exists bool) {
-	for etopic, edelegate := range m.Handlers {
-		if matchTopic(etopic, itopic) {
-			return edelegate, true
-		}
+func (m *Service) FindHandlerByID(srcID uint32) (delegate Delegate, exists bool) {
+	if hander, exists := m.handlersByID[srcID]; exists {
+		return hander, true
 	}
 	return nil, false
+}
+
+func (m *Service) FindHandlerByPath(peerPath string) (delegate Delegate, exists bool) {
+	if hander, exists := m.handlersByPath[peerPath]; exists {
+		return hander, true
+	}
+	return nil, false
+}
+
+func (m *Service) ConnectTo(peerPaths []string) {
+	for _, r := range peerPaths {
+		m.Connect(r)
+	}
 }
 
 func (m *Service) Loop() {
 	quit := false
 	for !quit {
-		m.Pubsub = pubsub.New(config.PubSubCfg)
-		err := m.Pubsub.Connect(m.Name, m.PubsubRegister, m.PubsubSubscribe)
-		if err == nil {
-			m.Logger.LogInfo("pubsub", "connected")
-
-			connected := true
-			for connected {
-				select {
-				case msg := <-m.ProcessMessages:
-					topic := msg.Topic
-					delegate, exists := m.FindHandler(topic)
+		connected := true
+		for connected {
+			select {
+			case msg := <-m.inboundCh:
+				srcID := msg.SrcID()
+				delegate, exists := m.FindHandlerByID(srcID)
+				if exists {
+					if !delegate(m, msg) {
+						connected = false
+						quit = true
+					}
+				} else {
+					delegate, exists := m.FindHandlerByPath("*")
 					if exists {
-						if !delegate(m, topic, msg.Payload) {
+						if !delegate(m, msg) {
 							connected = false
 							quit = true
 						}
 					}
 
-				case msg := <-m.Pubsub.InMsgs:
-					topic := m.Pubsub.Topic(msg)
-					delegate, exists := m.Handlers[topic]
-					if exists {
-						if !delegate(m, topic, m.Pubsub.Payload(msg)) {
-							connected = false
-							quit = true
-						}
-					} else {
-						delegate, exists := m.Handlers["*"]
-						if exists {
-							if !delegate(m, topic, m.Pubsub.Payload(msg)) {
-								connected = false
-								quit = true
-							}
-						}
-
-						if topic == "client/disconnected" {
-							m.Logger.LogInfo("pubsub", "disconnected")
-							connected = false
-						}
+					if srcID == Hash32("client/disconnected") {
+						m.Logger.LogInfo("net", "disconnected")
+						connected = false
 					}
 				}
 			}
-			m.Pubsub.Close()
-		}
-
-		if err != nil {
-			m.Logger.LogError(m.Name, err.Error())
 		}
 
 		if !quit {
-			m.Logger.LogInfo("pubsub", "Waiting 5 seconds before re-connecting..")
+			m.Logger.LogInfo("net", "Waiting 5 seconds before re-connecting..")
 			time.Sleep(5 * time.Second)
 		} else {
-			m.Logger.LogInfo("pubsub", "End.")
+			m.Logger.LogInfo("net", "End.")
 		}
 	}
 }

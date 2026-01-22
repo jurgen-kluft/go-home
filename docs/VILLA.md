@@ -1,7 +1,7 @@
 # Villa
 
 - Number of WiFi APs (every floor): 3
-  - GL-inet Berry/Slate and Flint
+  - 3 x GL-inet Flint
 - Zigbee Coordinator per floor
   - CC2531 USB Dongle
   - For:
@@ -17,11 +17,14 @@
 - Number of open/close: 31
   - Battery powered
   - WiFi connected
+- Number of switch wall panels: TODO, we need to identify all of them
+  - Note: We have Neutral in all switch boxes
 
-- Number of sensor data streams:
+- Number of sensor data streams (roughly): = 229
   - Presence = (state + RSSI + presence) * 18 = 54
   - Environment = (4 + state + RSSI) * 11 = 66
   - Open/Close = (1 + state + RSSI) * 31 = 93
+  - Smart Sockets = (voltage + current + power + energy) * 4 = 16
 
 ## Mailbox
 
@@ -40,6 +43,7 @@
   - (open/close) window
   - environment: temperature + humidity + CO2
   - presence
+  - smart socket: 2 (freezer and dehumidifier)
 - Main Room
   - (open/close) door
   - (open/close) window
@@ -67,6 +71,7 @@
   - (open/close) window, right
   - presence
   - environment: temperature + humidity
+  - smart socket: 3 (fridge, dishwasher and water heater)
 - Dining Area 
   - (open/close) window
   - presence
@@ -110,9 +115,9 @@
 - Washing Area 
   - presence
   - luminance
+  - smart socket: 2 (washing machine and dryer)
 - Balcony 
   - presence
-
 
 ## 3rd Floor
 

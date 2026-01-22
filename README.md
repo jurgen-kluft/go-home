@@ -9,13 +9,10 @@ Total overhaul of the project, all code is being scratched and redone in Go.
 ## App Structure
 
 Note:
-  InfluxDB for tracking metrics and usage of some processes.
-  Since all of this is written in Go it should be able to run anywhere, from a Raspberry PI, Arduino to a Windows/Mac machine.
+  Since all of this is written in Go it should be able to run anywhere, from a Raspberry PI, Arduino to any other Linux based machine.
 
-- Since every process is just running it's own logic want we need is a pub/sub server where every process
-  can register itself to specific events that it is interested in.
-  -> MQTT Server (Pub/Sub server where you can subscribe to channel(s))
-     This is also useful for any third-party device to integrate into the whole system.
+- Since every process is just running it's own logic want we need is client/server mechanism where every process
+  can connect itself to for specific events that it is interested in.
 
 - Following sub-processes:
   - Apple HomeKit       WIP, (Apple Home Kit accessory emulator, our **UI** solution)
@@ -46,29 +43,25 @@ Automation, reacting to all events and executing automation rules, all written i
 ## Devices / Hardware
 
 - Home 1:
-  - Aqara M2 Hub (Zigbee Sensors, Lights, Switches, Plugs)
-  - Aqara E1 Hub (Zigbee Repeater)
+  - Zigbee2MQTT
   - Apple Mac Mini M4, running Go
   - Apple TV 4K (this is the HomeKit controller since it can be Ethernet connected)
   - Apple HomePod
-  - 2 TP-Link Deco routers
-  - Hue, Yee, Ikea, Wiz and Aqara lighting
-  - Aqara Switches
+  - GLiNet routers
+  - Hue, Yee, Ikea, Wiz lighting
+  - Geek-Open Switches
   - Sony Bravia TV
-  - ESPHome devices (bed presence, air quality)
-
+  
 - Home 2:
   - Apple Mac Mini M4, running Go
   - Apple TV 4K (this is the HomeKit controller since it can be Ethernet connected)
-  - Aqara M3 Hub (Zigbee Sensors, Lights, Switches, Plugs)
-  - 2 x Aqara M2 Hub (Zigbee Sensors, Lights, Switches, Plugs)
+  - Zigbee2MQTT
   - Apple HomePod
   - GL.inet routers
-  - Wiz and Aqara lighting
-  - Aqara Switches
+  - Hue, Ikea, Wiz lighting
+  - Geek-Open Switches
   - LG TV's (HomeKit compatible)
-  - ESPHome devices (room presence, bed presence, air quality)
-
+  
 ## Apple HomePod
 
 Acts as a HomeKit Hub (Server) and also is able to serve `announcements` to all HomePods in the house. This is useful for automations that need to announce something, like when the door bell is pressed or when the front door is opened or when the wash machine or dryer is done.
@@ -93,8 +86,3 @@ For simulating HK accessories, so that in your automations you can use those `vi
 
 We can use Golang and C#, our favorite languages to implement this. The HomeKit Accessory Server is a simple server that can be run on any device that supports Golang or C#. It can be run on a PC, a Mac, or any other device that supports Golang or C#.
 
-### NFC Tags
-
-To keep this simple for each Tag we will have a virtual accessory that is triggered when the tag is scanned. This accessory can be used in automations to trigger other accessories or automations.
-
-So: Scan NFC Tag -> Set the state of a specific `Virtual Switch` to ON

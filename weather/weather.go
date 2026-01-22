@@ -187,15 +187,18 @@ func (c *instance) process(name string) ([]byte, error) {
 
 func main() {
 	c := new()
-	register := []string{"config/weather/", "config/request/", "state/sensor/weather/"}
-	subscribe := []string{"config/weather/"}
 
-	m := microservice.New("weather", time.Second*15)
-	m.RegisterAndSubscribe(register, subscribe)
+	m, err := microservice.New("weather", "state/weather", time.Second*15)
+	if err != nil {
+		panic(err)
+	}
 
-	m.RegisterHandler("config/weather/", func(m *microservice.Service, topic string, msg []byte) bool {
+	peers := []string{"config/request"}
+	m.ConnectTo(peers)
+
+	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")
-		weatherConfig, err := config.WeatherConfigFromJSON(msg)
+		weatherConfig, err := config.WeatherConfigFromJSON(msg.Payload)
 		if err == nil {
 			c.initialize(weatherConfig)
 		} else {
@@ -205,19 +208,19 @@ func main() {
 	})
 
 	tickCount := 0
-	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("tick", func(m *microservice.Service, msg *microservice.Message) bool {
 		if tickCount%5 == 0 {
 			if c.darksky != nil {
 				jsonbytes, err := c.process(m.Name)
 				if err == nil {
 					if jsonbytes != nil {
-						m.Pubsub.Publish("state/sensor/weather/", jsonbytes)
+						m.SendJsonTo("state/weather", string(jsonbytes))
 					}
 				} else {
 					m.Logger.LogError(m.Name, err.Error())
 				}
 			} else {
-				m.Pubsub.PublishStr("config/request/", m.Name)
+				m.SendJsonTo("config/request", m.Name)
 			}
 		}
 		tickCount++

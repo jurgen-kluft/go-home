@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
-	"github.com/jurgen-kluft/go-home/metrics"
 	microservice "github.com/jurgen-kluft/go-home/micro-service"
 )
 
@@ -63,7 +62,6 @@ type context struct {
 	name       string
 	cfgch      string
 	config     *config.FluxConfig
-	metrics    *metrics.Metrics
 	suncalc    *config.SensorState
 	seasonName string
 	season     *config.Season
@@ -77,10 +75,18 @@ func new() *context {
 	c := &context{}
 	c.name = "flux"
 	c.cfgch = "config/flux/"
-	c.metrics, _ = metrics.New()
-	c.metrics.Register("hue", map[string]string{"CT": "Color Temperature", "BRI": "Brightness"}, map[string]interface{}{"CT": 200.0, "BRI": 200.0})
-	c.metrics.Register("yee", map[string]string{"CT": "Color Temperature", "BRI": "Brightness"}, map[string]interface{}{"CT": 200.0, "BRI": 200.0})
 	c.seasonName = "winter"
+	// based on the current time/date, initialize to the correct season
+	switch time.Now().Month() {
+	case time.December, time.January, time.February:
+		c.seasonName = "winter"
+	case time.March, time.April, time.May:
+		c.seasonName = "spring"
+	case time.June, time.July, time.August:
+		c.seasonName = "summer"
+	case time.September, time.October, time.November:
+		c.seasonName = "autumn"
+	}
 	c.averageCT = NewFilter(8)
 	c.averageBRI = NewFilter(8)
 	return c
@@ -213,17 +219,11 @@ func (c *context) process() error {
 	for _, ltype := range c.config.Lighttype {
 		sensor := config.NewSensorState(ltype.LightName, ltype.LightType)
 
-		c.metrics.Begin(ltype.MetricsName)
-
 		lct := ltype.CT.LinearInterpolated(CT)
 		sensor.AddFloatAttr("CT", math.Floor(lct))
-		c.metrics.Set(ltype.MetricsName, "CT", lct)
 
 		lbri := ltype.BRI.LinearInterpolated(BRI)
 		sensor.AddFloatAttr("BRI", math.Floor(lbri))
-		c.metrics.Set(ltype.MetricsName, "BRI", lbri)
-
-		c.metrics.Send(ltype.MetricsName)
 
 		jsonbytes, err := sensor.ToJSON()
 		if err == nil {
@@ -241,28 +241,31 @@ func (c *context) process() error {
 
 func (c *context) publishSensor(channel string, json string) {
 	c.service.Logger.LogInfo(c.service.Name, "Publish at '"+channel+"' JSON ["+json+"]")
-	c.service.Pubsub.Publish(channel, []byte(json))
+	c.service.SendJsonTo(channel, json)
 }
 
 func main() {
-	register := []string{"config/request/", "config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/"}
-	subscribe := []string{"config/flux/", "state/sensor/weather/", "state/sensor/sun/", "state/sensor/season/"}
+	peers := []string{"config/request", "state/weather", "state/sun", "state/calendar"}
 
-	m := microservice.New("flux", time.Second*30)
-	m.RegisterAndSubscribe(register, subscribe)
+	m, err := microservice.New("flux", "state/flux", time.Second*30)
+	if err != nil {
+		fmt.Println("Error creating microservice:", err)
+		return
+	}
+	m.ConnectTo(peers)
 
 	c := new()
 	c.service = m
 
 	tickCount := 0
 
-	m.RegisterHandler("config/flux/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
 		var err error
-		c.config, err = config.FluxConfigFromJSON(msg)
+		c.config, err = config.FluxConfigFromJSON(msg.Payload)
 		if err == nil {
 			m.Logger.LogInfo(m.Name, "received configuration")
 			for _, ltype := range c.config.Lighttype {
-				m.Register(ltype.Channel)
+				m.Connect(ltype.Channel)
 				if err == nil {
 					m.Logger.LogInfo(c.name, fmt.Sprintf("registered pubsub channel %s for lighttype %s", ltype.Channel, ltype.LightType))
 				} else {
@@ -276,9 +279,9 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("state/sensor/weather/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("state/weather", func(m *microservice.Service, msg *microservice.Message) bool {
 		var err error
-		c.weather, err = config.SensorStateFromJSON(msg)
+		c.weather, err = config.SensorStateFromJSON(msg.Payload)
 		if err == nil {
 			m.Logger.LogInfo(c.name, "received weather state")
 		} else {
@@ -287,9 +290,9 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("state/sensor/sun/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("state/sun", func(m *microservice.Service, msg *microservice.Message) bool {
 		var err error
-		c.suncalc, err = config.SensorStateFromJSON(msg)
+		c.suncalc, err = config.SensorStateFromJSON(msg.Payload)
 		if err == nil {
 			m.Logger.LogInfo(c.name, "received sun state")
 		} else {
@@ -298,18 +301,18 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("state/sensor/season/", func(m *microservice.Service, topic string, msg []byte) bool {
-		seasonSensorState, err := config.SensorStateFromJSON(msg)
+	m.RegisterHandler("state/calendar", func(m *microservice.Service, msg *microservice.Message) bool {
+		seasonSensorState, err := config.SensorStateFromJSON(msg.Payload)
 		if err == nil {
 			m.Logger.LogInfo(c.name, "received season state")
-			c.seasonName = seasonSensorState.GetValueAttr("season", "winter")
+			c.seasonName = seasonSensorState.GetValueAttr("season", c.seasonName)
 		} else {
 			m.Logger.LogError(c.name, err.Error())
 		}
 		return true
 	})
 
-	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("tick", func(m *microservice.Service, msg *microservice.Message) bool {
 		if (tickCount % 30) == 0 {
 			err := c.process()
 			if err != nil {
@@ -318,7 +321,7 @@ func main() {
 		}
 		if (tickCount % 59) == 0 {
 			if c.config == nil {
-				m.Pubsub.PublishStr("config/request/", m.Name)
+				m.SendJsonTo("config/request", m.Name)
 			}
 		}
 		tickCount++

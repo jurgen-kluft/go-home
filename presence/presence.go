@@ -5,9 +5,7 @@ import (
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
-	"github.com/jurgen-kluft/go-home/metrics"
 	microservice "github.com/jurgen-kluft/go-home/micro-service"
-	pubsub "github.com/jurgen-kluft/go-home/nats"
 )
 
 // AWAY    is a state that happens when   NOT_SEEN > N seconds
@@ -85,20 +83,13 @@ type Presence struct {
 	members           []*Member
 	updateIntervalSec int
 	updateTimeStamp   time.Time
-	metrics           *metrics.Metrics
 }
 
 // New will return an instance of presence.Home
-func NewPresence(configdata []byte) (presence *Presence, err error) {
-	presenceConfig, err := config.PresenceConfigFromJSON(configdata)
+func NewPresence(msg *microservice.Message) (presence *Presence, err error) {
+	presenceConfig, err := config.PresenceConfigFromJSON(msg.Payload)
 	if err != nil {
 		return
-	}
-
-	var metric *metrics.Metrics
-	metric, err = metrics.New()
-	if err != nil {
-		return nil, err
 	}
 
 	presence = &Presence{}
@@ -107,7 +98,6 @@ func NewPresence(configdata []byte) (presence *Presence, err error) {
 	presence.macToIndex = map[string]int{}
 	presence.macToPresence = map[string]bool{}
 
-	presence.metrics = metric
 	metricTags := map[string]string{}
 	metricTags["presence"] = "router"
 
@@ -120,9 +110,9 @@ func NewPresence(configdata []byte) (presence *Presence, err error) {
 		member.last = Detect{Time: time.Now(), State: away}
 		member.current = Detect{Time: time.Now(), State: away}
 		member.index = 0
-		member.detect = make([]Detect, updateHist, updateHist)
-		for j := range member.detect {
-			member.detect[j] = Detect{Time: time.Now(), State: away}
+		member.detect = make([]Detect, updateHist)
+		for j := 0; j < updateHist; j++ {
+			member.detect = append(member.detect, Detect{Time: time.Now(), State: away})
 		}
 		for _, mac := range device.Mac {
 			presence.macToIndex[mac.String] = i
@@ -132,8 +122,6 @@ func NewPresence(configdata []byte) (presence *Presence, err error) {
 
 		metricFields[member.name] = float64(away)
 	}
-
-	presence.metrics.Register("presence", metricTags, metricFields)
 
 	presence.updateIntervalSec = presence.config.UpdateIntervalSec
 
@@ -188,13 +176,6 @@ func (p *Presence) presence(now time.Time) (updated bool, result error) {
 			m.updateState(now)
 		}
 
-		// Report metrics
-		p.metrics.Begin("presence")
-		for _, m := range p.members {
-			p.metrics.Set("presence", m.name, float64(m.current.State))
-		}
-		p.metrics.Send("presence")
-
 		p.computeNextTick(now, result)
 
 		return true, result
@@ -202,7 +183,7 @@ func (p *Presence) presence(now time.Time) (updated bool, result error) {
 	return false, result
 }
 
-func (p *Presence) publish(now time.Time, client *pubsub.Context) {
+func (p *Presence) publish(now time.Time, m *microservice.Service) {
 	sensor := config.NewSensorState("state.presence", "presence")
 	sensor.Time = now
 	for _, m := range p.members {
@@ -211,7 +192,10 @@ func (p *Presence) publish(now time.Time, client *pubsub.Context) {
 	}
 	jsonstr, err := sensor.ToJSON()
 	if err == nil {
-		client.Publish("state/presence/", jsonstr)
+		msg, err := m.NewTextMessage(string(jsonstr))
+		if err == nil {
+			m.SendTo("state/presence", msg)
+		}
 		//fmt.Println(jsonstr)
 	} else {
 		fmt.Println(err)
@@ -222,13 +206,12 @@ func main() {
 	var presence *Presence
 	var err error
 
-	register := []string{"state/presence/", "config/request/"}
-	subscribe := []string{"config/presence/"}
+	name := "presence"
+	peers := []string{"config/request"}
+	micro, err := microservice.New(name, "state/"+name, time.Second*15)
+	micro.ConnectTo(peers)
 
-	micro := microservice.New("presence", time.Second*15)
-	micro.RegisterAndSubscribe(register, subscribe)
-
-	micro.RegisterHandler("config/presence/", func(m *microservice.Service, topic string, msg []byte) bool {
+	micro.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")
 		presence, err = NewPresence(msg)
 		if err != nil {
@@ -237,18 +220,21 @@ func main() {
 		return true
 	})
 
-	micro.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+	micro.RegisterHandler("tick", func(m *microservice.Service, msg *microservice.Message) bool {
 		if presence != nil {
 			now := time.Now()
 			updated, err := presence.presence(now)
 			if err != nil {
 				m.Logger.LogError(m.Name, err.Error())
 			} else if updated {
-				presence.publish(now, m.Pubsub)
+				presence.publish(now, m)
 			}
 		} else {
 			m.Logger.LogInfo(m.Name, "request configuration")
-			m.Pubsub.PublishStr("config/request/", m.Name)
+			msg, err := m.NewTextMessage(m.Name)
+			if err == nil {
+				m.SendTo("config/request", msg)
+			}
 		}
 		return true
 	})

@@ -1,3 +1,0 @@
-# DoorMonitor
-
-Customized DoorMonitor

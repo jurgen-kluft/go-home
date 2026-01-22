@@ -11,6 +11,18 @@
   - Battery powered
   - WiFi connected
 
+# Data Streams
+
+Every value that we track is a file data stream on our server, so how many data streams do we have?
+
+- Total number of data streams: 74
+
+  - Presence sensors: 9 data streams (1 per sensor)
+  - Open/close sensors: 8 data streams (1 per sensor)
+  - Environment sensors: 28 data streams (4 per sensor: temperature, humidity, luminance, CO2)
+  - Switch wall panels: 25 data streams (varies depending on number of buttons per panel)
+  - Smart Sockets (voltage/current/power/energy): 1 * 4 data streams
+
 # Appartment
 
 According to the below setup, the appartment contains:
@@ -92,6 +104,8 @@ use some of the 'switching' wires to trace neutral to the switch box.
   - Environment: Temperature + humidity + luminance + CO2
   - Bedroom main light
   - Bedroom stand lights
+  - Switch wall panel (WiFi, Neutral, 2 buttons)
+  - Smart Socket: For AirConditioner
 
 ##  Bathroom Main
 

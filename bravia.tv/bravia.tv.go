@@ -28,7 +28,6 @@ type instance struct {
 func new() *instance {
 	c := &instance{}
 	c.name = "bravia.tv"
-	c.ccfg = "config/tv/bravia/"
 	c.tvs = make(map[string]*bravia.Bravia)
 	return c
 }
@@ -81,15 +80,18 @@ func main() {
 	c := new()
 	defer c.Close()
 
-	register := []string{c.ccfg, "state/tv/bravia/", "config/request/"}
-	subscribe := []string{c.ccfg, "state/tv/bravia/"}
+	m, err := microservice.New("bravia.tv", "state/bravia.tv", time.Second*30)
+	if err != nil {
+		fmt.Println("Error creating microservice:", err)
+		return
+	}
 
-	m := microservice.New("tv/bravia", time.Second*30)
-	m.RegisterAndSubscribe(register, subscribe)
+	peers := []string{"config/request"}
+	m.ConnectTo(peers)
 
-	m.RegisterHandler("config/tv/bravia/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
 		var err error
-		c.config, err = config.BraviaTVConfigFromJSON(msg)
+		c.config, err = config.BraviaTVConfigFromJSON(msg.Payload)
 		m.Logger.LogInfo(m.Name, "received configuration")
 		if err != nil {
 			m.Logger.LogError(m.Name, err.Error())
@@ -102,9 +104,9 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("state/tv/bravia/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("state/bravia.tv", func(m *microservice.Service, msg *microservice.Message) bool {
 		m.Logger.LogInfo(m.Name, "received state")
-		state, err := config.SensorStateFromJSON(msg)
+		state, err := config.SensorStateFromJSON(msg.Payload)
 		if err == nil {
 			power := state.GetValueAttr("power", "none")
 			c.changePower(state.Name, power)
@@ -124,11 +126,11 @@ func main() {
 	})
 
 	tickCount := 0
-	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("tick", func(m *microservice.Service, msg *microservice.Message) bool {
 		if tickCount == 29 {
 			tickCount = 0
 			if c.config == nil {
-				m.Pubsub.PublishStr("config/request/", m.Name)
+				m.SendJsonTo("config/request", m.Name)
 			}
 		} else {
 			tickCount++

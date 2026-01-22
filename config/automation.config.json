@@ -1,84 +1,79 @@
 {
-    "subscribe": [
-        "state/presence/",
-        "state/sensor/conbee/",
-        "state/sensor/calendar/",
-        "state/switch/conbee/",
-        "state/switch/ahk/",
-        "state/tv/bravia/",
-        "state/tv/samsung/"
-    ],
-    "register": [
-        "state/presence/automation/",
-        "state/light/automation/",
-        "state/tv/bravia/",
-        "state/tv/samsung/",
-        "shout/message/"
+    "peers": [
+        "state/presence",
+        "state/calendar",
+        "state/sensor",
+        "state/light",
+        "state/switch",
+        "state/ahk",
+        "state/bravia.tv",
+        "state/samsung.tv",
+        "shout/message"
     ],
     "devices": {
         "Kitchen": {
-            "channel": "state/light/automation/",
+            "channel": "state/light",
             "on": "{\"name\": \"Kitchen\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Kitchen\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
         "Frontdoor hall light": {
-            "channel": "state/light/automation/",
+            "channel": "state/light",
             "on": "{\"name\": \"Frontdoor hall light\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Frontdoor hall light\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
         "Living Room Stand": {
-            "channel": "state/light/automation/",
+            "channel": "state/light",
             "on": "{\"name\": \"Living Room Stand\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Living Room Stand\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
         "Living Room Main": {
-            "channel": "state/light/automation/",
+            "channel": "state/light",
             "on": "{\"name\": \"Living Room Main\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Living Room Main\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
         "Living Room Chandelier": {
-            "channel": "state/light/automation/",
+            "channel": "state/light",
             "on": "{\"name\": \"Living Room Chandelier\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Living Room Chandelier\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
         "Sophia Stand": {
-            "channel": "state/light/automation/",
+            "channel": "state/light",
             "on": "{\"name\": \"Sophia Stand\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Sophia Stand\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
         "Sophia Main": {
-            "channel": "state/light/automation/",
+            "channel": "state/light",
             "on": "{\"name\": \"Sophia Main\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Sophia Main\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
         "Jennifer Main": {
-            "channel": "state/light/automation/",
+            "channel": "state/light",
             "on": "{\"name\": \"Jennifer\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Jennifer\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
         "Bedroom Main": {
-            "channel": "state/light/automation/",
+            "channel": "state/light",
             "on": "{\"name\": \"Bedroom Main\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Bedroom Main\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
         "Bedroom Stand": {
-            "channel": "state/light/automation/",
+            "channel": "state/light",
             "on": "{\"name\": \"Bedroom Stand\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Bedroom Stand\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
         "Bedroom Plug": {
-            "channel": "state/switch/automation/",
+            "channel": "state/switch",
             "on": "{\"name\": \"Bedroom Plug\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Bedroom Plug\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}",
             "toggle": "{\"name\": \"Bedroom Plug\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"toggle\"}]}"
         },
         "Bedroom TV": {
-            "channel": "state/tv/samsung/",
+            "channel": "state/samsung.tv",
             "on": "{\"name\": \"Bedroom Samsung-TV\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Bedroom Samsung-TV\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         },
         "Livingroom TV": {
-            "channel": "state/tv/bravia/",
+            "channel": "state/bravia.tv",
             "on": "{\"name\": \"Livingroom Sony Bravia-TV\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"on\"}]}",
             "off": "{\"name\": \"Livingroom Sony Bravia-TV\",\"stringattrs\": [{\"name\": \"power\",\"value\": \"off\"}]}"
         }

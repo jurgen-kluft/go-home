@@ -426,17 +426,19 @@ func (s *instance) buildJSONMessage() ([]byte, error) {
 func main() {
 	suncalc := new()
 
-	register := []string{"state/sensor/sun/", "config/request/"}
-	subscribe := []string{"config/suncalc/"}
+	m, err := microservice.New("sun", "state/sun", time.Second*15)
+	if err != nil {
+		panic(err)
+	}
+
+	peers := []string{"config/request"}
+	m.ConnectTo(peers)
 
 	tickCount := 0
 
-	m := microservice.New("suncalc", time.Second*15)
-	m.RegisterAndSubscribe(register, subscribe)
-
-	m.RegisterHandler("config/suncalc/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")
-		err := suncalc.initialize(msg)
+		err := suncalc.initialize(msg.Payload)
 		if err != nil {
 			m.Logger.LogError(m.Name, err.Error())
 		} else {
@@ -445,17 +447,17 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("tick", func(m *microservice.Service, msg *microservice.Message) bool {
 		if tickCount%30 == 0 { // every 30 seconds
 			if suncalc.config == nil {
-				m.Pubsub.PublishStr("config/request/", m.Name)
+				m.SendJsonTo("config/request", m.Name)
 			}
 		}
 		if tickCount%300 == 0 { // every 5 minutes
 			if suncalc.config != nil {
 				jsonbytes, err := suncalc.buildJSONMessage()
 				if err == nil {
-					m.Pubsub.Publish("state/sensor/sun/", jsonbytes)
+					m.SendJsonTo("state/sun", string(jsonbytes))
 				} else {
 					m.Logger.LogError(m.Name, err.Error())
 				}

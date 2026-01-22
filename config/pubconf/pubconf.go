@@ -20,15 +20,16 @@ func main() {
 			Usage: "The JSON configuration file to read and publish",
 		},
 		&cli.StringFlag{
-			Name:  "channel",
-			Value: "config/flux/",
-			Usage: "The channel to publish to",
+			Name:  "destination",
+			Value: "config/flux",
+			Usage: "The channel to write to",
 		},
 	}
 
 	app.Action = func(c *cli.Context) error {
 
 		filename := c.String("file")
+		channel := c.String("destination")
 
 		filedata, err := os.ReadFile(filename)
 		if err != nil {
@@ -36,20 +37,18 @@ func main() {
 		}
 		jsonbytes := filedata
 
-		channel := c.String("channel")
-		register := []string{channel}
-		subscribe := []string{}
+		m, err := microservice.New("conf", "config/config", time.Second*15)
+		if err != nil {
+			return err
+		}
 
-		m := microservice.New("pubconf", time.Second*15)
-		m.RegisterAndSubscribe(register, subscribe)
-
-		m.RegisterHandler("*", func(m *microservice.Service, topic string, msg []byte) bool {
-			fmt.Printf("message received, topic:'%s', msg:'%s'\n", topic, string(msg))
+		m.RegisterHandler("*", func(m *microservice.Service, msg *microservice.Message) bool {
+			fmt.Printf("message received, from:'%d', msg:'%s'\n", msg.SrcID(), string(msg.Payload))
 			return true
 		})
 
-		m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
-			err := m.Pubsub.Publish(channel, jsonbytes)
+		m.RegisterHandler("tick", func(m *microservice.Service, msg *microservice.Message) bool {
+			err := m.SendJsonTo(channel, string(jsonbytes))
 			if err != nil {
 				fmt.Println(err)
 			}

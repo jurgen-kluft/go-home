@@ -1,0 +1,1 @@
+./watermessage --db ~/Library/Messages/chat.db

@@ -103,18 +103,22 @@ func (s *instance) postMessage(jsondata []byte) {
 }
 
 func main() {
-	register := []string{"config/request/"}
-	subscribe := []string{"config/shout/", "shout/message/"}
+	peers := []string{"config/request"}
 
-	m := microservice.New("shout", time.Second*15)
-	m.RegisterAndSubscribe(register, subscribe)
+	m, err := microservice.New("shout", "shout/message", time.Second*15)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	m.ConnectTo(peers)
 
 	c := new()
 	c.service = m
 
-	m.RegisterHandler("config/shout/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("config/shout/", func(m *microservice.Service, msg *microservice.Message) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")
-		err := c.initialize(msg)
+		err := c.initialize(msg.Payload)
 		if err != nil {
 			m.Logger.LogError(m.Name, err.Error())
 		} else {
@@ -123,20 +127,23 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("shout/message/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("shout/message/", func(m *microservice.Service, msg *microservice.Message) bool {
 		// Is this a message to send over slack ?
 		if c.client != nil {
 			m.Logger.LogInfo(m.Name, "message")
-			c.postMessage(msg)
+			c.postMessage(msg.Payload)
 		}
 		return true
 	})
 
 	tickCount := 0
-	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("tick/", func(m *microservice.Service, msg *microservice.Message) bool {
 		if (tickCount % 30) == 0 {
 			if c.config == nil {
-				m.Pubsub.Publish("config/request/", []byte(m.Name))
+				msg, err := m.NewTextMessage(m.Name)
+				if err == nil {
+					m.SendTo("config/request", msg)
+				}
 			}
 		}
 		tickCount++

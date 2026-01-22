@@ -21,15 +21,17 @@ func new() *instance {
 func main() {
 	c := new()
 
-	register := []string{"sensor/state/wemo/", "config/request/"}
-	subscribe := []string{"config/wemo/"}
+	m, err := microservice.New("wemo", "state/wemo", time.Second*15)
+	if err != nil {
+		panic(err)
+	}
 
-	m := microservice.New("wemo", time.Second*15)
-	m.RegisterAndSubscribe(register, subscribe)
+	peers := []string{"config/request"}
+	m.ConnectTo(peers)
 
-	m.RegisterHandler("config/wemo/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")
-		c.config, _ = config.WemoConfigFromJSON(msg)
+		c.config, _ = config.WemoConfigFromJSON(msg.Payload)
 		c.devices = map[string]*Switch{}
 		for _, d := range c.config.Devices {
 			c.devices[d.Name] = NewSwitch(d.Name, d.IP+":"+d.Port)
@@ -37,8 +39,8 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("sensor/state/wemo/", func(m *microservice.Service, topic string, msg []byte) bool {
-		sensor, err := config.SensorStateFromJSON(msg)
+	m.RegisterHandler("state/wemo", func(m *microservice.Service, msg *microservice.Message) bool {
+		sensor, err := config.SensorStateFromJSON(msg.Payload)
 		if err == nil {
 			m.Logger.LogInfo(m.Name, "received state")
 			devicename := sensor.Name
@@ -46,12 +48,11 @@ func main() {
 				device, exists := c.devices[devicename]
 				if exists {
 					power := sensor.GetValueAttr("power", "")
-					if power != "" {
-						if power == "on" {
-							device.On()
-						} else if power == "off" {
-							device.Off()
-						}
+					switch power {
+					case "on":
+						device.On()
+					case "off":
+						device.Off()
 					}
 				}
 			}
@@ -62,10 +63,10 @@ func main() {
 	})
 
 	tickCount := 0
-	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("tick", func(m *microservice.Service, msg *microservice.Message) bool {
 		if tickCount%5 == 0 {
 			if c.config == nil {
-				m.Pubsub.PublishStr("config/request/", m.Name)
+				m.SendJsonTo("config/request/", m.Name)
 			}
 		}
 		tickCount++

@@ -4,9 +4,6 @@
 
 Setup the following on my Mac Mini:
 
-* NATS       [DONE]
-* Influx DB  [DONE]
-* Grafana    [WIP]
 * Zigbee2MQTT [WIP]
 
 ## Implemented

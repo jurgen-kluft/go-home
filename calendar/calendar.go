@@ -216,7 +216,7 @@ func (c *Calendar) applyRulesToSensorStates() {
 }
 
 func (c *Calendar) publishSensorState(name string, sensorjsonbytes []byte) {
-	c.service.Pubsub.Publish("state/sensor/calendar/", sensorjsonbytes)
+	c.service.SendJsonTo("state/calendar", string(sensorjsonbytes))
 }
 
 // Process will update 'events' from the calendar
@@ -258,20 +258,23 @@ func (c *Calendar) process() (err error) {
 }
 
 func main() {
-	register := []string{"config/calendar/", "config/request/", "state/sensor/calendar/"}
-	subscribe := []string{"config/calendar/"}
+	peers := []string{"config/request"}
 
-	m := microservice.New("calendar", time.Second*60)
-	m.RegisterAndSubscribe(register, subscribe)
+	m, err := microservice.New("calendar", "state/calendar", time.Second*60)
+	if err != nil {
+		fmt.Println("Error creating microservice:", err)
+		return
+	}
+	m.ConnectTo(peers)
 
 	c := new()
 	c.service = m
 
 	tickCount := 150
 
-	m.RegisterHandler("config/calendar/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")
-		err := c.initialize(msg)
+		err := c.initialize(msg.Payload)
 		if err != nil {
 			c = nil
 			m.Logger.LogError(c.name, err.Error())
@@ -281,10 +284,10 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("tick/", func(m *microservice.Service, topic string, msg []byte) bool {
+	m.RegisterHandler("tick", func(m *microservice.Service, msg *microservice.Message) bool {
 		if tickCount%5 == 0 {
 			if c != nil && c.config == nil {
-				m.Pubsub.PublishStr("config/request/", m.Name)
+				m.SendJsonTo("config/request", m.Name)
 			}
 		}
 		if tickCount%450 == 0 {

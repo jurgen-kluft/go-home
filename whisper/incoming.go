@@ -146,9 +146,12 @@ func (m *Messages) checkForNewMessages() {
 		return // error
 	}
 	defer m.closeDB(db)
+	// sql := `SELECT message.rowid as rowid, handle.id as handle, cache_has_attachments, message.text as text ` +
+	// 	`FROM message INNER JOIN handle ON message.handle_id = handle.ROWID ` +
+	// 	`WHERE is_from_me=0 AND message.rowid > $id ORDER BY message.date ASC`
 	sql := `SELECT message.rowid as rowid, handle.id as handle, cache_has_attachments, message.text as text ` +
 		`FROM message INNER JOIN handle ON message.handle_id = handle.ROWID ` +
-		`WHERE is_from_me=0 AND message.rowid > $id ORDER BY message.date ASC`
+		`WHERE message.rowid > $id ORDER BY message.date ASC`
 	query, _, err := db.PrepareTransient(sql)
 	if err != nil {
 		return
