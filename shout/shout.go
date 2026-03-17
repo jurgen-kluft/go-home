@@ -6,15 +6,29 @@ import (
 
 	"github.com/jurgen-kluft/go-home/config"
 	microservice "github.com/jurgen-kluft/go-home/micro-service"
-	"github.com/slack-go/slack"
 )
 
-// Instance is our instant-messenger instance (currently Slack)
+// Shout microservice instance
+// This microservice shouts messages to specific Apple Home Pod devices using
+// Play audio on a HomePod by switching the `audio output` on the Mac Mini, we can do this from the terminal.
+// This means we can write a script that can convert text to an mp4 and then play it on one or more HomePods.
+// This is useful for automations that need to announce something, like when the door bell is pressed or when
+// the front door is opened or when the wash machine or dryer is done.
+// We can do this by writing to an announcement.queue file, and we have a process that tails the file and plays
+// the announcements one at a time on the designated HomePod(s).
+//
+// Example announcement on HomePod1 and HomePod2:
+// ```
+// say "Hello, this is a test announcement" --output announcement.mp4
+// select audio output as HomePod1
+// afplay announcement.mp4
+// select audio output as HomePod2
+// afplay announcement.mp4
+// ```
+
 type instance struct {
-	name   string
-	config *config.ShoutConfig
-	client *slack.Client
-	//socket_client *socketmode.Client
+	name    string
+	config  *config.ShoutConfig
 	service *microservice.Service
 }
 
@@ -30,76 +44,13 @@ func (s *instance) initialize(jsondata []byte) error {
 	config, err := config.ShoutConfigFromJSON(jsondata)
 	if err == nil {
 		s.config = config
-		s.client = slack.New(s.config.UserToken.String, slack.OptionDebug(true), slack.OptionAppLevelToken(s.config.AppToken.String))
 
-		/// The below does work, we can receive messages :-)
-
-		///		// go-slack comes with a SocketMode package that we need to use that accepts a Slack client and outputs a Socket mode client instead
-		///		s.socket_client = socketmode.New(
-		///			s.client,
-		///			socketmode.OptionDebug(true),
-		///			// Option to set a custom logger
-		///			socketmode.OptionLog(log.New(os.Stdout, "socketmode: ", log.Lshortfile|log.LstdFlags)),
-		///		)
-		///
-		///		// Create a context that can be used to cancel goroutine
-		///		ctx, cancel := context.WithCancel(context.Background())
-		///		// Make this cancel called properly in a real program , graceful shutdown etc
-		///		defer cancel()
-		///
-		///		go func(ctx context.Context, client *slack.Client, socketClient *socketmode.Client) {
-		///			// Create a for loop that selects either the context cancellation or the events incomming
-		///			for {
-		///				select {
-		///				// inscase context cancel is called exit the goroutine
-		///				case <-ctx.Done():
-		///					log.Println("Shutting down socketmode listener")
-		///					return
-		///				case event := <-socketClient.Events:
-		///					// We have a new Events, let's type switch the event
-		///					// Add more use cases here if you want to listen to other events.
-		///					switch event.Type {
-		///					// handle EventAPI events
-		///					case slackevents.Message:
-		///
-		///						// The application has been mentioned since this Event is a Mention event
-		///						log.Println(event)
-		///
-		///					case socketmode.EventTypeEventsAPI:
-		///						// The Event sent on the channel is not the same as the EventAPI events so we need to type cast it
-		///						eventsAPIEvent, ok := event.Data.(slackevents.EventsAPIEvent)
-		///						if !ok {
-		///							log.Printf("Could not type cast the event to the EventsAPIEvent: %v\n", event)
-		///							continue
-		///						}
-		///						// We need to send an Acknowledge to the slack server
-		///						socketClient.Ack(*event.Request)
-		///						// Now we have an Events API event, but this event type can in turn be many types, so we actually need another type switch
-		///						log.Println(eventsAPIEvent)
-		///					}
-		///
-		///				}
-		///			}
-		///		}(ctx, s.client, s.socket_client)
-		///
-		///		s.socket_client.Run()
 	}
 	return err
 }
 
 // postMessage posts a message to a channel
 func (s *instance) postMessage(jsondata []byte) {
-	if s.client != nil {
-		channelID, timestamp, err := s.client.PostMessage(s.config.Channel, slack.MsgOptionText(string(jsondata), false), slack.MsgOptionUsername("g0-h0m3"), slack.MsgOptionAsUser(true))
-		if err == nil {
-			s.service.Logger.LogInfo(s.name, fmt.Sprintf("message '%s' send (%s, %s)", string(jsondata), channelID, timestamp))
-		} else {
-			s.service.Logger.LogError(s.name, fmt.Sprintf("message '%s' not send (%s, %s)", string(jsondata), s.config.Channel, timestamp))
-			s.service.Logger.LogError(s.name, err.Error())
-		}
-	} else {
-		s.service.Logger.LogError(s.name, "service not connected")
-	}
 }
 
 func main() {
@@ -116,7 +67,7 @@ func main() {
 	c := new()
 	c.service = m
 
-	m.RegisterHandler("config/shout/", func(m *microservice.Service, msg *microservice.Message) bool {
+	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")
 		err := c.initialize(msg.Payload)
 		if err != nil {
@@ -127,17 +78,13 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("shout/message/", func(m *microservice.Service, msg *microservice.Message) bool {
-		// Is this a message to send over slack ?
-		if c.client != nil {
-			m.Logger.LogInfo(m.Name, "message")
-			c.postMessage(msg.Payload)
-		}
+	m.RegisterHandler("shout/message", func(m *microservice.Service, msg *microservice.Message) bool {
+
 		return true
 	})
 
 	tickCount := 0
-	m.RegisterHandler("tick/", func(m *microservice.Service, msg *microservice.Message) bool {
+	m.RegisterHandler("tick", func(m *microservice.Service, msg *microservice.Message) bool {
 		if (tickCount % 30) == 0 {
 			if c.config == nil {
 				msg, err := m.NewTextMessage(m.Name)

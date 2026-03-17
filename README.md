@@ -1,6 +1,6 @@
 # go-home
 
-Automated home using Go.
+Automated home using Go (and C#)
 
 ## Status
 
@@ -65,20 +65,6 @@ Automation, reacting to all events and executing automation rules, all written i
 ## Apple HomePod
 
 Acts as a HomeKit Hub (Server) and also is able to serve `announcements` to all HomePods in the house. This is useful for automations that need to announce something, like when the door bell is pressed or when the front door is opened or when the wash machine or dryer is done.
-
-## Mac Mini As Home-Server
-
-Doing it with a Mac Mini allows us to play audio on a HomePod by switching the `audio output` on the Mac Mini, we can do this from the terminal. This means we can write a script that can convert text to an mp4 and then play it on one or more HomePods. This is useful for automations that need to announce something, like when the door bell is pressed or when the front door is opened or when the wash machine or dryer is done.
-We can do this by writing to an announcement.queue file, and we have a process that tails the file and plays the announcements one at a time on the designated HomePod(s).
-
-Example announcement on HomePod1 and HomePod2:
-```
-say "Hello, this is a test announcement" --output announcement.mp4
-select audio output as HomePod1
-afplay announcement.mp4
-select audio output as HomePod2
-afplay announcement.mp4
-```
 
 ## HomeKit Accessory Server
 

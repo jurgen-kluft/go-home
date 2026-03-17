@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/jurgen-kluft/go-home/config"
@@ -99,7 +99,7 @@ func (c *context) updateConfigFileWatcher() {
 func (c *context) checkAllConfigurationFiles() (err error) {
 	for name, configuration := range c.configs.Configurations {
 		var data []byte
-		data, err = ioutil.ReadFile(configuration.ConfigFilename)
+		data, err = os.ReadFile(configuration.ConfigFilename)
 		if err != nil {
 			c.service.Logger.LogError(c.service.Name, err.Error())
 		} else {
@@ -135,7 +135,7 @@ func (c *context) sendConfigOnChannel(configtype string) (err error) {
 		configuration, exists := c.configs.Configurations[configtype]
 		if exists {
 			var configJSONData []byte
-			configJSONData, err = ioutil.ReadFile(configuration.ConfigFilename)
+			configJSONData, err = os.ReadFile(configuration.ConfigFilename)
 			if err != nil {
 				return err
 			}
@@ -161,7 +161,7 @@ func (c *context) sendConfigOnChannel(configtype string) (err error) {
 }
 
 func main() {
-	m, err := microservice.New("config", "config/request", time.Second*15)
+	m, err := microservice.New("config", "config/request", time.Second*60)
 	if err != nil {
 		fmt.Println("Error creating microservice:", err)
 		return
@@ -186,7 +186,7 @@ func main() {
 
 	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
 		configname := string(msg.Payload)
-		m.Logger.LogInfo(m.Name, "requested configuration for '"+configname+"'.")
+		m.Logger.LogInfo(m.Name, "a configuration is requested for '"+configname+"'.")
 		err := ctx.sendConfigOnChannel(configname)
 		if err != nil {
 			m.Logger.LogError(m.Name, err.Error())
@@ -194,15 +194,8 @@ func main() {
 		return true
 	})
 
-	tickCount := 0
 	m.RegisterHandler("tick", func(m *microservice.Service, msg *microservice.Message) bool {
-		if tickCount == 5 {
-			tickCount = 0
-			// Any config files updated ?
-			ctx.updateConfigFileWatcher()
-		} else {
-			tickCount += 1
-		}
+		ctx.updateConfigFileWatcher()
 		return true
 	})
 

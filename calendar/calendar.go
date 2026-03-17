@@ -22,7 +22,7 @@ type Calendar struct {
 	service      *microservice.Service
 }
 
-func new() *Calendar {
+func newCalendar() *Calendar {
 	c := &Calendar{}
 	c.name = "calendar"
 	c.sensors = map[string]config.Csensor{}
@@ -258,26 +258,25 @@ func (c *Calendar) process() (err error) {
 }
 
 func main() {
-	peers := []string{"config/request"}
-
 	m, err := microservice.New("calendar", "state/calendar", time.Second*60)
 	if err != nil {
 		fmt.Println("Error creating microservice:", err)
 		return
 	}
+
+	peers := []string{"config/request"}
 	m.ConnectTo(peers)
 
-	c := new()
-	c.service = m
+	calendar := newCalendar()
+	calendar.service = m
 
 	tickCount := 150
-
 	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")
-		err := c.initialize(msg.Payload)
+		err := calendar.initialize(msg.Payload)
 		if err != nil {
-			c = nil
-			m.Logger.LogError(c.name, err.Error())
+			calendar = nil
+			m.Logger.LogError(calendar.name, err.Error())
 		} else {
 			tickCount = 150
 		}
@@ -285,20 +284,17 @@ func main() {
 	})
 
 	m.RegisterHandler("tick", func(m *microservice.Service, msg *microservice.Message) bool {
-		if tickCount%5 == 0 {
-			if c != nil && c.config == nil {
+		if calendar != nil && calendar.config == nil {
+			if tickCount%5 == 0 {
 				m.SendJsonTo("config/request", m.Name)
 			}
-		}
-		if tickCount%450 == 0 {
-			if c != nil && c.config != nil {
-				c.load()
+		} else if calendar != nil && calendar.config != nil {
+			if tickCount%450 == 0 {
+				calendar.load()
 				m.Logger.LogInfo(m.Name, "(re)loaded calendars")
 			}
-		}
-		if tickCount%60 == 0 {
-			if c != nil && c.config != nil {
-				if err := c.process(); err != nil {
+			if tickCount%60 == 0 {
+				if err := calendar.process(); err != nil {
 					m.Logger.LogError(m.Name, err.Error())
 				}
 			}

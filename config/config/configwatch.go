@@ -47,8 +47,6 @@ func (c *configFileWatcher) watchConfigFile(path string, user string) {
 	}
 
 	c.configFiles[path] = wi
-
-	return
 }
 
 type configFileEvent struct {

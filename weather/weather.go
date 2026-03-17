@@ -9,10 +9,6 @@ import (
 	microservice "github.com/jurgen-kluft/go-home/micro-service"
 )
 
-func converFToC(fahrenheit float64) float64 {
-	return ((fahrenheit - 32.0) * 5.0 / 9.0)
-}
-
 type instance struct {
 	config    *config.WeatherConfig
 	location  *time.Location
@@ -169,7 +165,7 @@ func (c *instance) process(name string) ([]byte, error) {
 		if err == nil {
 
 			from := now
-			until := hoursLater(from, 3.0)
+			until := hoursLater(from, 4.0)
 
 			state.AddTimeWndAttr("forecast", from, until)
 			state.AddFloatAttr("rain", forecast.Currently.PrecipProbability)
@@ -177,7 +173,8 @@ func (c *instance) process(name string) ([]byte, error) {
 			state.AddFloatAttr("wind", forecast.Currently.WindSpeed)
 			state.AddFloatAttr("temperature", forecast.Currently.ApparentTemperature)
 
-			//			c.addHourly(atHour(now, 6, 0), atHour(now, 20, 0), forecast.Hourly, state)
+			//c.addHourly(from, until, forecast.Hourly)
+			state.AddStringAttr("chance_of_rain", chanceOfRain(from, until, forecast.Hourly))
 		}
 		jsonbytes, err := state.ToJSON()
 		return jsonbytes, err
