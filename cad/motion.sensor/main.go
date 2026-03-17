@@ -41,23 +41,12 @@ const (
 	PowerBoxHeight = PowerBlockHeight * 2
 )
 
-func NewBox(w, l, h float64) Primitive {
-	return shapes.NewSmoothedCube(Vec3{w, l, h}, Rounding).Build()
-}
-
-func NewCylinderOnTheXAxis(h, r float64) Primitive {
-	return NewRotation(Vec3{0, 90, 0}, NewCylinder(h, r))
-}
-
-func NewCylinderOnTheYAxis(h, r float64) Primitive {
-	return NewRotation(Vec3{90, 0, 0}, NewCylinder(h, r))
-}
-
 // newPowerBlock creates the power block primitive that holds the USB power block.
 // The power block has cutouts on the top and bottom for heat dissipation
 func newPowerBlock() Primitive {
-	return NewTranslation(
-		Vec3{0, 0, PowerBlockHeight/2 + W1},
+	cylindricalHeatHole := NewCylinder(PowerBlockHeight+2*W2, W2*0.8)
+
+	return NewUnion(
 		NewDifference(
 			shapes.NewSmoothedCube(
 				Vec3{PowerBlockWidth + 2*W1, PowerBlockLength + 2*W1, PowerBlockHeight + 2*W1},
@@ -75,6 +64,19 @@ func newPowerBlock() Primitive {
 				Vec3{0, -((PowerBlockLength / 2) + (USBALength / 2) - W1), 0},
 				NewBox(USBAWidth, USBALength, PowerBlockHeight-2*W1),
 			),
+
+			// Heat dissipation holes on the sensor box, especially around the power block area
+			NewTranslation(Vec3{0, (PowerBlockLength / 6) - (PowerBlockLength / 2), 0}, cylindricalHeatHole),
+			NewTranslation(Vec3{0, 5*(PowerBlockLength/6) - (PowerBlockLength / 2), 0}, cylindricalHeatHole),
+
+			NewTranslation(Vec3{(PowerBlockWidth/2 - 3*W2), 2*(PowerBlockLength/6) - (PowerBlockLength / 2), 0}, cylindricalHeatHole),
+			NewTranslation(Vec3{-(PowerBlockWidth/2 - 3*W2), 2*(PowerBlockLength/6) - (PowerBlockLength / 2), 0}, cylindricalHeatHole),
+			NewTranslation(Vec3{(PowerBlockWidth/2 - 2*W2), 3*(PowerBlockLength/6) - (PowerBlockLength / 2), 0}, cylindricalHeatHole),
+			NewTranslation(Vec3{-(PowerBlockWidth/2 - 2*W2), 3*(PowerBlockLength/6) - (PowerBlockLength / 2), 0}, cylindricalHeatHole),
+			NewTranslation(Vec3{(PowerBlockWidth/2 - 3*W2), 4*(PowerBlockLength/6) - (PowerBlockLength / 2), 0}, cylindricalHeatHole),
+			NewTranslation(Vec3{-(PowerBlockWidth/2 - 3*W2), 4*(PowerBlockLength/6) - (PowerBlockLength / 2), 0}, cylindricalHeatHole),
+			NewTranslation(Vec3{(PowerBlockWidth/2 - 2*W2), 5*(PowerBlockLength/6) - (PowerBlockLength / 2), 0}, cylindricalHeatHole),
+			NewTranslation(Vec3{-(PowerBlockWidth/2 - 2*W2), 5*(PowerBlockLength/6) - (PowerBlockLength / 2), 0}, cylindricalHeatHole),
 		),
 	)
 }
@@ -108,13 +110,22 @@ func newPowerBox() Primitive {
 
 		// Circular Sensor cutout at the top
 		NewTranslation(
-			Vec3{0, -(PowerBoxLength / 2) + 2*SensorCylindricalR, PowerBoxHeight - 4*W1},
-			NewCylinder(8*W1, SensorCylindricalR+W1),
+			Vec3{0, -(PowerBoxLength / 2) + 2*SensorStickCylindricalRadius, PowerBoxHeight - 4*W1},
+			NewCylinder(8*W1, SensorStickCylindricalRadius+W1),
 		),
 	)
 }
 
 func newPowerBoxLid() Primitive {
+	cylindricalHeatHole := NewRotation(Vec3{90, 0, 0},
+		NewTranslation(Vec3{0, 0, 0},
+			NewCylinder(3*W2, W2*0.6),
+		),
+	)
+	holeOffsetX1 := PowerBlockWidth/2 - 2*W2
+	holeOffsetX2 := PowerBlockWidth/2 - 3*W2
+	holeOffsetZ := (PowerBoxHeight / 4)
+
 	return NewDifference(
 		NewUnion(
 			NewTranslation(
@@ -128,11 +139,17 @@ func newPowerBoxLid() Primitive {
 		),
 
 		// Cut some holes for heat dissipation
-		NewTranslation(Vec3{10, 0, 0}, NewRotation(Vec3{90, 0, 0}, NewCylinder(8*W2, W2*0.6))),
-		NewTranslation(Vec3{-10, 0, 0}, NewRotation(Vec3{90, 0, 0}, NewCylinder(8*W2, W2*0.6))),
+		NewTranslation(Vec3{0, 0, 0 - holeOffsetZ}, cylindricalHeatHole),
+		NewTranslation(Vec3{0, 0, 8*W2 - holeOffsetZ}, cylindricalHeatHole),
 
-		NewTranslation(Vec3{0, 0, 4 * W2}, NewRotation(Vec3{90, 0, 0}, NewCylinder(8*W2, W2*0.6))),
-		NewTranslation(Vec3{0, 0, -4 * W2}, NewRotation(Vec3{90, 0, 0}, NewCylinder(8*W2, W2*0.6))),
+		NewTranslation(Vec3{holeOffsetX1, 0, 0 - holeOffsetZ}, cylindricalHeatHole),
+		NewTranslation(Vec3{-holeOffsetX1, 0, 0 - holeOffsetZ}, cylindricalHeatHole),
+		NewTranslation(Vec3{holeOffsetX2, 0, 2*W2 - holeOffsetZ}, cylindricalHeatHole),
+		NewTranslation(Vec3{-holeOffsetX2, 0, 2*W2 - holeOffsetZ}, cylindricalHeatHole),
+		NewTranslation(Vec3{holeOffsetX1, 0, 4*W2 - holeOffsetZ}, cylindricalHeatHole),
+		NewTranslation(Vec3{-holeOffsetX1, 0, 4*W2 - holeOffsetZ}, cylindricalHeatHole),
+		NewTranslation(Vec3{holeOffsetX2, 0, 6*W2 - holeOffsetZ}, cylindricalHeatHole),
+		NewTranslation(Vec3{-holeOffsetX2, 0, 6*W2 - holeOffsetZ}, cylindricalHeatHole),
 	)
 }
 
@@ -140,7 +157,7 @@ func newPowerBoxLid() Primitive {
 func newSensorStick() Primitive {
 
 	cylindricalLength := 10.0
-	stickHeight := 2*SensorCylindricalR + W2
+	stickHeight := 2*SensorStickCylindricalRadius + W2
 
 	return NewTranslation(
 		Vec3{0, 0, stickHeight / 2.0},
@@ -157,7 +174,7 @@ func newSensorStick() Primitive {
 				// Cutout for the cylindrical part
 				NewTranslation(
 					Vec3{0, (RD03DL + W1) / 2, 0},
-					NewCylinderOnTheYAxis(2*W2, SensorCylindricalR),
+					NewCylinderOnTheYAxis(2*W2, SensorStickCylindricalRadius),
 				),
 			),
 
@@ -165,8 +182,8 @@ func newSensorStick() Primitive {
 			NewTranslation(
 				Vec3{0, RD03DL/2.0 + cylindricalLength/2.0 + W1, 0},
 				NewDifference(
-					NewCylinderOnTheYAxis(cylindricalLength+W1, SensorCylindricalR+W1),
-					NewCylinderOnTheYAxis(RD03DL, SensorCylindricalR),
+					NewCylinderOnTheYAxis(cylindricalLength+W1, SensorStickCylindricalRadius+W1),
+					NewCylinderOnTheYAxis(RD03DL, SensorStickCylindricalRadius),
 				),
 			),
 		),
@@ -174,55 +191,67 @@ func newSensorStick() Primitive {
 }
 
 func newSensorStickLid() Primitive {
+	cylindricalHeatHole := NewCylinder(10, 2)
+
 	return NewTranslation(
 		Vec3{0, 0, W1 / 2.0},
-		NewUnion(
-			NewTranslation(
-				Vec3{0, 0, W1 / 2},
-				NewBox(RD03DW+2*W1, RD03DL+2*W1, W1),
-			),
-			NewTranslation(
-				Vec3{0, 0, W2/2 + Rounding/2},
-				NewDifference(
-					NewBox(RD03DW-0.2, RD03DL, W2),
-					NewBox(RD03DW-0.2-W2, RD03DL-W2, 2*W2),
+		NewDifference(
+			NewUnion(
+				NewTranslation(
+					Vec3{0, 0, W1 / 2},
+					NewBox(RD03DW+2*W1, RD03DL+2*W1, W1),
+				),
+				NewTranslation(
+					Vec3{0, 0, W2/2 + Rounding/2},
+					NewDifference(
+						NewBox(RD03DW-0.2, RD03DL, W2),
+						NewBox(RD03DW-0.2-W2, RD03DL-W2, 2*W2),
+					),
 				),
 			),
+			NewTranslation(Vec3{0, 0, 0}, cylindricalHeatHole),
+			NewTranslation(Vec3{0, 2 * RD03DL / 6, 0}, cylindricalHeatHole),
+			NewTranslation(Vec3{0, -2 * RD03DL / 6, 0}, cylindricalHeatHole),
+
+			NewTranslation(Vec3{W2, RD03DL / 6, 0}, cylindricalHeatHole),
+			NewTranslation(Vec3{-W2, RD03DL / 6, 0}, cylindricalHeatHole),
+			NewTranslation(Vec3{W2, -RD03DL / 6, 0}, cylindricalHeatHole),
+			NewTranslation(Vec3{-W2, -RD03DL / 6, 0}, cylindricalHeatHole),
+		),
+	)
+}
+
+func newSensorBox() Primitive {
+	return NewUnion(
+		NewDifference(
+			newPowerBox(),
+			// Cutout the bottom of the box for the powerblock
+			NewTranslation(
+				Vec3{0, ((PowerBoxLength / 2) - (PowerBlockLength / 2)) - W1, 0},
+				shapes.NewSmoothedCube(
+					Vec3{PowerBlockWidth, PowerBlockLength, PowerBlockHeight + 2*W1},
+					PowerBlockRounding,
+				).Build(),
+			),
+		),
+		NewTranslation(
+			Vec3{0, ((PowerBoxLength / 2) - (PowerBlockLength / 2)) - W1, (PowerBlockHeight + 2*W1) / 2},
+			newPowerBlock(),
 		),
 	)
 }
 
 func newProduct() Primitive {
-	cylindricalHeatHole := NewCylinder(PowerBlockHeight+2*W2, W2*0.8)
 	return NewRender(
 		10,
 		NewUnion(
-			NewDifference(
-				NewUnion(
-					newPowerBox(),
-					NewTranslation(
-						Vec3{0, ((PowerBoxLength / 2) - (PowerBlockLength / 2)) - W1, 0},
-						newPowerBlock(),
-					),
-				),
-
-				// Cutout in the bottom
-				NewTranslation(Vec3{0, 0, PowerBlockHeight / 2}, cylindricalHeatHole),
-				NewTranslation(Vec3{0, 8 * W2, PowerBlockHeight / 2}, cylindricalHeatHole),
-
-				NewTranslation(Vec3{(PowerBlockWidth/2 - 2*W2), 0, PowerBlockHeight / 2}, cylindricalHeatHole),
-				NewTranslation(Vec3{-(PowerBlockWidth/2 - 2*W2), 0, PowerBlockHeight / 2}, cylindricalHeatHole),
-				NewTranslation(Vec3{(PowerBlockWidth/2 - 3*W2), 2 * W2, PowerBlockHeight / 2}, cylindricalHeatHole),
-				NewTranslation(Vec3{-(PowerBlockWidth/2 - 3*W2), 2 * W2, PowerBlockHeight / 2}, cylindricalHeatHole),
-				NewTranslation(Vec3{(PowerBlockWidth/2 - 2*W2), 4 * W2, PowerBlockHeight / 2}, cylindricalHeatHole),
-				NewTranslation(Vec3{-(PowerBlockWidth/2 - 2*W2), 4 * W2, PowerBlockHeight / 2}, cylindricalHeatHole),
-				NewTranslation(Vec3{(PowerBlockWidth/2 - 3*W2), 6 * W2, PowerBlockHeight / 2}, cylindricalHeatHole),
-				NewTranslation(Vec3{-(PowerBlockWidth/2 - 3*W2), 6 * W2, PowerBlockHeight / 2}, cylindricalHeatHole),
+			NewTranslation(
+				Vec3{0, 0, 0},
+				newSensorBox(),
 			),
-
 			// // DEBUG Antenna shape
 			// NewTranslation(
-			// 	Vec3{0, SensorCylindricalR, 1.1 * PowerBoxHeight},
+			// 	Vec3{0, SensorStickCylindricalRadius, 1.1 * PowerBoxHeight},
 			// 	NewBox(AntennaW, AntennaL, AntennaH*3),
 			// ),
 			NewTranslation(
@@ -245,10 +274,36 @@ func newProduct() Primitive {
 	)
 }
 
+func newCombineAll() Primitive {
+	// Return a setup of all the parts together for review
+	// Move them apart for better viewing
+	apart := 35.0
+	return NewList(
+		NewTranslation(
+			Vec3{-apart, 0, 0},
+			newSensorBox(),
+		),
+		NewTranslation(
+			Vec3{apart, 0, PowerBoxHeight / 2},
+			newPowerBoxLid(),
+		),
+		// Sensor stick
+		NewTranslation(
+			Vec3{-apart * 2, 0, 0},
+			newSensorStick(),
+		),
+		NewTranslation(
+			Vec3{apart * 2, 0, 0},
+			newSensorStickLid(),
+		),
+	)
+}
+
 func main() {
 	sys.Initialize()
 	sys.RenderMultiple([]sys.Shape{
 		{Name: "power_box", Primitive: newProduct(), Flags: sys.Default},
 		{Name: "power_box_lid", Primitive: newPowerBoxLid(), Flags: sys.Default},
+		{Name: "for-review-only", Primitive: newCombineAll(), Flags: sys.None},
 	})
 }

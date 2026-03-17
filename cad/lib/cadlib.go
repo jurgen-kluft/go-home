@@ -23,7 +23,7 @@ const (
 	PowerBlockWidth    = 36.0
 	PowerBlockLength   = 46.52
 	PowerBlockHeight   = 23.0 + 0.25
-	PowerBlockRounding = 2.5
+	PowerBlockRounding = Rounding
 )
 
 // --------------------------------------------------------------------------------------------------------------------------
