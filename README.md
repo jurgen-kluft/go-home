@@ -1,6 +1,6 @@
 # go-home
 
-Automated home using Go (and C#)
+HomeKit based home automation using Go, Arduino (C/C++, ESP32 and ESP8266).
 
 ## Status
 
@@ -16,14 +16,14 @@ Note:
 
 - Following sub-processes:
   - Apple HomeKit       WIP, (Apple Home Kit accessory emulator, our **UI** solution)
-  - Wemo                Ok, (Wemo WiFi powerplug)
+  - GeekOpen            Ok, (GeekOpen WiFi wall-sockets/wall-switches/power-plugs)
   - Config              Ok, (A service that is the provider of configurations for all other services)
   - Presence            Ok, (Connects to Router to obtain list of devices present on the network)
-  - Flux                Ok, (Calculates Color-Temperature and Brightness during the day)
-  - AQI                 Ok, (Air Quality Index)
-  - Suncalc             Ok, (Computes sun-rise, sun-set etc..)
-  - Season              Ok, (Computes the season (Spring, Summer, Autumn, Winter) based on the date)
-  - Weather             Ok, (Darksky)
+  - Flux                Ok, (Calculates Color-Temperature and Brightness during the day and makes sensors out of them)
+  - AQI                 Ok, (Air Quality Index, and makes sensor out of it)
+  - Suncalc             Ok, (Computes sun-rise, sun-set etc.., and makes sensors out of it)
+  - Season              Ok, (Computes the season (Spring, Summer, Autumn, Winter), and makes sensors out of it)
+  - Weather             Ok, (Obtains weather data from OpenWeatherMap and makes sensors out of it)
   - Calendar            Ok, (Reads calendars from icloud and determines active events and makes sensors out of them)
   - Shout               Ok, (Push notifications to HomePods?)
   - Yee                 Ok, (Xiaomi Yee lighting, turn on/off, change CT and BRI)
@@ -32,9 +32,7 @@ Note:
   - Samsung TV Remote   Ok, (Turn on/off Samsung TV(s))
 
 TODO:
-  - ESPHome; For custom mmWave/Air-Quality sensors (https://github.com/pteich/esphomekit)
   - DD-WRT; For some form of presence (https://github.com/awilliams/wifi-presence)
-  - MQTT; https://github.com/antlinker/libmqtt
   
 ## Automation Logic
   
@@ -43,24 +41,34 @@ Automation, reacting to all events and executing automation rules, all written i
 ## Devices / Hardware
 
 - Home 1:
-  - Zigbee2MQTT
   - Apple Mac Mini M4, running Go
   - Apple TV 4K (this is the HomeKit controller since it can be Ethernet connected)
   - Apple HomePod
   - GLiNet routers
   - Hue, Yee, Ikea, Wiz lighting
-  - Geek-Open Switches
+  - Geek-Open, WiFi Switches/Sockets (can report energy usage)
+    - Can detect if dish-washer, washing machine, air-conditioners or dryer is running based on energy usage
   - Sony Bravia TV
+  - Custom (WiFi, UDP/TCP) sensors: 
+    - door/window
+    - motion/presence sensors
+    - temperature/humidity sensors
+    - light sensors (all based on ESP32/ESP8266 and Arduino)
   
 - Home 2:
   - Apple Mac Mini M4, running Go
   - Apple TV 4K (this is the HomeKit controller since it can be Ethernet connected)
-  - Zigbee2MQTT
   - Apple HomePod
   - GL.inet routers
   - Hue, Ikea, Wiz lighting
-  - Geek-Open Switches
+  - Geek-Open, WiFi Switches/Sockets
+    - Can detect if dish-washer, washing machine, air-conditioners or dryer is running based on energy usage
   - LG TV's (HomeKit compatible)
+  - Custom (WiFi, UDP/TCP) sensors: 
+    - door/window (magnetic switch)
+    - motion/presence sensors
+    - temperature/humidity sensors
+    - light sensors (all based on ESP32/ESP8266 and Arduino)
   
 ## Apple HomePod
 

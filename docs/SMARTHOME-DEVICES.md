@@ -2,9 +2,9 @@
 
 - A HUB (on every floor) that can display information from all devices
   - Should have touch display so that we can control it easily.
-- An ESPNOW Gateway that can receive data from all the sensors over ESPNOW and send it to a server
+- A local server that can receive data from all the sensors over WiFi
   - Sensors that can measure air quality, presence, bed presence, door/window status, etc.
-  - Gateway will also send a time-sync packet every hour.
+  - Server will also send a time-sync packet every hour.
 
 ## Air Quality Elite
 
@@ -43,7 +43,6 @@ We can make a setup that can sync the color of the light strips to the color of 
   - Addressable RGB LED Strips
   - URL: https://www.adafruit.com/product/1138
 
-
 ## Presence
 
 - mmWave Radar Sensor
@@ -53,10 +52,11 @@ The mmWave radar is always `on` when it detects nothing, but at the moment it de
 ## Bed Presence
 
 - ESP32 C3 Mini
-- mmWave Radar Sensor
+- light sensor (BH1750)
+- mmWave sensor (RD03D 24GHz, 60°, 8m)
   - We will use two setups; ESP8266 + Relay + Light sensor setup, to turn on/off another full setup, ESP32 and RD03D mmWave
 
-In the evening between a certain time window (configurable, e.g. 8pm until detection, time-out at 2am) the mmWave sensor is used to determine if the bed is occupied or not. We need to run a prototype with a RD03D mmWave sensor to see if we are able to detect 2 persons in the bed.
+In the evening within a certain time window (configurable, e.g. 8pm until detection, time-out at 2am) the mmWave sensor is used to determine if the bed is occupied or not. We need to run a prototype with a RD03D mmWave sensor to see if we are able to detect 2 persons in the bed.
 
 When the light sensor detects that the lights are turned off, we do the detection for 'bed presence' during a certain time duration (e.g. 10 minutes). After collecting info during this time duration, we determine if the bed is occupied or not, and how many persons are in the bed. Then during the whole night (e.g. until 7am) we just assume the bed is occupied.
 
@@ -64,9 +64,9 @@ When the light sensor detects that the lights are turned off, we do the detectio
 
 These are only for low frequency measurements, e.g. once every 5 minutes or once every 15 minutes:
 
-# Low Frequency measuments, e.g. Air Quality
+# Environment (Air Quality, Temperature, Humidity, Pressure, CO2, Luminosity)
 
-We can make a battery version of this, but we need to use a 'latch circuit' to power the sensors only when needed. The ESP32 can control a 'latch' to turn on the power to the sensors, and after reading the sensors, it can turn off the power again. This way, we can save a lot of power. 
+These are 220V/USB-C powered.
 
 - Temperature
 - Humidity
@@ -75,31 +75,16 @@ We can make a battery version of this, but we need to use a 'latch circuit' to p
 - Luminosity
 
 - Firebeetle ESP32
-  - Deep Sleep or even Hibernation Mode
-- Latch Circuit
-  - To power the sensors only when needed
-- 1600 mAh LiPo Battery
-
-1600 mAh / 100 uA = 16000 hours = 666 days = 1.8 years (theoretical)
 
 # Presence Sensor
 
 If we use a mmWave (low power) sensor that has 'trigger' output, we can use this to wake up the ESP32. The ESP32 can then send a message to the server that presence is detected, and then go back to deep sleep. If no presence is detected for a certain time (e.g. 5 minutes), the ESP32 can go back to deep sleep.
 
-## Battery Powered Presence Sensor
+# Magic Cube
 
-- ESP32 C3 Xiao
-  - 1600 mAh LiPo Battery
-  - Deep Sleep Mode, estimated 10 uA in deep sleep
-  - HiLink LD2410S mmWave Sensor
-    - 0.1 mA average current consumption
-    - Use the 'trigger' output to wake up the ESP32
+This is a cube that can be used to control automations in the house. 
 
-1600 mAh / 110 uA = 14545 hours = 606 days = 1.6 years (theoretical)
-
-# Door / Window / Mailbox Sensor
-
-LoRa based: https://github.com/foorschtbar/LoRaProMini
+# Button or Door/Window/Mailbox Sensor
 
 URL: https://github.com/gadjet/Window-Door-sensor-Version-5/tree/main
      https://gadjetsblog.blogspot.com/2022/03/the-many-versions-of-wireles-door.html

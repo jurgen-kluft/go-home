@@ -5,7 +5,5 @@
 
 ## 3D Case
 
-- Also holds the USB charger, so we can just plug it in a wall socket
+- Holds the USB charger, so we can just plug it in a wall socket
 - 
-
-

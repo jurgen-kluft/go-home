@@ -41,7 +41,7 @@ Good board brands:
 
 ## CYD (cheap yellow display)
 
-These can work in combination with OpenHAB :)
+They can be connected to sensors and display the data on the screen, for example we can use them to display the temperature, humidity, pressure, luminosity, CO2 levels, etc. in a room. They can also be used to display the time and date.
 
 - There are many different versions, I have bought the 2.4 inch version (39 RMB)
 - There is also a 2.8 and 3.5 inch version (43, 55 RMB)
@@ -81,19 +81,17 @@ Philips Hue (color or white) can be used in the bedrooms to avoid the need of Wi
 
 ## Room Presense Sensors
 
-We will also build them ourselves using ESP32 devices on WiFi can easily be exposed to HomeKit (if necessary) through the use of Golang, however we can also just expose switches that indicate presence in a room/area using `https://github.com/brutella/hap`.
+We will also build them ourselves using ESP32 on WiFi and can easily be exposed to HomeKit (if necessary) through the use of Golang, however we can also just expose switches that indicate presence in a room/area using `https://github.com/brutella/hap`.
 
 ## Bed Presence Sensors (DYI, WIP)
 
 One other option
 
 - RD03D 24GHz, 60°, 8m
+- Light sensor (BH1750)
 - ESP32              = 22 RMB
 - USB-C power supply = 20 RMB
 - Total              = 187 RMB 
-
-- https://github.com/eoncire/HA_bed_presence
-- https://www.homeautomationguy.io/blog/making-my-own-bed-sensor
 
 ### Luminosity
 
@@ -136,6 +134,7 @@ Cost:
 
 Can track multiple targets at a time, it can be used to detect if the room is occupied or not.
 
+- USB powered
 - Wi-Fi 2.4GHz, Bluetooth 4.2
 - 5V1A, USB
 - RD03D 24GHz, 60°, 11m
