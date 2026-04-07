@@ -4,7 +4,17 @@
   - Should have touch display so that we can control it easily.
 - A local server that can receive data from all the sensors over WiFi
   - Sensors that can measure air quality, presence, bed presence, door/window status, etc.
-  - Server will also send a time-sync packet every hour.
+  - Server will also send a UDP time-sync packet N seconds.
+
+# Environment (Air Quality, Temperature, Humidity, Pressure, CO2, Luminosity)
+
+These are 220V/USB-C powered.
+
+- Temperature
+- Humidity
+- Pressure
+- CO2
+- Luminosity
 
 ## Air Quality Elite
 
@@ -43,9 +53,9 @@ We can make a setup that can sync the color of the light strips to the color of 
   - Addressable RGB LED Strips
   - URL: https://www.adafruit.com/product/1138
 
-## Presence
+# Presence
 
-- mmWave Radar Sensor
+Using mmWave Radar Sensors
 
 The mmWave radar is always `on` when it detects nothing, but at the moment it detects something, it will slowly `back-off` at a certain rate, e.g. 10 seconds, 20 seconds, 1 minute, 5 minutes, etc.
 
@@ -60,31 +70,17 @@ In the evening within a certain time window (configurable, e.g. 8pm until detect
 
 When the light sensor detects that the lights are turned off, we do the detection for 'bed presence' during a certain time duration (e.g. 10 minutes). After collecting info during this time duration, we determine if the bed is occupied or not, and how many persons are in the bed. Then during the whole night (e.g. until 7am) we just assume the bed is occupied.
 
-## Battery Powered Prototypes
-
-These are only for low frequency measurements, e.g. once every 5 minutes or once every 15 minutes:
-
-# Environment (Air Quality, Temperature, Humidity, Pressure, CO2, Luminosity)
-
-These are 220V/USB-C powered.
-
-- Temperature
-- Humidity
-- Pressure
-- CO2
-- Luminosity
-
-- Firebeetle ESP32
-
-# Presence Sensor
+## Room Presence
 
 If we use a mmWave (low power) sensor that has 'trigger' output, we can use this to wake up the ESP32. The ESP32 can then send a message to the server that presence is detected, and then go back to deep sleep. If no presence is detected for a certain time (e.g. 5 minutes), the ESP32 can go back to deep sleep.
 
-# Magic Cube
+# Smart 
+
+## Magic Cube
 
 This is a cube that can be used to control automations in the house. 
 
-# Button or Door/Window/Mailbox Sensor
+## Button or Door/Window/Mailbox Sensor
 
 URL: https://github.com/gadjet/Window-Door-sensor-Version-5/tree/main
      https://gadjetsblog.blogspot.com/2022/03/the-many-versions-of-wireles-door.html
@@ -93,7 +89,8 @@ Ordered at JLC PCB: https://www.jlcpcb.com
 - ESP8266 12F
   - Power Latch, estimated (closed/open) 5.4 uA/3.9 uA
 - Magnet Switch or Button
-- 400 mAh 3.7 V LiPo Battery?
+- 900 mAh 3.7 V LiPo Battery?
 
-400 mAh / 10 uA = 40000 hours = 1666 days = 4.5 years (theoretical)
+900 mAh / 10 uA = 90000 hours = 3750 days = 10.3 years (theoretical)
+
 Battery Dimensions: 3cm x 2cm x 1cm = 6 cm³

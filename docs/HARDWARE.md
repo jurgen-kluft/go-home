@@ -8,12 +8,13 @@
 
 Mac Mini M4 to run:
 
-- Sensor Server (golang)
-- HomeKit Bridge?
-- MQTT Broker
+- Sensor Server (C, Golang)
+- Automation Logic (Golang)
+- HomeKit Bridge (Golang)
 - Image Recognition (for presence detection)
 - Other services
   - Immich (photo server)
+  - Booklet (e-book server)
 
 ## NAS
 
@@ -21,14 +22,7 @@ Mac Mini M4 to run:
 
 ## ESP8266 boards
 
-Very good for DIY trigger based sensors, e.g. door/window sensors, water leak sensors, vibration sensors, etc.
-
-Also low frequency (wakeup) based sensors can be built using ESP8266 modules, like: 
-
-- temperature
-- humidity
-- pressure
-- luminosity
+Very good for DIY trigger based sensors, e.g. button, door/window, water leak, vibration, etc.
 
 ## ESP32 boards
 
@@ -56,10 +50,7 @@ Checked out many, and found this one to be of good quality and price.
 
 We would like to have smart wall panels in every room to control lights, plugs, scenes and other automations. The wall panels should be flush mounted in the wall and have a nice touch screen to control everything. The wall panels should be connected to the network through Zigbee.
 
-- GeekOpen, these look like normal light switches, but inside they have a ESP8266 that sends out JSON packets to a configurable TCP server. You can send JSON
-  commands to the switch to change the state of the switch. They are powered using 220V AC.
-
-  - https://www.smart-bird.cn/smart.html
+- GeekOpen, these look like normal light switches, but inside they have a ESP8266 that sends out JSON packets to a configurable TCP server. You can send JSON commands to the switch to change the state of the switch. They are powered using 220V AC.
 
 ## Smart Plugs
 
@@ -84,8 +75,6 @@ Philips Hue (color or white) can be used in the bedrooms to avoid the need of Wi
 We will also build them ourselves using ESP32 on WiFi and can easily be exposed to HomeKit (if necessary) through the use of Golang, however we can also just expose switches that indicate presence in a room/area using `https://github.com/brutella/hap`.
 
 ## Bed Presence Sensors (DYI, WIP)
-
-One other option
 
 - RD03D 24GHz, 60°, 8m
 - Light sensor (BH1750)
@@ -115,35 +104,14 @@ The BME280 is a humidity sensor measuring relative humidity, barometric pressure
 
 ## DIY Presence Detection
 
-### ESP32 with DFRobot C4001
+We can already notice pressence from the smart switches and smart plugs. For example, if the switch in the living room is turned on/off, we can assume that there is someone in the living room. If the switch in the bedroom is turned on/off, we can assume that there is someone in the bedroom. If the switch in the kitchen is turned on/off, we can assume that there is someone in the kitchen. If the switch in the bathroom is turned on/off, we can assume that there is someone in the bathroom.
 
-- Wi-Fi 2.4GHz, Bluetooth 4.2
-- 5V1A, USB
-- ESPHome or Custom
-- DFRobot 24GHz, 100°, 25m
-
-Cost: 
-
-- DFRobot C4001 = 100 RMB
-- ESP32 = 30 RMB
-- USB cable = 10 RMB
-- Power supply = 20 RMB
-- Total = 160 RMB
-
-### ESP32 with AiThinker RD03D
+### ESP32 with AiThinker RD03D and BH1750
 
 Can track multiple targets at a time, it can be used to detect if the room is occupied or not.
 
-- USB powered
-- Wi-Fi 2.4GHz, Bluetooth 4.2
-- 5V1A, USB
-- RD03D 24GHz, 60°, 11m
-
-Cost:
-
-- RD03D = 30 RMB
-- ESP32 = 30 RMB
-- USB cable = 10 RMB
-- Power supply = 20 RMB
-- Total = 90 RMB
-
+- RD03D 24GHz, 60°, 8m  = 30 RMB
+- Light sensor (BH1750) = 15 RMB
+- ESP32                 = 22 RMB
+- USB-C power supply    = 20 RMB
+- Total                 = 87 RMB
