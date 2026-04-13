@@ -76,6 +76,18 @@ If we use a mmWave (low power) sensor that has 'trigger' output, we can use this
 
 # Smart 
 
+## Gas Meter
+
+Using a camera and ESP32-S3 to periodically take a picture of the gas meter and send it over the network to the server. The server can then use OCR to read the gas meter and determine the gas usage.
+
+## Water Meter
+
+Using a camera and ESP32-S3 to periodically take a picture of the water meter and send it over the network to the server. The server can then use OCR to read the water meter and determine the water usage.
+
+## Electricity Meter
+
+We need to find the main electricity line and wrap it with a current sensor, e.g. SCT-013-000, to measure the electricity usage. The ESP32 can then send the data over the network to the server.
+
 ## Magic Cube
 
 This is a cube that can be used to control automations in the house. 
