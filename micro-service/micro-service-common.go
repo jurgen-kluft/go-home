@@ -121,6 +121,8 @@ type Service struct {
 	handlersByID   map[uint32]Delegate
 	handlersByPath map[string]Delegate
 
+	Services []string
+
 	cfg       Config
 	inboundCh chan *Message
 	srcID     uint32
@@ -155,8 +157,13 @@ func Hash32(p string) uint32 {
 	return binary.LittleEndian.Uint32(h[:4])
 }
 
-func New(name string, peerPath string, tickFrequency time.Duration) (*Service, error) {
-	cfg := Config{ListenPath: peerPath}
+func New(name string, configFilepath string, servicesConfigFilepath string, tickFrequency time.Duration) (*Service, error) {
+	// Load the configuration for this service
+	listenPath := fmt.Sprintf("/tmp/%s.sock", name)
+
+	// Load the configuration for all services to determine which services to connect to
+
+	cfg := Config{ListenPath: listenPath}
 
 	if cfg.ListenPath == "" {
 		return nil, errors.New("ListenPath required")
@@ -226,21 +233,24 @@ func New(name string, peerPath string, tickFrequency time.Duration) (*Service, e
 
 // Connect starts (or restarts) a client-side connector (dialer) to the given server socket path.
 // It returns immediately and reconnects automatically on failures.
-func (s *Service) Connect(peerPath string) {
-	if peerPath == "" || peerPath == s.cfg.ListenPath {
-		return
-	}
-	if s.getConn(peerPath) != nil {
-		return
-	}
-	s.startDialer(peerPath)
+func (s *Service) Connect() {
+
+	// connect to all services in the config
+
+	// if peerPath == "" || peerPath == s.cfg.ListenPath {
+	// 	return
+	// }
+	// if s.getConn(peerPath) != nil {
+	// 	return
+	// }
+	// s.startDialer(peerPath)
 }
 
 // ConnectAndWait connects to peerPath and waits until the connection is established or timeout elapses.
 // Returns true if connected within the timeout, false otherwise.
-func (s *Service) ConnectAndWait(peerPath string, timeout time.Duration) bool {
-	s.Connect(peerPath)
-	return s.ReadyWait(peerPath, timeout)
+func (s *Service) ConnectAndWait(timeout time.Duration) bool {
+	s.Connect()
+	return s.ReadyWait(timeout)
 }
 
 // Ready returns connectivity for the provided peers. If no peers are given, it returns
@@ -264,10 +274,10 @@ func (s *Service) Ready(peers ...string) map[string]bool {
 
 // ReadyWait blocks until the connection to peerPath is up, or timeout expires.
 // Returns true if the connection is up before the deadline.
-func (s *Service) ReadyWait(peerPath string, timeout time.Duration) bool {
+func (s *Service) ReadyWait(timeout time.Duration) bool {
 	deadline := time.Now().Add(timeout)
-	for {
-		c := s.getConn(peerPath)
+	for _, service := range s.Services {
+		c := s.getConn(service)
 		if c != nil && !isClosed(c) {
 			return true
 		}
@@ -280,6 +290,7 @@ func (s *Service) ReadyWait(peerPath string, timeout time.Duration) bool {
 			return false
 		}
 	}
+	return true
 }
 
 // Peers returns a sorted list of peer paths this service currently knows about (connected or in reconnect),

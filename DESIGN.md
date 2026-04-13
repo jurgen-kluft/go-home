@@ -1,12 +1,10 @@
 # Services
 
-Each service is responsible for a specific domain, e.g. weather, calendar, presence, etc. Each service has its own configuration and can communicate with other services through UNIX sockets. Also each service watches its own configuration file for changes and can hot-load the new configuration when it detects a change.
+Each service is responsible for a specific domain, e.g. weather, calendar, presence, etc. Each service has its own configuration and can communicate with other services through the micro-service framework. Also each service watches its own configuration file for changes and can restart itself and load the new configuration when it detects a change.
 
 ## UNIX Socket Messaging
 
-Listen to config/request messages, when a client connects we can send him the configuration.
-Also when we detect that the configuration on disk has changed, we can hot-load it and send
-it to the associated channel. (This is part of the config service and is working)
+The micro-service framework uses UNIX sockets for inter-process communication. Each service has its own socket file, and the framework manages the connections between services based on their dependencies. When a service starts, it creates its socket file and listens for incoming connections. When a service needs to communicate with another service, it connects to the respective socket file of that service.
 
 ## Configuration
 
@@ -43,6 +41,18 @@ Unix Socket configuration for multiple processes, where the outgoing sockets are
       "depends_on": [
         "calendar",
         "presence"
+      ]
+    },
+    {
+      "id": "logger",
+      "depends_on": [
+        "weather",
+        "aqi",
+        "sun",
+        "calendar",
+        "presence",
+        "flux",
+        "automation"
       ]
     }
   ]
