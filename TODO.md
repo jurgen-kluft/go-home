@@ -2,10 +2,6 @@
 
 ## Integration
 
-Setup the following on my Mac Mini:
-
-* Zigbee2MQTT [WIP]
-
 ## Implemented
 
 * wemo
