@@ -124,7 +124,7 @@ func (c *context) checkAllConfigurationFiles() (err error) {
 func (c *context) registerAllConfigurationChannels() (err error) {
 	for name, configuration := range c.configs.Configurations {
 		c.service.Logger.LogInfo(c.service.Name, fmt.Sprintf("Register pubsub channel %s for %s", configuration.ChannelName, name))
-		c.service.Connect(configuration.ChannelName)
+		c.service.Connect()
 	}
 	return
 }
@@ -161,7 +161,9 @@ func (c *context) sendConfigOnChannel(configtype string) (err error) {
 }
 
 func main() {
-	m, err := microservice.New("config", "config/request", time.Second*60)
+	thisConfigFilepath := "config/config.config.json"
+	servicesConfigFilepath := "config/services.config.json"
+	m, err := microservice.New("config", thisConfigFilepath, servicesConfigFilepath, time.Second*60)
 	if err != nil {
 		fmt.Println("Error creating microservice:", err)
 		return
@@ -169,30 +171,6 @@ func main() {
 
 	ctx := newContext()
 	ctx.service = m
-
-	m.RegisterHandler("config/config", func(m *microservice.Service, msg *microservice.Message) bool {
-		config, err := configFromJSON(msg.Payload)
-		if err == nil {
-			m.Logger.LogInfo(m.Name, "received configuration")
-			ctx.configs = config
-			ctx.checkAllConfigurationFiles()
-			ctx.registerAllConfigurationChannels()
-			ctx.initializeConfigFileWatcher()
-		} else {
-			m.Logger.LogError(m.Name, err.Error())
-		}
-		return true
-	})
-
-	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
-		configname := string(msg.Payload)
-		m.Logger.LogInfo(m.Name, "a configuration is requested for '"+configname+"'.")
-		err := ctx.sendConfigOnChannel(configname)
-		if err != nil {
-			m.Logger.LogError(m.Name, err.Error())
-		}
-		return true
-	})
 
 	m.RegisterHandler("tick", func(m *microservice.Service, msg *microservice.Message) bool {
 		ctx.updateConfigFileWatcher()

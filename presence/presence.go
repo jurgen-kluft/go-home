@@ -207,11 +207,12 @@ func main() {
 	var err error
 
 	name := "presence"
-	peers := []string{"config/request"}
-	micro, err := microservice.New(name, "state/"+name, time.Second*15)
-	micro.ConnectTo(peers)
+	thisConfigFilepath := "config/presence.config.json"
+	servicesConfigFilepath := "config/services.config.json"
+	micro, err := microservice.New(name, thisConfigFilepath, servicesConfigFilepath, time.Second*15)
+	micro.Connect()
 
-	micro.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
+	micro.RegisterHandler("config", func(m *microservice.Service, msg *microservice.Message) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")
 		presence, err = NewPresence(msg)
 		if err != nil {
@@ -233,7 +234,7 @@ func main() {
 			m.Logger.LogInfo(m.Name, "request configuration")
 			msg, err := m.NewTextMessage(m.Name)
 			if err == nil {
-				m.SendTo("config/request", msg)
+				m.SendTo("config", msg)
 			}
 		}
 		return true

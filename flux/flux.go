@@ -245,27 +245,28 @@ func (c *context) publishSensor(channel string, json string) {
 }
 
 func main() {
-	peers := []string{"config/request", "state/weather", "state/sun", "state/calendar"}
+	thisConfigFilepath := "config/flux.config.json"
+	servicesConfigFilepath := "config/services.config.json"
 
-	m, err := microservice.New("flux", "state/flux", time.Second*30)
+	m, err := microservice.New("flux", thisConfigFilepath, servicesConfigFilepath, time.Second*30)
 	if err != nil {
 		fmt.Println("Error creating microservice:", err)
 		return
 	}
-	m.ConnectTo(peers)
+	m.Connect()
 
 	c := new()
 	c.service = m
 
 	tickCount := 0
 
-	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
+	m.RegisterHandler("config", func(m *microservice.Service, msg *microservice.Message) bool {
 		var err error
 		c.config, err = config.FluxConfigFromJSON(msg.Payload)
 		if err == nil {
 			m.Logger.LogInfo(m.Name, "received configuration")
 			for _, ltype := range c.config.Lighttype {
-				m.Connect(ltype.Channel)
+				m.Connect()
 				if err == nil {
 					m.Logger.LogInfo(c.name, fmt.Sprintf("registered pubsub channel %s for lighttype %s", ltype.Channel, ltype.LightType))
 				} else {
@@ -279,7 +280,7 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("state/weather", func(m *microservice.Service, msg *microservice.Message) bool {
+	m.RegisterHandler("weather", func(m *microservice.Service, msg *microservice.Message) bool {
 		var err error
 		c.weather, err = config.SensorStateFromJSON(msg.Payload)
 		if err == nil {
@@ -290,7 +291,7 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("state/sun", func(m *microservice.Service, msg *microservice.Message) bool {
+	m.RegisterHandler("sun", func(m *microservice.Service, msg *microservice.Message) bool {
 		var err error
 		c.suncalc, err = config.SensorStateFromJSON(msg.Payload)
 		if err == nil {
@@ -301,7 +302,7 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("state/calendar", func(m *microservice.Service, msg *microservice.Message) bool {
+	m.RegisterHandler("calendar", func(m *microservice.Service, msg *microservice.Message) bool {
 		seasonSensorState, err := config.SensorStateFromJSON(msg.Payload)
 		if err == nil {
 			m.Logger.LogInfo(c.name, "received season state")
