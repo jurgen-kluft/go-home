@@ -1,4 +1,17 @@
+# Virtual Switch
 
+The VirtualSwitch is a specialized switch that turns on or off when the physical switch is turned on by an external
+source or under certain conditions by motion.
+This means that when presence is detected, but the physical switch is off that the
+virtual switch will not turn on. When the physical switch is turned on, the virtual switch will turn on immediately.
+When the physical switch is physically turned off, the virtual switch will turn off immediately. However, when the
+physical switch is ON and the presence detects that there is no presence, the virtual switch will turn off
+after a delay of 5 minutes and the state is such that when presence is again detected, the virtual switch will turn
+on immediately. If in the meantime the physical switch is turned off, the virtual switch will turn off immediately
+and the presence sensor will not have any effect until the physical switch is turned on again.
+
+
+```go
 type PresenceSensor interface {
 	SetPresenceState(state bool)
 }
@@ -45,15 +58,5 @@ func (vs *VirtualSwitch) SetSwitchState(state bool) {
 		vs.VirtualState = false
 	}
 }
+```
 
-/*
-The VirtualSwitch is a specialized switch that turns on or off when the physical switch is turned on by an external
-source or under certain conditions by motion.
-This means that when presence is detected, but the physical switch is off that the
-virtual switch will not turn on. When the physical switch is turned on, the virtual switch will turn on immediately.
-When the physical switch is physically turned off, the virtual switch will turn off immediately. However, when the
-physical switch is ON and the presence detects that there is no presence, the virtual switch will turn off
-after a delay of 5 minutes and the state is such that when presence is again detected, the virtual switch will turn
-on immediately. If in the meantime the physical switch is turned off, the virtual switch will turn off immediately
-and the presence sensor will not have any effect until the physical switch is turned on again.
-*/
