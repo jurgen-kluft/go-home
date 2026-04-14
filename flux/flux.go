@@ -245,17 +245,15 @@ func (c *context) publishSensor(channel string, json string) {
 }
 
 func main() {
-	thisConfigFilepath := "config/flux.config.json"
+	c := new()
+	thisConfigFilepath := "config/" + c.name + ".json"
 	servicesConfigFilepath := "config/services.config.json"
-
-	m, err := microservice.New("flux", thisConfigFilepath, servicesConfigFilepath, time.Second*30)
+	m, err := microservice.New(c.name, thisConfigFilepath, servicesConfigFilepath, time.Second*60)
 	if err != nil {
 		fmt.Println("Error creating microservice:", err)
 		return
 	}
-	m.Connect()
 
-	c := new()
 	c.service = m
 
 	tickCount := 0
@@ -266,7 +264,7 @@ func main() {
 		if err == nil {
 			m.Logger.LogInfo(m.Name, "received configuration")
 			for _, ltype := range c.config.Lighttype {
-				m.Connect()
+				m.Start()
 				if err == nil {
 					m.Logger.LogInfo(c.name, fmt.Sprintf("registered pubsub channel %s for lighttype %s", ltype.Channel, ltype.LightType))
 				} else {
@@ -329,5 +327,6 @@ func main() {
 		return true
 	})
 
+	m.Start()
 	m.Loop()
 }

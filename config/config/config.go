@@ -124,7 +124,7 @@ func (c *context) checkAllConfigurationFiles() (err error) {
 func (c *context) registerAllConfigurationChannels() (err error) {
 	for name, configuration := range c.configs.Configurations {
 		c.service.Logger.LogInfo(c.service.Name, fmt.Sprintf("Register pubsub channel %s for %s", configuration.ChannelName, name))
-		c.service.Connect()
+		c.service.Start()
 	}
 	return
 }

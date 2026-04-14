@@ -426,17 +426,16 @@ func (s *instance) buildJSONMessage() ([]byte, error) {
 func main() {
 	suncalc := new()
 
-	m, err := microservice.New("sun", "state/sun", time.Second*15)
+	thisConfigFilepath := "config/suncalc.config.json"
+	servicesConfigFilepath := "config/services.config.json"
+	m, err := microservice.New("sun", thisConfigFilepath, servicesConfigFilepath, time.Second*15)
 	if err != nil {
 		panic(err)
 	}
 
-	peers := []string{"config/request"}
-	m.ConnectTo(peers)
-
 	tickCount := 0
 
-	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
+	m.RegisterHandler("config", func(m *microservice.Service, msg *microservice.Message) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")
 		err := suncalc.initialize(msg.Payload)
 		if err != nil {
@@ -467,5 +466,6 @@ func main() {
 		return true
 	})
 
+	m.Start()
 	m.Loop()
 }

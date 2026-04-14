@@ -95,16 +95,15 @@ func (c *instance) Poll() (aqiStateJSON []byte, err error) {
 }
 
 func main() {
-	peers := []string{"config/request"}
-
 	c := construct()
-	m, err := microservice.New("aqi", "sensor/aqi", time.Minute*10)
+	thisConfigFilepath := "config/aqi.config.json"
+	servicesConfigFilepath := "config/services.config.json"
+	m, err := microservice.New("aqi", thisConfigFilepath, servicesConfigFilepath, time.Minute*10)
 	if err != nil {
 		panic(err)
 	}
-	m.ConnectTo(peers)
 
-	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
+	m.RegisterHandler("config", func(m *microservice.Service, msg *microservice.Message) bool {
 		configAqi, err := config.AqiConfigFromJSON(msg.Payload)
 		if err == nil {
 			m.Logger.LogInfo(m.Name, "received configuration")
@@ -138,5 +137,6 @@ func main() {
 		return true
 	})
 
+	m.Start()
 	m.Loop()
 }

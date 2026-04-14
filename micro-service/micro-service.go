@@ -28,8 +28,8 @@ func (m *Service) FindHandlerByPath(peerPath string) (delegate Delegate, exists 
 	return nil, false
 }
 
-func (m *Service) ConnectTo(peerPaths []string) {
-	for _, r := range peerPaths {
+func (m *Service) Start() {
+	for _, r := range m.pathsToConnect {
 		m.Connect(r)
 	}
 }

@@ -20,31 +20,30 @@ const (
 )
 
 func main() {
-	peers := []string{"config/request", "state/sensor", "state/calendar", "state/presence"}
-
-	m, err := microservice.New("automation", "automation", time.Second*5)
+	thisConfigFilepath := "config/automation.config.json"
+	servicesConfigFilepath := "config/services.config.json"
+	m, err := microservice.New("automation", thisConfigFilepath, servicesConfigFilepath, time.Second*5)
 	if err != nil {
 		fmt.Println("Error creating microservice:", err)
 		return
 	}
-	m.ConnectTo(peers)
 
 	auto := new(m)
 
-	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
+	m.RegisterHandler("config", func(m *microservice.Service, msg *microservice.Message) bool {
 		// Register used channels and subscribe to channels we are interested in
 		m.Logger.LogInfo(m.Name, "Received configuration")
 		config, err := config.AutomationConfigFromJSON(msg.Payload)
 		if err == nil {
 			auto.config = config
-			m.ConnectTo(auto.config.Register)
+			m.Start()
 		} else {
 			m.Logger.LogError(m.Name, err.Error())
 		}
 		return true
 	})
 
-	m.RegisterHandler("state/sensor", func(m *microservice.Service, msg *microservice.Message) bool {
+	m.RegisterHandler("conbee.sensor", func(m *microservice.Service, msg *microservice.Message) bool {
 		//m.Logger.LogInfo(m.Name, "conbee sensor state: "+string(msg))
 		state, err := config.SensorStateFromJSON(msg.Payload)
 		if err == nil {
@@ -55,7 +54,7 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("state/calendar", func(m *microservice.Service, msg *microservice.Message) bool {
+	m.RegisterHandler("calendar", func(m *microservice.Service, msg *microservice.Message) bool {
 		state, err := config.SensorStateFromJSON(msg.Payload)
 		if err == nil {
 			auto.handleEvent(state)
@@ -65,7 +64,7 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("state/presence", func(m *microservice.Service, msg *microservice.Message) bool {
+	m.RegisterHandler("presence", func(m *microservice.Service, msg *microservice.Message) bool {
 		state, err := config.SensorStateFromJSON(msg.Payload)
 		if err == nil {
 			auto.handleEvent(state)
@@ -95,6 +94,7 @@ func main() {
 		return true
 	})
 
+	m.Start()
 	m.Loop()
 }
 

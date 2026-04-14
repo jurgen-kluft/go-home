@@ -21,13 +21,15 @@ func new() *instance {
 func main() {
 	c := new()
 
-	m, err := microservice.New("wemo", "state/wemo", time.Second*15)
+	name := "wemo"
+	thisConfigFilepath := "config/" + name + ".json"
+	servicesConfigFilepath := "config/services.config.json"
+	m, err := microservice.New(name, thisConfigFilepath, servicesConfigFilepath, time.Second*60)
 	if err != nil {
 		panic(err)
 	}
 
-	peers := []string{"config/request"}
-	m.ConnectTo(peers)
+	m.Start()
 
 	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")

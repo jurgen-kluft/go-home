@@ -185,15 +185,15 @@ func (c *instance) process(name string) ([]byte, error) {
 func main() {
 	c := new()
 
-	m, err := microservice.New("weather", "state/weather", time.Second*15)
+	name := "weather"
+	thisConfigFilepath := "config/" + name + ".json"
+	servicesConfigFilepath := "config/services.config.json"
+	m, err := microservice.New(name, thisConfigFilepath, servicesConfigFilepath, time.Second*60)
 	if err != nil {
 		panic(err)
 	}
 
-	peers := []string{"config/request"}
-	m.ConnectTo(peers)
-
-	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
+	m.RegisterHandler("config", func(m *microservice.Service, msg *microservice.Message) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")
 		weatherConfig, err := config.WeatherConfigFromJSON(msg.Payload)
 		if err == nil {
@@ -211,18 +211,19 @@ func main() {
 				jsonbytes, err := c.process(m.Name)
 				if err == nil {
 					if jsonbytes != nil {
-						m.SendJsonTo("state/weather", string(jsonbytes))
+						m.SendJsonTo("weather", string(jsonbytes))
 					}
 				} else {
 					m.Logger.LogError(m.Name, err.Error())
 				}
 			} else {
-				m.SendJsonTo("config/request", m.Name)
+				m.SendJsonTo("config", m.Name)
 			}
 		}
 		tickCount++
 		return true
 	})
 
+	m.Start()
 	m.Loop()
 }

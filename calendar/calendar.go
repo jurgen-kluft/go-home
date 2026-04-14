@@ -258,20 +258,20 @@ func (c *Calendar) process() (err error) {
 }
 
 func main() {
-	m, err := microservice.New("calendar", "state/calendar", time.Second*60)
+	name := "calendar"
+	thisConfigFilepath := "config/" + name + ".json"
+	servicesConfigFilepath := "config/services.config.json"
+	m, err := microservice.New(name, thisConfigFilepath, servicesConfigFilepath, time.Second*60)
 	if err != nil {
 		fmt.Println("Error creating microservice:", err)
 		return
 	}
 
-	peers := []string{"config/request"}
-	m.ConnectTo(peers)
-
 	calendar := newCalendar()
 	calendar.service = m
 
 	tickCount := 150
-	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
+	m.RegisterHandler("config", func(m *microservice.Service, msg *microservice.Message) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")
 		err := calendar.initialize(msg.Payload)
 		if err != nil {
@@ -303,5 +303,6 @@ func main() {
 		return true
 	})
 
+	m.Start()
 	m.Loop()
 }

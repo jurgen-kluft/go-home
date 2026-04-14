@@ -37,7 +37,10 @@ func main() {
 		}
 		jsonbytes := filedata
 
-		m, err := microservice.New("conf", "config/config", time.Second*15)
+		name := "config"
+		thisConfigFilepath := "config/" + name + ".json"
+		servicesConfigFilepath := "config/services.config.json"
+		m, err := microservice.New(name, thisConfigFilepath, servicesConfigFilepath, time.Second*60)
 		if err != nil {
 			return err
 		}
@@ -57,6 +60,7 @@ func main() {
 			return false
 		})
 
+		m.Start()
 		m.Loop()
 
 		return nil

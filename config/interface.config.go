@@ -3,7 +3,7 @@ package config
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 )
 
@@ -15,7 +15,7 @@ type Config interface {
 var errUnsupportedFileExtension = errors.New("unsupported file extension")
 
 func loadJSON(path string, v interface{}) error {
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}

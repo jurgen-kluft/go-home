@@ -23,20 +23,37 @@ import (
 
 // The Magic Cube has to hold the following inside:
 // - Battery
-// - Firebeetle ESP32
+// - Xiao Seeed Studio, ESP32-S3
 // - 6 axis IMU sensor (e.g. MPU6050)
 
 // Cube dimensions
+
 // Firebeetle DFRobot ESP32-C6 v1.0
 const (
-	FirebeetleLength    = 60.0
-	FirebeetleLengthH2H = 56.6
-	FirebeetleWidth     = 25.4
-	FirebeetleWidthH2H  = 22.0
+	Firebeetle2Length    = 60.0
+	Firebeetle2LengthH2H = 56.6
+	Firebeetle2Width     = 25.4
+	Firebeetle2WidthH2H  = 22.0
+)
+
+// Xiao Seeed Studio, ESP32-S3
+const (
+	XiaoEsp32S3Length    = 25.0
+	XiaoEsp32S3LengthH2H = 22.0
+	XiaoEsp32S3Width     = 18.0
+	XiaoEsp32S3WidthH2H  = 15.0
+)
+
+// MicroController dimensions
+const (
+	MicroControllerLength    = XiaoEsp32S3Length
+	MicroControllerLengthH2H = XiaoEsp32S3LengthH2H
+	MicroControllerWidth     = XiaoEsp32S3Width
+	MicroControllerWidthH2H  = XiaoEsp32S3WidthH2H
 )
 
 const (
-	CubeDimension = 3*FirebeetleWidth + 2*W2
+	CubeDimension = 3*MicroControllerWidth + 2*W2
 )
 
 // 900mAh battery dimensions
@@ -81,16 +98,16 @@ func newMagicCube() Primitive {
 			NewTranslation(
 				Vec3{0, (-CubeDimension / 2) + W1*3, 0},
 				NewUnion(
-					NewTranslation(Vec3{FirebeetleWidthH2H / 2, 0, FirebeetleLengthH2H / 2},
+					NewTranslation(Vec3{MicroControllerWidthH2H / 2, 0, MicroControllerLengthH2H / 2},
 						NewCylinderOnTheYAxis(W1*3, 1),
 					),
-					NewTranslation(Vec3{-FirebeetleWidthH2H / 2, 0, FirebeetleLengthH2H / 2},
+					NewTranslation(Vec3{-MicroControllerWidthH2H / 2, 0, MicroControllerLengthH2H / 2},
 						NewCylinderOnTheYAxis(W1*3, 1),
 					),
-					NewTranslation(Vec3{FirebeetleWidthH2H / 2, 0, -FirebeetleLengthH2H / 2},
+					NewTranslation(Vec3{MicroControllerWidthH2H / 2, 0, -MicroControllerLengthH2H / 2},
 						NewCylinderOnTheYAxis(W1*3, 1),
 					),
-					NewTranslation(Vec3{-FirebeetleWidthH2H / 2, 0, -FirebeetleLengthH2H / 2},
+					NewTranslation(Vec3{-MicroControllerWidthH2H / 2, 0, -MicroControllerLengthH2H / 2},
 						NewCylinderOnTheYAxis(W1*3, 1),
 					),
 				),
@@ -154,17 +171,17 @@ func newBatteryHolderLid() Primitive {
 }
 
 func newBatteryHolder() Primitive {
-	h := FirebeetleLength
+	h := MicroControllerLength
 	return NewTranslation(
 		Vec3{0, 0, W2 + h/2 - PowerBlockRounding},
 		NewDifference(
 			NewTranslation(
 				Vec3{0, 0, 0},
-				NewBox(CubeDimension, FirebeetleWidth, h),
+				NewBox(CubeDimension, MicroControllerWidth, h),
 			),
 
 			// Make a hollow cylinder
-			NewTranslation(Vec3{0, 0, (FirebeetleLength-batteryLength)/2 + W1},
+			NewTranslation(Vec3{0, 0, (MicroControllerLength-batteryLength)/2 + W1},
 				NewCylinder(batteryLength+W2, batteryRadius),
 			),
 
@@ -181,9 +198,15 @@ func newBatteryHolder() Primitive {
 			NewTranslation(Vec3{0, batteryRadius, h/2 - W2},
 				NewCylinderOnTheYAxis(wireTunnelLength, wireTunnelRadius),
 			),
+			NewTranslation(Vec3{0, -batteryRadius, h/2 - W2},
+				NewCylinderOnTheYAxis(wireTunnelLength, wireTunnelRadius),
+			),
 
 			// Wire tunnel bottom
 			NewTranslation(Vec3{0, batteryRadius, h/2 - W2 - (batteryLength - 2*W2)},
+				NewCylinderOnTheYAxis(wireTunnelLength, wireTunnelRadius),
+			),
+			NewTranslation(Vec3{0, -batteryRadius, h/2 - W2 - (batteryLength - 2*W2)},
 				NewCylinderOnTheYAxis(wireTunnelLength, wireTunnelRadius),
 			),
 		),

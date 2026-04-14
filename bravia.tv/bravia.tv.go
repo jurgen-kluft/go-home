@@ -80,16 +80,15 @@ func main() {
 	c := new()
 	defer c.Close()
 
-	m, err := microservice.New("bravia.tv", "state/bravia.tv", time.Second*30)
+	thisConfigFilepath := "config/" + c.name + ".json"
+	servicesConfigFilepath := "config/services.config.json"
+	m, err := microservice.New(c.name, thisConfigFilepath, servicesConfigFilepath, time.Second*30)
 	if err != nil {
 		fmt.Println("Error creating microservice:", err)
 		return
 	}
 
-	peers := []string{"config/request"}
-	m.ConnectTo(peers)
-
-	m.RegisterHandler("config/request", func(m *microservice.Service, msg *microservice.Message) bool {
+	m.RegisterHandler("config", func(m *microservice.Service, msg *microservice.Message) bool {
 		var err error
 		c.config, err = config.BraviaTVConfigFromJSON(msg.Payload)
 		m.Logger.LogInfo(m.Name, "received configuration")
@@ -104,7 +103,7 @@ func main() {
 		return true
 	})
 
-	m.RegisterHandler("state/bravia.tv", func(m *microservice.Service, msg *microservice.Message) bool {
+	m.RegisterHandler("bravia.tv", func(m *microservice.Service, msg *microservice.Message) bool {
 		m.Logger.LogInfo(m.Name, "received state")
 		state, err := config.SensorStateFromJSON(msg.Payload)
 		if err == nil {
@@ -138,5 +137,6 @@ func main() {
 		return true
 	})
 
+	m.Start()
 	m.Loop()
 }

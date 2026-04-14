@@ -31,7 +31,6 @@ func main() {
 		fmt.Println("Error creating microservice:", err)
 		return
 	}
-	c.service.Connect()
 
 	tickCount := 0
 
@@ -62,5 +61,6 @@ func main() {
 		return true
 	})
 
+	c.service.Start()
 	c.service.Loop()
 }

@@ -207,10 +207,9 @@ func main() {
 	var err error
 
 	name := "presence"
-	thisConfigFilepath := "config/presence.config.json"
+	thisConfigFilepath := "config/" + name + ".config.json"
 	servicesConfigFilepath := "config/services.config.json"
 	micro, err := microservice.New(name, thisConfigFilepath, servicesConfigFilepath, time.Second*15)
-	micro.Connect()
 
 	micro.RegisterHandler("config", func(m *microservice.Service, msg *microservice.Message) bool {
 		m.Logger.LogInfo(m.Name, "received configuration")
@@ -240,5 +239,6 @@ func main() {
 		return true
 	})
 
+	micro.Start()
 	micro.Loop()
 }

@@ -15,6 +15,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	config "github.com/jurgen-kluft/go-home/config"
 	logpkg "github.com/jurgen-kluft/go-home/logging"
 )
 
@@ -121,7 +122,7 @@ type Service struct {
 	handlersByID   map[uint32]Delegate
 	handlersByPath map[string]Delegate
 
-	Services []string
+	pathsToConnect []string
 
 	cfg       Config
 	inboundCh chan *Message
@@ -157,11 +158,21 @@ func Hash32(p string) uint32 {
 	return binary.LittleEndian.Uint32(h[:4])
 }
 
-func New(name string, configFilepath string, servicesConfigFilepath string, tickFrequency time.Duration) (*Service, error) {
+func New(name string, thisConfigFilepath string, servicesConfigFilepath string, tickFrequency time.Duration) (*Service, error) {
+	// For thisConfigFilepath we need a FileWatcher to reload the config on changes, but for simplicity we'll just load it once here.
+
 	// Load the configuration for this service
-	listenPath := fmt.Sprintf("/tmp/%s.sock", name)
+	jsonBytes, err := os.ReadFile(servicesConfigFilepath)
+	if err != nil {
+		return nil, err
+	}
+	servicesCfg, err := config.ServicesConfigFromJSON(jsonBytes)
+	if err != nil {
+		return nil, err
+	}
 
 	// Load the configuration for all services to determine which services to connect to
+	listenPath := fmt.Sprintf("/tmp/%s.sock", name)
 
 	cfg := Config{ListenPath: listenPath}
 
@@ -199,6 +210,7 @@ func New(name string, configFilepath string, servicesConfigFilepath string, tick
 		Logger:         logpkg.New(name),
 		handlersByID:   make(map[uint32]Delegate),
 		handlersByPath: make(map[string]Delegate),
+		pathsToConnect: servicesCfg.GetDependencies(name),
 		cfg:            cfg,
 		inboundCh:      make(chan *Message, cfg.InboundCapacity),
 		srcID:          Hash32(cfg.ListenPath),
@@ -233,23 +245,20 @@ func New(name string, configFilepath string, servicesConfigFilepath string, tick
 
 // Connect starts (or restarts) a client-side connector (dialer) to the given server socket path.
 // It returns immediately and reconnects automatically on failures.
-func (s *Service) Connect() {
-
-	// connect to all services in the config
-
-	// if peerPath == "" || peerPath == s.cfg.ListenPath {
-	// 	return
-	// }
-	// if s.getConn(peerPath) != nil {
-	// 	return
-	// }
-	// s.startDialer(peerPath)
+func (s *Service) Connect(peerPath string) {
+	if peerPath == "" || peerPath == s.cfg.ListenPath {
+		return
+	}
+	if s.getConn(peerPath) != nil {
+		return
+	}
+	s.startDialer(peerPath)
 }
 
 // ConnectAndWait connects to peerPath and waits until the connection is established or timeout elapses.
 // Returns true if connected within the timeout, false otherwise.
-func (s *Service) ConnectAndWait(timeout time.Duration) bool {
-	s.Connect()
+func (s *Service) StartAndWait(timeout time.Duration) bool {
+	s.Start()
 	return s.ReadyWait(timeout)
 }
 
@@ -276,8 +285,8 @@ func (s *Service) Ready(peers ...string) map[string]bool {
 // Returns true if the connection is up before the deadline.
 func (s *Service) ReadyWait(timeout time.Duration) bool {
 	deadline := time.Now().Add(timeout)
-	for _, service := range s.Services {
-		c := s.getConn(service)
+	for _, path := range s.pathsToConnect {
+		c := s.getConn(path)
 		if c != nil && !isClosed(c) {
 			return true
 		}
