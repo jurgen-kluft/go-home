@@ -263,14 +263,7 @@ func main() {
 		c.config, err = config.FluxConfigFromJSON(msg.Payload)
 		if err == nil {
 			m.Logger.LogInfo(m.Name, "received configuration")
-			for _, ltype := range c.config.Lighttype {
-				m.Start()
-				if err == nil {
-					m.Logger.LogInfo(c.name, fmt.Sprintf("registered pubsub channel %s for lighttype %s", ltype.Channel, ltype.LightType))
-				} else {
-					m.Logger.LogError(c.name, err.Error())
-				}
-			}
+			m.Start()
 			tickCount = 0
 		} else {
 			m.Logger.LogError(m.Name, err.Error())
@@ -320,7 +313,7 @@ func main() {
 		}
 		if (tickCount % 59) == 0 {
 			if c.config == nil {
-				m.SendJsonTo("config/request", m.Name)
+				m.SendJsonTo("config", m.Name)
 			}
 		}
 		tickCount++

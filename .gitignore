@@ -3,10 +3,6 @@
 #do scan all folders in go-home
 !*/
 
-tags
-*.exe
-*.exe~
-
 .git/
 .vscode/
 .build/

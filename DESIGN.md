@@ -8,53 +8,6 @@ The micro-service framework uses UNIX sockets for inter-process communication. E
 
 ## Configuration
 
-Unix Socket configuration for multiple processes, where the outgoing sockets are determined from the incoming sockets of the respective services:
+Unix Socket configuration for multiple processes, where the outgoing sockets are determined from the incoming sockets of the respective services.
 
-```json
-{
-  "services": [
-    {
-      "id": "weather"
-    },
-    {
-      "id": "aqi"
-    },
-    {
-      "id": "sun"
-    },
-    {
-      "id": "calendar"
-    },
-    {
-      "id": "presence"
-    },
-    {
-      "id": "flux",
-      "depends_on": [
-        "calendar",
-        "weather",
-        "sun"
-      ]
-    },
-    {
-      "id": "automation",
-      "depends_on": [
-        "calendar",
-        "presence"
-      ]
-    },
-    {
-      "id": "logger",
-      "depends_on": [
-        "weather",
-        "aqi",
-        "sun",
-        "calendar",
-        "presence",
-        "flux",
-        "automation"
-      ]
-    }
-  ]
-}
-```
+## 

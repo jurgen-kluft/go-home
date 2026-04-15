@@ -15,7 +15,7 @@ Note:
   can connect itself to for specific events that it is interested in.
 
 - Following sub-processes:
-  - Apple HomeKit       WIP, (Apple Home Kit accessory emulator, our **UI** solution)
+  - Apple HomeKit       WIP,(Apple Home Kit bridge, Hue Bridge and more are connected to this, and it exposes all devices)
   - GeekOpen            Ok, (GeekOpen WiFi wall-sockets/wall-switches/power-plugs)
   - Config              Ok, (A service that is the provider of configurations for all other services)
   - Presence            Ok, (Connects to Router to obtain list of devices present on the network)
@@ -29,7 +29,7 @@ Note:
   - Yee                 Ok, (Xiaomi Yee lighting, turn on/off, change CT and BRI)
   - Wiz                 Ok, (Xiaomi Yee lighting, turn on/off, change CT and BRI)
   - Sony Bravia TV      Ok, (Turn on/off, HDMI Input, Volume for Sony Bravia TV(s))
-  - Samsung TV Remote   Ok, (Turn on/off Samsung TV(s))
+  - Samsung TV          Ok, (Turn on/off Samsung TV(s))
 
 TODO:
   - DD-WRT; For some form of presence (https://github.com/awilliams/wifi-presence)
