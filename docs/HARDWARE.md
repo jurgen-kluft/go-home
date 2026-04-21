@@ -8,13 +8,10 @@
 
 Mac Mini M4 to run:
 
+- Apple HomeKit Bridge (Golang)
 - Sensor Server (C, Golang)
 - Automation Logic (Golang)
-- HomeKit Bridge (Golang)
 - Image Recognition (for presence detection)
-- Other services
-  - Immich (photo server)
-  - Booklet (e-book server)
 
 ## NAS
 
@@ -29,9 +26,9 @@ Very good for DIY trigger based sensors, e.g. button, door/window, water leak, v
 Good board brands:
 
 - DFRobot, e.g. FireBeetle
-- LOLIN, e.g. D1 Mini
+- DWO 
+- Seeed Studio, Xiao ESP32-S3
 - Waveshare
-- Seeed Studio, Xiao
 
 ## CYD (cheap yellow display)
 
@@ -39,6 +36,10 @@ They can be connected to sensors and display the data on the screen, for example
 
 - There are many different versions, I have bought the 2.4 inch version (39 RMB)
 - There is also a 2.8 and 3.5 inch version (43, 55 RMB)
+- Resolution: 
+  - 2.4 inch: 320x240
+  - 2.8 inch: 320x240
+  - 3.5 inch: 480x320
 
 ## Lab Power Supply
 
