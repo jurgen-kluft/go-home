@@ -35,15 +35,8 @@ For example:
 Run on Apple Silicon:
 
 - Moondream; you can query what is being seen on an image (https://github.com/vikhyat/moondream?tab=readme-ov-file)
+- Zaya; ZAYA1-VL-8B: Efficient Open Visual Intelligence
 
-Run directly on ESP32 S3:
-- https://www.hackster.io/asadshafi5/running-yolov5n-on-an-esp32-s3-dd1afc
-
-- https://darknetcv.ai/api/ (Darknet/Yolo, this seems to be the best option so far)
-    - https://github.com/stephanecharette/DarkHelp
-    - https://github.com/stephanecharette/DarkMark
-- https://github.com/dog-qiuqiu/Yolo-Fastest
-- https://github.com/ThibaMahlezana/Intrusion-Detection-System
 
 ## Kalman filter
 
