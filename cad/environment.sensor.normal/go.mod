@@ -1,4 +1,4 @@
-module switchsensor
+module environmentsensornormal
 
 go 1.25.4
 

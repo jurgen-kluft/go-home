@@ -59,7 +59,7 @@ const (
 
 // PCB Board from
 const (
-	pcbBoardW      = 56.25 + (Rounding / 2)
+	pcbBoardW      = 70 + (Rounding / 2)
 	pcbBoardL      = 80.25 + (Rounding / 2)
 	pcbBoardT      = 1.6                                 // Thickness of the PCB board itself
 	pcbBoardMountW = 51                                  // Mounting width, from hole to hole, for the PCB board
@@ -72,12 +72,12 @@ const (
 
 // Display, SH1107 OLED, 128x128
 const (
-	displayScreenW       = Sh1107ScreenL
-	displayScreenL       = Sh1107ScreenW
-	displayScreenR       = Sh1107ScreenR
-	displayMountingW     = Sh1107MountingW
-	displayMountingL     = Sh1107MountingL
-	displayMountingHoleR = Sh1107MountingHoleD / 2
+	displayScreenW       = WcsScreenL
+	displayScreenL       = WcsScreenW
+	displayScreenR       = WcsScreenR
+	displayMountingW     = WcsMountingW
+	displayMountingL     = WcsMountingL
+	displayMountingHoleR = WcsMountingHoleD / 2.0
 )
 
 // Circular hole dimensions for sensor mounting
@@ -119,10 +119,10 @@ func newMagnetInlay(h float64) Primitive {
 		NewTranslation(
 			Vec3{0, 0, h / 2},
 			NewDifference(
-				NewCylinder(h, magnetInlayRadius),
+				NewCylinder(h, magnetInlayRadius).SetFn(20),
 				NewTranslation(
 					Vec3{0, 0, h / 2},
-					NewCylinder(magnetH*2, magnetR),
+					NewCylinder(magnetH*2, magnetR).SetFn(20),
 				),
 			),
 		),
@@ -156,6 +156,10 @@ func newBoxBackside() Primitive {
 								Vec3{0, 0, boxBacksideT},
 								newBox(boxW, boxL, boxBacksideH, MainRounding),
 							),
+							NewTranslation(
+								Vec3{0, 0, boxBacksideH / 2.0},
+								newBox(boxW+2*(boxI), boxL+2*(boxI), 2*W1, MainRounding),
+							),
 						),
 						NewTranslation(
 							Vec3{0, 0, boxBacksideT},
@@ -165,7 +169,7 @@ func newBoxBackside() Primitive {
 					// USB-C connector cutout
 					NewTranslation(
 						Vec3{-(boxW / 2) + 2 + UsbCHoleRingDiameter/2, -(boxL / 2.0) + UsbCHoleRingDiameter, 0},
-						NewCylinder(boxBacksideH*2, UsbCHoleRadius),
+						NewCylinder(boxBacksideH*2, UsbCHoleRadius).SetFn(20),
 					),
 				),
 			),
@@ -180,10 +184,11 @@ func newBoxBackside() Primitive {
 		// 	),
 		// ),
 
-		NewTranslation(
-			Vec3{0, 0, boxBacksideT},
-			newMounting(pcbBoardMountW, pcbBoardMountL, displayMountingHoleR, 4*W1),
-		),
+		// NewTranslation(
+		// 	Vec3{0, 0, boxBacksideT},
+		// 	newMounting(pcbBoardMountW, pcbBoardMountL, displayMountingHoleR, 4*W1),
+		// ),
+
 		NewTranslation(
 			Vec3{0, 0, boxBacksideT},
 			NewTranslation(
@@ -218,13 +223,13 @@ func newBoxBackside() Primitive {
 func newMountingNail(lowerRadius, lowerHeight, nailRadius, nailHeight float64) Primitive {
 	return NewDifference(
 		NewUnion(
-			NewCylinder(lowerHeight, lowerRadius),
-			NewCylinder(lowerHeight+nailHeight, nailRadius),
+			NewCylinder(lowerHeight, lowerRadius).SetFn(20),
+			NewCylinder(lowerHeight+nailHeight, nailRadius).SetFn(20),
 		),
 		// Cutoff the bottom
 		NewTranslation(
 			Vec3{0, 0, -(lowerHeight + nailHeight + W1) / 2},
-			NewCylinder((lowerHeight+nailHeight+W1), lowerRadius+W2),
+			NewCylinder((lowerHeight+nailHeight+W1), lowerRadius+W2).SetFn(20),
 		),
 	)
 }
@@ -281,6 +286,10 @@ func newBoxFrontside() Primitive {
 							Vec3{0, 0, boxFrontsideT},
 							newBox(boxW, boxL, boxFrontsideH, MainRounding),
 						),
+						NewTranslation(
+							Vec3{0, 0, boxFrontsideH / 2.0},
+							newBox(boxW+2*(boxI), boxL+2*(boxI), boxBacksideT*2, MainRounding),
+						),
 					),
 					NewTranslation(
 						Vec3{0, 0, boxFrontsideH / 2},
@@ -294,14 +303,14 @@ func newBoxFrontside() Primitive {
 					Vec3{(boxW / 2), -(7 * W2), sensorMountingHoleR / 2.0},
 					NewRotation(
 						Vec3{0, -90, 0},
-						NewCylinder(W2*3, sensorMountingHoleR),
+						NewCylinder(W2*3, sensorMountingHoleR).SetFn(20),
 					),
 				),
 				NewTranslation(
 					Vec3{(boxW / 2), (7 * W2), sensorMountingHoleR / 2.0},
 					NewRotation(
 						Vec3{0, -90, 0},
-						NewCylinder(W2*3, sensorMountingHoleR),
+						NewCylinder(W2*3, sensorMountingHoleR).SetFn(20),
 					),
 				),
 
@@ -310,14 +319,14 @@ func newBoxFrontside() Primitive {
 					Vec3{-15, ((boxL / 2) + (boxFrontsideT-boxI)/2), 0},
 					NewRotation(
 						Vec3{90, 0, 0},
-						NewCylinder(W2*3, sensorMountingHoleR),
+						NewCylinder(W2*3, sensorMountingHoleR).SetFn(20),
 					),
 				),
 				NewTranslation(
 					Vec3{15, ((boxL / 2) + (boxFrontsideT-boxI)/2), 0},
 					NewRotation(
 						Vec3{90, 0, 0},
-						NewCylinder(W2*3, sensorMountingHoleR),
+						NewCylinder(W2*3, sensorMountingHoleR).SetFn(20),
 					),
 				),
 
@@ -325,20 +334,20 @@ func newBoxFrontside() Primitive {
 					Vec3{-15, -((boxL / 2) + boxFrontsideT/2), 0},
 					NewRotation(
 						Vec3{90, 0, 0},
-						NewCylinder(W2*3, sensorMountingHoleR),
+						NewCylinder(W2*3, sensorMountingHoleR).SetFn(20),
 					),
 				),
 				NewTranslation(
 					Vec3{15, -((boxL / 2) + boxFrontsideT/2), 0},
 					NewRotation(
 						Vec3{90, 0, 0},
-						NewCylinder(W2*3, sensorMountingHoleR),
+						NewCylinder(W2*3, sensorMountingHoleR).SetFn(20),
 					),
 				),
 
 				// Opening on the front for the OLED display
 				NewTranslation(
-					Vec3{15, (displayScreenL / 2), -3 * W2},
+					Vec3{0, 0, -3 * W2},
 					newBox(displayScreenW, displayScreenL, 6*W2, displayScreenR),
 				),
 			),
@@ -346,7 +355,7 @@ func newBoxFrontside() Primitive {
 
 		// AMOLED display mounting
 		NewTranslation(
-			Vec3{15, (displayScreenL / 2), boxFrontsideT},
+			Vec3{0, 0, boxFrontsideT},
 			newMounting(displayMountingL, displayMountingW, displayMountingHoleR, 1),
 		),
 
@@ -401,6 +410,6 @@ func newProduct() Primitive {
 func main() {
 	sys.Initialize()
 	sys.RenderMultiple([]sys.Shape{
-		{Name: "esp32_enclosure", Primitive: newProduct(), Flags: sys.Default},
+		{Name: "environment.sensor.normal", Primitive: newProduct(), Flags: sys.Default},
 	})
 }

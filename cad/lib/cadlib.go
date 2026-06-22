@@ -126,6 +126,18 @@ const (
 	Sh1107MountingHoleD = 2.2  // Mounting hole diameter
 )
 
+// Display, WCS, 320x480, 3.5 inch LCD
+const (
+	WcsScreenW       = 55.0                    // Actual display width
+	WcsScreenL       = 85.5                    // Actual display length
+	WcsScreenR       = 0.0                     // Actual display corner rounding
+	WcsW             = 60.5                    // Overall width including bezel
+	WcsL             = 103.0                   // Overall length including bezel
+	WcsMountingHoleD = 3.0                     // Mounting hole diameter
+	WcsMountingW     = 55.0 - WcsMountingHoleD // Mounting hole to hole width
+	WcsMountingL     = 98.0 - WcsMountingHoleD // Mounting hole to hole length
+)
+
 // --------------------------------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------------------------------------

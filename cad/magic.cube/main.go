@@ -38,29 +38,30 @@ const (
 
 // Xiao Seeed Studio, ESP32-S3
 const (
-	XiaoEsp32S3Length    = 25.0
-	XiaoEsp32S3LengthH2H = 22.0
-	XiaoEsp32S3Width     = 18.0
-	XiaoEsp32S3WidthH2H  = 15.0
+	XiaoEsp32S3Length       = 23.0
+	XiaoEsp32S3Width        = 18.0
+	XiaoEsp32S3PCBThickness = 1.2
 )
 
 // MicroController dimensions
 const (
-	MicroControllerLength    = XiaoEsp32S3Length
-	MicroControllerLengthH2H = XiaoEsp32S3LengthH2H
-	MicroControllerWidth     = XiaoEsp32S3Width
-	MicroControllerWidthH2H  = XiaoEsp32S3WidthH2H
+	MicroControllerLength       = XiaoEsp32S3Length
+	MicroControllerWidth        = XiaoEsp32S3Width
+	MicroControllerPCBThickness = XiaoEsp32S3PCBThickness
 )
 
 const (
 	CubeDimension = 3*MicroControllerWidth + 2*W2
+	// Pimple Profile Control
+	PipRadius  = 3.0 // Width footprint of the pimple
+	PipProfile = 1.2
 )
 
 // 900mAh battery dimensions
 const (
 	batteryWireGap  = 2.0
-	batteryDiameter = 16.6 + batteryWireGap
-	batteryLength   = 34.0 + 6.0 // 34.0
+	batteryDiameter = 16.8 + batteryWireGap
+	batteryLength   = 32.5 + 6.0 // 34.0
 	batteryRadius   = batteryDiameter / 2.0
 )
 
@@ -70,9 +71,109 @@ const (
 	wireTunnelRadius = 1.2
 )
 
+// getLowProfileDimples returns a union of cutting tools designed to carve pockets INWARD from Z = 0.
+func getLowProfileDimples(number int) Primitive {
+	pips := []Primitive{}
+	s := CubeDimension * 0.22
+
+	addDimple := func(x, y float64) {
+		// A sphere positioned so its crown cuts exactly PipProfile into the wall.
+		// It extends slightly into positive space (+1.0) to guarantee a clean breakthrough edge.
+		dimpleCutter := NewTranslation(Vec3{0, 0, -PipRadius + PipProfile},
+			NewUnion(
+				NewSphere(PipRadius).SetFn(20),
+				NewCylinder(PipRadius+20.0, 0.5).SetFn(20),
+			),
+		)
+		pips = append(pips, NewTranslation(Vec3{x, y, 0}, dimpleCutter))
+	}
+
+	buildDiePattern(number, s, addDimple)
+	return NewUnion(pips...)
+}
+
+// Helper to reuse the standard die face layout grid across both functions
+func buildDiePattern(number int, s float64, addFunc func(x, y float64)) {
+	switch number {
+	case 1:
+		addFunc(0, 0)
+	case 2:
+		addFunc(-s, -s)
+		addFunc(s, s)
+	case 3:
+		addFunc(-s, -s)
+		addFunc(0, 0)
+		addFunc(s, s)
+	case 4:
+		addFunc(-s, -s)
+		addFunc(-s, s)
+		addFunc(s, -s)
+		addFunc(s, s)
+	case 5:
+		addFunc(-s, -s)
+		addFunc(-s, s)
+		addFunc(0, 0)
+		addFunc(s, -s)
+		addFunc(s, s)
+	case 6:
+		addFunc(-s, -s)
+		addFunc(-s, 0)
+		addFunc(-s, s)
+		addFunc(s, -s)
+		addFunc(s, 0)
+		addFunc(s, s)
+	}
+}
+
+// newVerticalSliderRails creates left and right mounting blocks
+// shifted safely inward toward the center of the box.
+func newVerticalSliderRails(width, length float64) Primitive {
+	railHeightZ := length // Height of the blocks along Z
+	railWidthX := width   // Total thickness of each printed block along X
+	railDepthY := width   // How far the blocks stick out from the back wall
+	slotDepthX := 2.0     // How deep the PCB slides into the block
+	printTolerance := 0.2 // Clearance spacing for a smooth slide fit
+
+	slotThicknessY := MicroControllerPCBThickness + printTolerance
+
+	// 1. Build the Left Rail Block
+	// The track slot cuts into the inner right side of this block (facing +X)
+	leftBlock := NewBox(railWidthX, railDepthY, railHeightZ)
+	leftSlotCutter := NewTranslation(
+		Vec3{railWidthX / 2.0, 0, 1.0},
+		NewBox(2.0*slotDepthX+1.0, slotThicknessY, railHeightZ+2.0),
+	)
+	leftRailFinished := NewDifference(leftBlock, leftSlotCutter)
+
+	// 2. Build the Right Rail Block
+	// The track slot cuts into the inner left side of this block (facing -X)
+	rightBlock := NewBox(railWidthX, railDepthY, railHeightZ)
+	rightSlotCutter := NewTranslation(
+		Vec3{-railWidthX / 2.0, 0, 1.0},
+		NewBox(2.0*slotDepthX+1.0, slotThicknessY, railHeightZ+2.0),
+	)
+	rightRailFinished := NewDifference(rightBlock, rightSlotCutter)
+
+	// 3. FIX: Position the rails using the internal slot distance rather than the outer span.
+	// This pulls the boxes away from the cube's corners and places them directly around the board width.
+	railMoveX := (MicroControllerWidth / 2.0) + (railWidthX/2.0 - slotDepthX)
+	leftRailPlaced := NewTranslation(
+		Vec3{-railMoveX, 0, 0},
+		leftRailFinished,
+	)
+	rightRailPlaced := NewTranslation(
+		Vec3{railMoveX, 0, 0},
+		rightRailFinished,
+	)
+
+	return NewUnion(leftRailPlaced, rightRailPlaced)
+}
+
 // newMagicCube creates the power block primitive that holds the USB power block.
 // The power block has cutouts on the top and bottom for heat dissipation
 func newMagicCube() Primitive {
+	offset := (CubeDimension / 2.0)
+
 	return NewTranslation(
 		Vec3{0, 0, CubeDimension / 2},
 		NewUnion(
@@ -85,32 +186,21 @@ func newMagicCube() Primitive {
 					NewBox(CubeDimension-2*W2, CubeDimension-2*W2, CubeDimension),
 				),
 
-				// 6 sides, drill holes:
-				// at side 1 sketching the number 1
-				// at side 2 sketching the number 2
-				// at side 3 sketching the number 3
-				// at side 4 sketching the number 4
-				// at side 5 sketching the number 5
-				// at side 6 sketching the number 6
+				// Subtracting dimple cutters from the faces
+				NewTranslation(Vec3{0, -offset, 0}, NewRotation(Vec3{-90, 0, 0}, getLowProfileDimples(1))),
+				NewTranslation(Vec3{0, offset, 0}, NewRotation(Vec3{90, 0, 0}, getLowProfileDimples(2))),
+				NewTranslation(Vec3{-offset, 0, 0}, NewRotation(Vec3{0, 90, 0}, getLowProfileDimples(3))),
+				NewTranslation(Vec3{offset, 0, 0}, NewRotation(Vec3{0, -90, 0}, getLowProfileDimples(4))),
+				NewTranslation(Vec3{0, 0, -offset}, NewRotation(Vec3{0, 0, 0}, getLowProfileDimples(5))),
 			),
 
-			// 4 pins for the Firebeetle board to be attached to the inside of the cube. The holes are 3mm in diameter and 4mm deep, and are located at the corners of a rectangle that is 56.6mm by 22mm (the dimensions of the Firebeetle board). The holes are centered on the Z axis and are located 10mm from the top of the cube.
+			// Microcontroller left and right block with slider cutout to insert the microcontroller horizontally
+			// from the top of the cube.
+			// This is attached to the main cube with a small gap (W2) to allow for some tolerance when sliding the
+			// microcontroller in.
 			NewTranslation(
-				Vec3{0, (-CubeDimension / 2) + W1*3, 0},
-				NewUnion(
-					NewTranslation(Vec3{MicroControllerWidthH2H / 2, 0, MicroControllerLengthH2H / 2},
-						NewCylinderOnTheYAxis(W1*3, 1),
-					),
-					NewTranslation(Vec3{-MicroControllerWidthH2H / 2, 0, MicroControllerLengthH2H / 2},
-						NewCylinderOnTheYAxis(W1*3, 1),
-					),
-					NewTranslation(Vec3{MicroControllerWidthH2H / 2, 0, -MicroControllerLengthH2H / 2},
-						NewCylinderOnTheYAxis(W1*3, 1),
-					),
-					NewTranslation(Vec3{-MicroControllerWidthH2H / 2, 0, -MicroControllerLengthH2H / 2},
-						NewCylinderOnTheYAxis(W1*3, 1),
-					),
-				),
+				Vec3{0, CubeDimension/2 - W2 - (8.0 / 2), -(((CubeDimension / 2.0) - W2 + (Rounding / 2.0)) - MicroControllerLength/2.0)},
+				newVerticalSliderRails(8.0, MicroControllerLength),
 			),
 		),
 	)
@@ -125,6 +215,11 @@ func newMagicCubeLid() Primitive {
 	// holeOffsetX2 := CubeDimension/2 - 3*W2
 	// holeOffsetZ := (CubeDimension / 4)
 
+	// The lid sits flat on the XY plane.
+	// The outer top surface of the main lid plate is at Z = W1.
+
+	outerSurfaceHeight := W1
+
 	return NewDifference(
 		NewUnion(
 			NewTranslation(
@@ -137,19 +232,11 @@ func newMagicCubeLid() Primitive {
 			),
 		),
 
-		// Cut some holes for heat dissipation
-		// NewTranslation(Vec3{0, 0 - holeOffsetZ, 0}, cylindricalHeatHole),
-		// NewTranslation(Vec3{0, 8*W2 - holeOffsetZ, 0}, cylindricalHeatHole),
-
-		// NewTranslation(Vec3{holeOffsetX1, 0 - holeOffsetZ, 0}, cylindricalHeatHole),
-		// NewTranslation(Vec3{-holeOffsetX1, 0 - holeOffsetZ, 0}, cylindricalHeatHole),
-		// NewTranslation(Vec3{holeOffsetX2, 2*W2 - holeOffsetZ, 0}, cylindricalHeatHole),
-		// NewTranslation(Vec3{-holeOffsetX2, 2*W2 - holeOffsetZ, 0}, cylindricalHeatHole),
-		// NewTranslation(Vec3{holeOffsetX1, 4*W2 - holeOffsetZ, 0}, cylindricalHeatHole),
-		// NewTranslation(Vec3{-holeOffsetX1, 4*W2 - holeOffsetZ, 0}, cylindricalHeatHole),
-		// NewTranslation(Vec3{holeOffsetX2, 6*W2 - holeOffsetZ, 0}, cylindricalHeatHole),
-		// NewTranslation(Vec3{-holeOffsetX2, 6*W2 - holeOffsetZ, 0}, cylindricalHeatHole),
+		// Translate Side 6 dimple cutters onto the top surface
+		// No rotation needed: getLowProfileDimples cuts downward into the surface along the -Z axis natively
+		NewTranslation(Vec3{0, 0, outerSurfaceHeight}, getLowProfileDimples(6)),
 	)
+
 }
 
 // The lid has to be wider than the holder to fit over it so that we can
@@ -171,17 +258,17 @@ func newBatteryHolderLid() Primitive {
 }
 
 func newBatteryHolder() Primitive {
-	h := MicroControllerLength
+	h := batteryLength
 	return NewTranslation(
 		Vec3{0, 0, W2 + h/2 - PowerBlockRounding},
 		NewDifference(
 			NewTranslation(
 				Vec3{0, 0, 0},
-				NewBox(CubeDimension, MicroControllerWidth, h),
+				NewBox(CubeDimension, batteryDiameter+W2, h),
 			),
 
 			// Make a hollow cylinder
-			NewTranslation(Vec3{0, 0, (MicroControllerLength-batteryLength)/2 + W1},
+			NewTranslation(Vec3{0, 0, W1},
 				NewCylinder(batteryLength+W2, batteryRadius),
 			),
 

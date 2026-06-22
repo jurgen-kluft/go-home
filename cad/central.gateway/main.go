@@ -67,11 +67,11 @@ const (
 	magnetInlayRadius = magnetR + W1
 )
 
-// USB-C hole dimensions
-const (
-	UsbCHoleDiameter = 11.6 // Radius of the USB-C hole, 1.16 cm
-	UsbCHoleRadius   = UsbCHoleDiameter / 2.0
-)
+// // USB-C hole dimensions
+// const (
+// 	UsbCHoleDiameter = 11.6 // Radius of the USB-C hole, 1.16 cm
+// 	UsbCHoleRadius   = UsbCHoleDiameter / 2.0
+// )
 
 const (
 	UsbCablePlugWidth  = 11.0

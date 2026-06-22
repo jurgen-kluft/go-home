@@ -5,6 +5,7 @@ import (
 	"github.com/ljanyst/ghostscad/sys"
 
 	. "github.com/go-gl/mathgl/mgl64"
+	. "github.com/jurgen-kluft/go-home/cad/lib"
 	. "github.com/ljanyst/ghostscad/primitive"
 )
 
@@ -19,16 +20,6 @@ import (
 //     - X axis is width
 //     - Y axis is length/depth
 //     - Z axis is height
-
-// Global constants
-const (
-	Unit         = 1.0 // 1 unit = 1 mm
-	WT           = 1.6
-	W1           = WT
-	W2           = 2 * WT
-	Rounding     = 1
-	MainRounding = 10
-)
 
 // Box dimensions
 const (
@@ -61,7 +52,7 @@ const (
 
 // PCB Board
 const (
-	pcbBoardW      = 62 + (Rounding / 2)
+	pcbBoardW      = 90 + (Rounding / 2)
 	pcbBoardL      = 90 + (Rounding / 2)
 	pcbBoardT      = 1.6                                 // Thickness of the PCB board itself
 	pcbBoardMountW = 51.0                                // Mounting width, from hole to hole, for the PCB board
@@ -72,81 +63,14 @@ const (
 	pcbBoardH      = pcbBoardBH + pcbBoardTH + pcbBoardT // Total height of the PCB including components
 )
 
-// Display, 128x128, SH1107 OLED
+// Display
 const (
-	sh1107ScreenW       = 37.3 // Actual display width
-	sh1107ScreenL       = 34.0 // Actual display length
-	sh1107ScreenR       = 0.5  // Actual display corner rounding
-	sh1107W             = 47.1 // Overall width including bezel
-	sh1107L             = 34.1 // Overall length including bezel
-	sh1107MountingW     = 42   // Mounting hole to hole width
-	sh1107MountingL     = 29   // Mounting hole to hole length
-	sh1107MountingHoleD = 2.2  // Mounting hole diameter
-)
-
-// Display, SH1107 OLED, 128x128
-const (
-	displayScreenW       = sh1107ScreenL
-	displayScreenL       = sh1107ScreenW
-	displayScreenR       = sh1107ScreenR
-	displayMountingW     = sh1107MountingW
-	displayMountingL     = sh1107MountingL
-	displayMountingHoleR = sh1107MountingHoleD / 2
-)
-
-// RD03D
-const (
-	RD03DW  = 15.25
-	RD03DL  = 44.5
-	RD03DH  = 5.0
-	RD03DT  = 3.2 // PCB and things thickness
-	RD03DBT = 0.7 // Bottom height (height of components on bottom side
-	RD03DTT = 1.0 // Bottom height (height of components on bottom side
-)
-
-// Scd41 (CO2, temp, humidity)
-const (
-	Scd41SensorWidth          = 8.5                                              // Width of the sensor body
-	Scd41SensorLength         = 8.5                                              // Length of the sensor body
-	Scd41SensorHeight         = 6.5                                              // Height of the sensor body
-	Scd41BottomToSensorTop    = 18.0                                             // Length until the top of the sensor body (measured from the bottom)
-	Scd41BottomToSensorMiddle = Scd41BottomToSensorTop - (Scd41SensorHeight / 2) // Length until the middle of the sensor body (measured from the bottom)
-	Scd41W                    = 13.2                                             // Width of the PCB
-	Scd41L                    = 22.0                                             // Length of the PCB
-	Scd41H                    = 8
-	Scd41T                    = 1.6
-)
-
-// Bh1750 (light)
-const (
-	Bh1750W                    = 14.2                                               // Width of the PCB
-	Bh1750L                    = 18.5                                               // Length of the PCB
-	Bh1750BottomToSensorTop    = 12.25                                              // Length until the top of the sensor body (measured from the bottom)
-	Bh1750TopToSensorBottom    = Bh1750L - 8.25                                     // Length until the bottom of the sensor body (measured from the top)
-	Bh1750BottomToSensorMiddle = Bh1750BottomToSensorTop - (Bh1750SensorHeight / 2) // Length until the middle of the sensor body (measured from the bottom)
-	Bh1750SensorWidth          = 3.2                                                // Width of the sensor body
-	Bh1750SensorHeight         = Bh1750BottomToSensorTop - Bh1750TopToSensorBottom  // Height of the sensor body
-
-	Bh1750H = 1.0
-	Bh1750T = 1.6
-)
-
-// Bme280 (temperature, humidity, pressure)
-const (
-	Bme280W                    = 10.5
-	Bme280L                    = 13.2
-	Bme280H                    = 3.5
-	Bme280T                    = 1.6
-	Bme280SensorWidth          = 2.0
-	Bme280SensorLength         = 3.0
-	Bme280SensorHeight         = 1.0
-	Bme280BottomToSensorMiddle = 11.0
-)
-
-// USB-C hole dimensions
-const (
-	UsbCHoleDiameter = 11.6 // Radius of the USB-C hole, 1.16 cm
-	UsbCHoleRadius   = UsbCHoleDiameter / 2.0
+	displayScreenW       = WcsScreenL
+	displayScreenL       = WcsScreenW
+	displayScreenR       = WcsScreenR
+	displayMountingW     = WcsMountingW
+	displayMountingL     = WcsMountingL
+	displayMountingHoleR = WcsMountingHoleD / 2
 )
 
 func newPyramid(w, l, h float64) Primitive {
@@ -453,6 +377,151 @@ func newPcbInlay() Primitive {
 	)
 }
 
+const (
+	// --- 1. Dimension Constants (in mm) ---
+	pipeLength = 40.0
+	pipeOD     = 20.0
+	pipeID     = 16.0
+
+	// SEN66 dimensional requirements
+	sen66X        = 55.6
+	sen66Y        = 26.0
+	sen66Z        = 21.7
+	wallThickness = 2.0
+)
+
+func buildSensorForSEN66() Primitive {
+
+	compODX := sen66X + (wallThickness * 2)
+	compODY := sen66Y + (wallThickness * 2)
+
+	// FIX: Make the solid outer block taller by adding an explicit floor buffer
+	// into the negative Z quadrant so subtractions cannot delete the floor.
+	compODZ := sen66Z + wallThickness
+
+	// --- 2. Solid Outer Compartment Block ---
+	cornerRadius := 3.0
+	cornerX := (compODX / 2.0) - cornerRadius
+	cornerY := (compODY / 2.0) - cornerRadius
+
+	// FIX: Outer hull starts at Z = -2.0 instead of 0 to give a solid structural base plate
+	compartmentOuter := NewHull(
+		NewTranslation(Vec3{cornerX, cornerY, -2.0}, NewCylinder(compODZ+2.0, cornerRadius)),
+		NewTranslation(Vec3{-cornerX, cornerY, -2.0}, NewCylinder(compODZ+2.0, cornerRadius)),
+		NewTranslation(Vec3{cornerX, -cornerY, -2.0}, NewCylinder(compODZ+2.0, cornerRadius)),
+		NewTranslation(Vec3{-cornerX, -cornerY, -2.0}, NewCylinder(compODZ+2.0, cornerRadius)),
+	)
+
+	// --- 3. Inner Pocket via Hull ---
+	// Sits at Z = wallThickness (2.0), leaving a clean 4mm solid plastic buffer floor (from Z=-2 to Z=2)
+	innerRadius := 1.5
+	innerX := (sen66X / 2.0) - innerRadius
+	innerY := (sen66Y / 2.0) - innerRadius
+	pocketHeight := sen66Z + 10.0 // Extends cleanly out through the ceiling
+
+	sensorPocket := NewHull(
+		NewTranslation(Vec3{innerX, innerY, wallThickness}, NewCylinder(pocketHeight, innerRadius)),
+		NewTranslation(Vec3{-innerX, innerY, wallThickness}, NewCylinder(pocketHeight, innerRadius)),
+		NewTranslation(Vec3{innerX, -innerY, wallThickness}, NewCylinder(pocketHeight, innerRadius)),
+		NewTranslation(Vec3{-innerX, -innerY, wallThickness}, NewCylinder(pocketHeight, innerRadius)),
+	)
+
+	// --- 4. Wire Feedthrough Hole ---
+	// FIX: Controlled diameter hole that cuts through the bottom base plate cleanly
+	// without removing the wide shelf that supports the SEN66 housing.
+	wireHole := NewTranslation(Vec3{0, 0, -3.0}, NewCylinder(wallThickness+6.0, pipeID/2))
+
+	// --- 5. Side Ventilation Windows ---
+	ventWidth := 10.0
+	ventLength := compODY + 6.0
+	ventHeight := 12.0
+
+	intakeVent := NewTranslation(
+		Vec3{-(compODX / 2.0) - 1.0, -ventLength / 2.0, wallThickness},
+		NewCube(Vec3{ventWidth, ventLength, ventHeight}),
+	)
+
+	exhaustVent := NewTranslation(
+		Vec3{(compODX / 2.0) - ventWidth + 1.0, -ventLength / 2.0, wallThickness},
+		NewCube(Vec3{ventWidth, ventLength, ventHeight}),
+	)
+
+	// --- 6. Assemble the Subtraction Tree ---
+	compartment := NewDifference(
+		compartmentOuter,
+		sensorPocket,
+		wireHole,
+		intakeVent,
+		exhaustVent,
+	)
+
+	// --- 7. Hollow Pipe Stalk with Interlocking Flange ---
+	// Pipe spans up to Z = 40.0. The inner hollow core terminates cleanly at the flange rim.
+	stalk := NewDifference(
+		NewCylinder(pipeLength, pipeOD/2),
+		NewCylinder(pipeLength+2.0, pipeID/2),
+	)
+
+	// --- 8. Structural Assembly Placement ---
+	// FIX: Shift the compartment up so its base layer (Z = -2.0) interfaces and buries
+	// into the stalk head (Z = 40.0). This overlaps the geometries into a clean, rigid, solid mesh.
+	positionedCompartment := NewTranslation(Vec3{0, 0, sen66Z/2.0 + 2.0*wallThickness + pipeLength/2.0}, compartment)
+
+	return NewUnion(stalk, positionedCompartment)
+}
+
+func buildCompartmentLidForSEN66() Primitive {
+	// Reference dimensions from the compartment layout
+	compODX := sen66X + (wallThickness * 2)
+	compODY := sen66Y + (wallThickness * 2)
+
+	lidTopThickness := 2.0
+	plugDepth := 4.0  // How deep the underside alignment wall goes down into the compartment
+	tolerance := 0.25 // The 3D printing safety clearance on all sides
+
+	// Dimensions for the lower inserting plug block
+	plugX := sen66X - (tolerance * 2.0)
+	plugY := sen66Y - (tolerance * 2.0)
+
+	// --- 1. Top Cover Layer (Matches the main box footprint) ---
+	cornerRadius := 3.0
+	cornerX := (compODX / 2.0) - cornerRadius
+	cornerY := (compODY / 2.0) - cornerRadius
+
+	lidTopPlate := NewHull(
+		NewTranslation(Vec3{cornerX, cornerY, 0}, NewCylinder(lidTopThickness, cornerRadius)),
+		NewTranslation(Vec3{-cornerX, cornerY, 0}, NewCylinder(lidTopThickness, cornerRadius)),
+		NewTranslation(Vec3{cornerX, -cornerY, 0}, NewCylinder(lidTopThickness, cornerRadius)),
+		NewTranslation(Vec3{-cornerX, -cornerY, 0}, NewCylinder(lidTopThickness, cornerRadius)),
+	)
+
+	// --- 2. Underside Alignment Plug Block ---
+	// Centers the cube block underneath the lid plate face
+
+	lidUndersidePlate := NewHull(
+		NewTranslation(Vec3{cornerX, cornerY, 0}, NewCylinder(lidTopThickness+1.0, cornerRadius)),
+		NewTranslation(Vec3{-cornerX, cornerY, 0}, NewCylinder(lidTopThickness+1.0, cornerRadius)),
+		NewTranslation(Vec3{cornerX, -cornerY, 0}, NewCylinder(lidTopThickness+1.0, cornerRadius)),
+		NewTranslation(Vec3{-cornerX, -cornerY, 0}, NewCylinder(lidTopThickness+1.0, cornerRadius)),
+	)
+
+	// scaling factor to scale it down to the inner dimensions of the compartment, while accounting for the tolerance
+	scalar := Vec3{plugX / compODX, plugY / compODY, 1.0}
+	scalarInner := Vec3{0.9 * scalar.X(), 0.9 * scalar.Y(), 8.0}
+	undersidePlug := NewTranslation(Vec3{0, 0, -plugDepth / 2},
+		NewDifference(
+			NewScale(scalar, lidUndersidePlate),
+			NewScale(scalarInner, lidUndersidePlate),
+		),
+	)
+
+	// Join them together into a single printable piece
+	return NewUnion(
+		NewColor("blue", lidTopPlate),
+		NewColor("green", undersidePlug),
+	)
+}
+
 // The frontside of the box, also has 4 sides of a certain height:
 // - RD03D sensor insert-slide (upper part)
 // - OLED display cutout (lower part)
@@ -509,7 +578,7 @@ func newBoxFrontside() Primitive {
 
 				// Opening on the front for the OLED display
 				NewTranslation(
-					Vec3{15, (displayScreenL / 2), -3 * W2},
+					Vec3{0, (displayScreenL / 2), -3 * W2},
 					newBox(displayScreenW, displayScreenL, 6*W2, displayScreenR),
 				),
 			),
@@ -525,7 +594,7 @@ func newBoxFrontside() Primitive {
 
 		// AMOLED display mounting
 		NewTranslation(
-			Vec3{15, (displayScreenL / 2), boxFrontsideT},
+			Vec3{0, (displayScreenL / 2), boxFrontsideT},
 			newMounting(displayMountingL, displayMountingW, displayMountingHoleR, 1),
 		),
 
@@ -587,5 +656,12 @@ func main() {
 	sys.Initialize()
 	sys.RenderMultiple([]sys.Shape{
 		{Name: "main", Primitive: newProduct(), Flags: sys.Default},
+		{Name: "SEN66_Sensor", Primitive: NewUnion(
+			NewTranslation(
+				Vec3{0, 0, pipeLength/2.0 + sen66Z + 2.0 + 2.0*wallThickness},
+				buildCompartmentLidForSEN66(),
+			),
+			buildSensorForSEN66(),
+		), Flags: sys.Default},
 	})
 }
