@@ -54,15 +54,15 @@ func (s *instance) postMessage(jsondata []byte) {
 }
 
 func main() {
-	peers := []string{"config/request"}
 
-	m, err := microservice.New("shout", "shout/message", time.Second*15)
+	thisConfigFilepath := "config/shout.config.json"
+	servicesConfigFilepath := "config/shout.config.json"
+
+	m, err := microservice.New("shout", thisConfigFilepath, servicesConfigFilepath, time.Second*15)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-
-	m.ConnectTo(peers)
 
 	c := new()
 	c.service = m
@@ -97,5 +97,6 @@ func main() {
 		return true
 	})
 
+	m.Start()
 	m.Loop()
 }
