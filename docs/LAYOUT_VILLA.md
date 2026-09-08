@@ -7,9 +7,17 @@
 - CO2
 - Luminosity
 
+## Overview
+
+- Windows: <= 16
+- Doors: <= 17
+- Rooms: 2 + 6 + 6 + 6 = 20
+- Floors: 4
+
 ## Floor
 
 Every floor has WiFi cover, so we are targeting to mostly use WiFi and we can experiment with EspNOW.
+
 
 ## Sensors
 

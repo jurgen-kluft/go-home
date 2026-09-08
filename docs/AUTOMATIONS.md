@@ -19,8 +19,8 @@ For example, we want to know if the kitchen lights should be ON or OFF based on 
 - Auto: House should know the light intensity (per room) so as to start turning on/off lights.
 - Moods: Lights should be dimmed when watching TV or a movie and brighten when paused.
 - Door and Window sensors (open/close) should be used everywhere (50 RMB)
-  - esp32-c3 super mini
-  - US1881 hall effect sensor or reed switch
+  - esp8266
+  - reed switch
   - lipo battery (3.7V 1300mAh)
   - magnet
 
