@@ -2,7 +2,7 @@
 
 - Number of WiFi APs (every floor): 3
   - 3 x GL-inet Flint
-- Zigbee Coordinator per floor
+- HUE Hub per floor
   - CC2531 USB Dongle
   - For:
     - Hue Lights

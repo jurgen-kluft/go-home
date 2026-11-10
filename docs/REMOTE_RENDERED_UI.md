@@ -1,5 +1,7 @@
 # Remote Rendered UI
 
+Obsolete!!
+
 ## Constraints
 
 - ESP32 is a display client

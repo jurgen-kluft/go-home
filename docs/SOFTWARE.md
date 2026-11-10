@@ -7,18 +7,14 @@ On the new Mac Mini, what to install:
 
 - Homebrew; https://brew.sh/
 - Golang; `brew install go`
-- Mosquitto MQTT broker; `brew install mosquitto`
 - VSCode; https://code.visualstudio.com/
 
-## Sensor Data Server
+## House Server
 
-- TCP server (Golang)
-
-## MQTT Broker
-
-- Emitter; https://github.com/emitter-io/emitter (golang)
-- Mochi MQTT; https://github.com/mochi-mqtt/server (golang)
-- MQTT Broker; Mosquitto
+- Home Server
+  - TCP server for sensor data
+  - UDP server for sensor data
+  - TCP server for image recognition data
 
 ## Esp32 S3 Camera
 

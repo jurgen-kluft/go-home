@@ -15,6 +15,7 @@ These are 220V/USB-C powered.
 - Pressure
 - CO2
 - Luminosity
+- Presence
 
 ## Air Quality Elite
 
